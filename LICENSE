@@ -1,0 +1,60 @@
+# RunuX AI Runtime — Proprietary License
+
+Copyright (c) 2026 Xavier Callens / Socrate AI. All Rights Reserved.
+
+## Terms and Conditions
+
+This software and associated documentation files (the "Software") are the
+proprietary and confidential property of Xavier Callens / Socrate AI.
+
+### 1. Grant of License
+
+No license is granted to any party unless explicitly provided through a
+signed Commercial License Agreement, Evaluation License Agreement, or
+other written agreement with the copyright holder.
+
+### 2. Restrictions
+
+Without a signed license agreement, you may NOT:
+
+- Use, copy, modify, or distribute the Software
+- Reverse engineer, decompile, or disassemble the Software
+- Create derivative works based on the Software
+- Sublicense, sell, or transfer the Software to any third party
+- Use the Software for benchmarking or competitive analysis
+- Publish or disclose any performance data derived from the Software
+
+### 3. Intellectual Property
+
+The Software embodies trade secrets and proprietary know-how of the
+copyright holder. All patent rights, copyrights, trade secrets, and
+other intellectual property rights in the Software are and shall remain
+the exclusive property of Xavier Callens / Socrate AI.
+
+### 4. Confidentiality
+
+The Software and all related technical information are Confidential
+Information. Recipients must protect this information with at least the
+same degree of care used to protect their own confidential information,
+but in no event less than reasonable care.
+
+### 5. Patents Pending
+
+Certain aspects of this Software are covered by pending patent
+applications in the European Union, People's Republic of China, and
+United States of America.
+
+### 6. Termination
+
+Any unauthorized use of this Software automatically terminates any
+implied license and may result in civil and criminal penalties.
+
+### 7. Contact
+
+For licensing inquiries:
+- Email: xavier.callens@socrate.ai
+- Web: https://runux.ai
+
+---
+
+SPDX-License-Identifier: LicenseRef-RunuX-Commercial

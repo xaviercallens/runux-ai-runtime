@@ -1,0 +1,12 @@
+[package]
+name = "ai_bridge"
+version = "0.1.0"
+edition = "2021"
+description = "RunuX AI Bridge — C FFI bridge for Python TensorFlow/PyTorch interop"
+
+[dependencies]
+ai_runtime = { path = "../ai_runtime" }
+rvv_simd = { path = "../rvv_simd" }
+
+[lib]
+crate-type = ["rlib"]

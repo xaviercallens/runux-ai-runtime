@@ -1,0 +1,10 @@
+[package]
+name = "ai_runtime"
+version = "0.1.0"
+edition = "2021"
+description = "RunuX AI Runtime — tensor types, inference engine, and model loading for RISC-V edge AI"
+
+[dependencies]
+
+[lib]
+crate-type = ["rlib"]

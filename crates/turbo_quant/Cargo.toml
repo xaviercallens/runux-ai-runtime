@@ -1,0 +1,11 @@
+[package]
+name = "turbo_quant"
+version = "0.1.0"
+edition = "2021"
+description = "RunuX TurboQuant — KV-cache compression via PolarQuant + QJL for extended LLM context windows"
+
+[dependencies]
+ai_runtime = { path = "../ai_runtime" }
+
+[lib]
+crate-type = ["rlib"]

@@ -1,0 +1,27 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/ai_runtime",
+    "crates/rvv_simd",
+    "crates/turbo_quant",
+    "crates/ai_bridge",
+    "crates/federated",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Xavier Callens <xavier.callens@socrate.ai>"]
+license = "LicenseRef-RunuX-Commercial"
+repository = "https://github.com/xaviercallens/runux-ai-runtime"
+
+[profile.dev]
+opt-level = 0
+panic = "abort"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true

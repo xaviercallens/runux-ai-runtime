@@ -1,0 +1,11 @@
+[package]
+name = "federated"
+version = "0.1.0"
+edition = "2021"
+description = "RunuX Federated Learning — distributed training, gradient aggregation, and privacy-preserving ML"
+
+[dependencies]
+ai_runtime = { path = "../ai_runtime" }
+
+[lib]
+crate-type = ["rlib"]

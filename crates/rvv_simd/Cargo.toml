@@ -1,0 +1,11 @@
+[package]
+name = "rvv_simd"
+version = "0.1.0"
+edition = "2021"
+description = "RunuX RVV SIMD — RISC-V Vector accelerated kernels for tensor operations"
+
+[dependencies]
+ai_runtime = { path = "../ai_runtime" }
+
+[lib]
+crate-type = ["rlib"]
