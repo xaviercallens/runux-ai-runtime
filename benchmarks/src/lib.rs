@@ -1,5 +1,4 @@
-#![no_std]
-#![cfg_attr(not(test), no_main)]
+#![cfg_attr(not(test), no_std)]
 // Copyright (c) 2026 Xavier Callens / Socrate AI. All Rights Reserved.
 // SPDX-License-Identifier: LicenseRef-RunuX-Commercial
 

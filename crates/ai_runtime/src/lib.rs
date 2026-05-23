@@ -4,8 +4,7 @@
 // distribution, or use is strictly prohibited.
 
 #![allow(clippy::all, clippy::pedantic)]
-#![no_std]
-#![cfg_attr(not(test), no_main)]
+#![cfg_attr(not(test), no_std)]
 #![deny(clippy::all)]
 #![warn(clippy::pedantic)]
 //! RunuX AI Runtime — Core tensor types and inference engine abstractions

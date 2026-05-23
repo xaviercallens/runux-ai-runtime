@@ -3,8 +3,7 @@
 // This file is proprietary and confidential. Unauthorized copying,
 // distribution, or use is strictly prohibited.
 
-#![no_std]
-#![cfg_attr(not(test), no_main)]
+#![cfg_attr(not(test), no_std)]
 #![deny(clippy::all)]
 #![warn(clippy::pedantic)]
 //! RunuX TurboQuant — KV-Cache compression for extended LLM context windows
