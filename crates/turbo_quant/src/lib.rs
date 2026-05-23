@@ -197,8 +197,9 @@ impl PolarQuant {
 
     /// Generate a pseudo-random rotation value using xorshift64.
     fn random_rotation(&self, i: usize, j: usize) -> f32 {
-        let mut state = self.seed ^ (i as u64 * 6364136223846793005)
-            ^ (j as u64 * 1442695040888963407);
+        let mut state = self.seed
+            ^ (i as u64).wrapping_mul(6364136223846793005)
+            ^ (j as u64).wrapping_mul(1442695040888963407);
         state ^= state << 13;
         state ^= state >> 7;
         state ^= state << 17;
@@ -408,7 +409,9 @@ impl QjlProjection {
 
     /// Generate Rademacher random variable: +1.0 or -1.0
     fn rademacher(&self, i: usize, j: usize) -> f32 {
-        let mut state = self.seed ^ (i as u64 * 2654435761) ^ (j as u64 * 40503);
+        let mut state = self.seed
+            ^ (i as u64).wrapping_mul(2654435761)
+            ^ (j as u64).wrapping_mul(40503);
         state ^= state << 13;
         state ^= state >> 17;
         state ^= state << 5;
