@@ -1,0 +1,17 @@
+[package]
+name = "sim_inference"
+version = "0.1.0"
+edition = "2021"
+license = "LicenseRef-RunuX-Commercial"
+description = "Simulated end-to-end LLM inference pipeline for RunuX AI Runtime"
+
+[dependencies]
+ai_runtime = { path = "../ai_runtime" }
+transformer = { path = "../transformer" }
+flash_attention = { path = "../flash_attention" }
+arena_mem = { path = "../arena_mem" }
+turbo_quant = { path = "../turbo_quant" }
+speculative = { path = "../speculative" }
+power_monitor = { path = "../power_monitor" }
+perf_model = { path = "../perf_model" }
+rvv_simd = { path = "../rvv_simd" }

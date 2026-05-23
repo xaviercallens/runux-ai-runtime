@@ -15,7 +15,9 @@ members = [
     "crates/arena_mem",
     "crates/speculative",
     "crates/power_monitor",
+    "crates/perf_model",
     "crates/sim_bench",
+    "crates/sim_inference",
     "benchmarks",
 ]
 
