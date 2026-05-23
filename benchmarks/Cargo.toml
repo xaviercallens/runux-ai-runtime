@@ -1,0 +1,11 @@
+[package]
+name = "runux-benchmarks"
+version = "0.1.0"
+edition = "2021"
+license = "LicenseRef-RunuX-Commercial"
+publish = false
+
+[dependencies]
+ai_runtime = { path = "../crates/ai_runtime" }
+rvv_simd = { path = "../crates/rvv_simd" }
+turbo_quant = { path = "../crates/turbo_quant" }

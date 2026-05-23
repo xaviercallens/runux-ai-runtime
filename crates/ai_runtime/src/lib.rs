@@ -288,6 +288,8 @@ pub enum ModelArch {
 /// Configuration for loading and running an ML model.
 #[derive(Debug, Clone)]
 pub struct ModelConfig {
+    /// Human-readable model name
+    pub name: String,
     /// Model architecture family
     pub arch: ModelArch,
     /// Number of parameters (in billions, approximate)
@@ -498,6 +500,7 @@ impl ModelRegistry {
     /// Qwen 2.5 0.5B — ultra-lightweight, ideal for draft model / classification
     pub fn qwen_0_5b(device: DeviceType) -> ModelConfig {
         ModelConfig {
+            name: String::from("Qwen 2.5 0.5B"),
             arch: ModelArch::Qwen,
             params_billions: 1, // rounded up for estimation
             quant_format: QuantFormat::GgufQ4KM,
@@ -515,6 +518,7 @@ impl ModelRegistry {
     /// DeepSeek R1 1.5B — reasoning distill, good on BPI-F3 (8GB)
     pub fn deepseek_r1_1_5b(device: DeviceType) -> ModelConfig {
         ModelConfig {
+            name: String::from("DeepSeek R1 1.5B"),
             arch: ModelArch::DeepSeekR1,
             params_billions: 2, // rounded up
             quant_format: QuantFormat::GgufQ4KM,
@@ -532,6 +536,7 @@ impl ModelRegistry {
     /// DeepSeek R1 7B — advanced reasoning, needs AIBOX-K3
     pub fn deepseek_r1_7b(device: DeviceType) -> ModelConfig {
         ModelConfig {
+            name: String::from("DeepSeek R1 7B"),
             arch: ModelArch::DeepSeekR1,
             params_billions: 7,
             quant_format: QuantFormat::Fp8E4M3,
@@ -549,6 +554,7 @@ impl ModelRegistry {
     /// Qwen 2.5 14B — high-quality generation, AIBOX-K3 32GB
     pub fn qwen_14b(device: DeviceType) -> ModelConfig {
         ModelConfig {
+            name: String::from("Qwen 2.5 14B"),
             arch: ModelArch::Qwen,
             params_billions: 14,
             quant_format: QuantFormat::GgufQ4KM,
@@ -561,6 +567,17 @@ impl ModelRegistry {
             device,
             weights_path: String::new(),
         }
+    }
+
+    /// Returns all pre-configured model profiles.
+    pub fn all_models() -> Vec<ModelConfig> {
+        let dev = DeviceType::Cpu;
+        alloc::vec![
+            Self::qwen_0_5b(dev),
+            Self::deepseek_r1_1_5b(dev),
+            Self::deepseek_r1_7b(dev),
+            Self::qwen_14b(dev),
+        ]
     }
 }
 

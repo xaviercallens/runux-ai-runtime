@@ -6,6 +6,7 @@ members = [
     "crates/turbo_quant",
     "crates/ai_bridge",
     "crates/federated",
+    "benchmarks",
 ]
 
 [workspace.package]
