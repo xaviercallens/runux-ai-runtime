@@ -1,0 +1,9 @@
+[package]
+name = "gpu_compute"
+version = "0.1.0"
+edition = "2021"
+license = "LicenseRef-RunuX-Commercial"
+description = "GPU Compute driver for PowerVR on SpacemiT K3 (RunuX AI Runtime)"
+
+[dependencies]
+ai_runtime = { path = "../ai_runtime" }

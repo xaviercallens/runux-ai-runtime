@@ -370,6 +370,8 @@ pub enum AiError {
     ComputeError,
     /// Invalid configuration
     InvalidConfig(String),
+    /// Unsupported hardware feature
+    UnsupportedHardware,
 }
 
 impl fmt::Display for AiError {
@@ -386,6 +388,7 @@ impl fmt::Display for AiError {
             Self::ShapeMismatch { .. } => write!(f, "Tensor shape mismatch"),
             Self::ComputeError => write!(f, "Compute error"),
             Self::InvalidConfig(msg) => write!(f, "Invalid config: {}", msg),
+            Self::UnsupportedHardware => write!(f, "Unsupported hardware feature"),
         }
     }
 }

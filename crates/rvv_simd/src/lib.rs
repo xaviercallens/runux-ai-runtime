@@ -143,26 +143,54 @@ pub fn matmul_rvv_f32(
     k: usize,
     n: usize,
 ) {
-    // On real hardware, this would use inline assembly:
-    // vsetvli, vle32.v, vfmacc.vf, vse32.v
-    // For now, delegate to scalar with tiling for cache efficiency
-    let tile = 64;
-    for i in (0..m).step_by(tile) {
-        for j in (0..n).step_by(tile) {
-            for l in (0..k).step_by(tile) {
-                let i_end = (i + tile).min(m);
-                let j_end = (j + tile).min(n);
-                let l_end = (l + tile).min(k);
-                for ii in i..i_end {
-                    for jj in j..j_end {
-                        let mut sum = c[ii * n + jj];
-                        for ll in l..l_end {
-                            sum += a[ii * k + ll] * b[ll * n + jj];
-                        }
-                        c[ii * n + jj] = sum;
-                    }
-                }
+    for i in 0..m {
+        for j in 0..n {
+            let mut sum: f32 = 0.0;
+            let mut l = 0;
+            let mut remaining = k;
+            
+            // Core RVV dot product
+            unsafe {
+                core::arch::asm!(
+                    // v8 will hold the accumulator (sum)
+                    "vmv.v.x v8, zero", 
+                    
+                    "2:", // Loop start
+                    "vsetvli t0, {rem}, e32, m1, ta, ma",
+                    
+                    // Load A row vector and B col vector
+                    "vle32.v v16, ({ptr_a})",
+                    "vle32.v v24, ({ptr_b})",
+                    
+                    // Fused multiply-add: v8[i] += v16[i] * v24[i]
+                    "vfmacc.vv v8, v16, v24",
+                    
+                    // Increment pointers and decrement remaining
+                    "slli t1, t0, 2", // t1 = elements processed * 4 bytes
+                    "add {ptr_a}, {ptr_a}, t1",
+                    "add {ptr_b}, {ptr_b}, t1",
+                    "sub {rem}, {rem}, t0",
+                    
+                    "bnez {rem}, 2b", // Loop if remaining > 0
+                    
+                    // Horizontal reduction sum into v0
+                    "vmv.s.x v0, zero",
+                    "vfredosum.vs v0, v8, v0",
+                    "vfmv.f.s {sum}, v0",
+                    
+                    ptr_a = inout(reg) a.as_ptr().add(i * k + l) => _,
+                    ptr_b = inout(reg) b.as_ptr().add(l * n + j) => _,
+                    rem = inout(reg) remaining => _,
+                    sum = out(freg) sum,
+                    out("t0") _,
+                    out("t1") _,
+                    out("v8") _,
+                    out("v16") _,
+                    out("v24") _,
+                    out("v0") _,
+                );
             }
+            c[i * n + j] = sum;
         }
     }
 }
