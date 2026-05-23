@@ -1,0 +1,6 @@
+[package]
+name = "tokenizer"
+version = "0.1.0"
+edition = "2021"
+license = "LicenseRef-RunuX-Commercial"
+description = "Minimal BPE tokenizer for RunuX AI Runtime (no_std)"

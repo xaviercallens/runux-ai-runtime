@@ -6,6 +6,9 @@ members = [
     "crates/turbo_quant",
     "crates/ai_bridge",
     "crates/federated",
+    "crates/gguf_loader",
+    "crates/tokenizer",
+    "crates/transformer",
     "benchmarks",
 ]
 

@@ -1,0 +1,9 @@
+[package]
+name = "gguf_loader"
+version = "0.1.0"
+edition = "2021"
+license = "LicenseRef-RunuX-Commercial"
+description = "Pure Rust GGUF model file parser for RunuX AI Runtime"
+
+[dependencies]
+ai_runtime = { path = "../ai_runtime" }
