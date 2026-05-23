@@ -218,14 +218,14 @@ pub fn bench_arena_allocator() -> BenchmarkResult {
     let num_allocations = 100;
     let mut total_bytes = 0usize;
 
-    for i in 0..num_allocations {
+    for _i in 0..num_allocations {
         let size = 896 * 4; // hidden_dim buffer
         if let Some(_offset) = arena.alloc_f32(size / 4, 64) {
             total_bytes += size;
         }
     }
 
-    let utilization = arena.utilization_percent();
+    let _utilization = arena.utilization_percent();
     arena.reset();
 
     BenchmarkResult {
@@ -279,7 +279,7 @@ pub fn bench_memory_planning() -> Vec<BenchmarkResult> {
                     ram,
                 );
 
-                let quant_name = if bits == 4 { "Q4_K_M" } else { "Q8_0" };
+                let _quant_name = if bits == 4 { "Q4_K_M" } else { "Q8_0" };
 
                 results.push(BenchmarkResult {
                     name: "Memory fit check",

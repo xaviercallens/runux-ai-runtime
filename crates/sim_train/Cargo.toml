@@ -1,0 +1,12 @@
+[package]
+name = "sim_train"
+version = "0.1.0"
+edition = "2021"
+license = "LicenseRef-RunuX-Commercial"
+description = "Simulated LoRA fine-tuning and federated training for RunuX AI Runtime"
+
+[dependencies]
+ai_runtime = { path = "../ai_runtime" }
+arena_mem = { path = "../arena_mem" }
+power_monitor = { path = "../power_monitor" }
+perf_model = { path = "../perf_model" }

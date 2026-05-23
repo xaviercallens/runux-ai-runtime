@@ -13,9 +13,8 @@
 //! multiplication instructions.
 
 extern crate alloc;
-use alloc::vec::Vec;
 
-use ai_runtime::{DataType, AiError};
+use ai_runtime::AiError;
 
 /// SpacemiT K3 A100 Core Context
 #[derive(Debug)]

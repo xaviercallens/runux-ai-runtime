@@ -12,9 +12,9 @@ use alloc::vec;
 use alloc::vec::Vec;
 use alloc::string::String;
 
-use ai_runtime::{DataType, DeviceType, HardwareCaps};
-use rvv_simd::{matmul_scalar_f32, matmul_rvv_f32, softmax_f32, rms_norm_f32, silu_f32};
-use turbo_quant::{TurboQuantConfig, compress_kv, decompress_kv, CompressedKvCache};
+use ai_runtime::HardwareCaps;
+use rvv_simd::{matmul_scalar_f32, matmul_rvv_f32};
+use turbo_quant::{TurboQuantConfig, compress_kv, decompress_kv};
 
 /// Benchmark result for a single operation.
 #[derive(Debug, Clone)]

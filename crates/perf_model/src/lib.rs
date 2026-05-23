@@ -35,7 +35,6 @@
 //! increasing operational intensity toward the compute ceiling.
 
 extern crate alloc;
-use alloc::vec;
 use alloc::vec::Vec;
 
 // ---------------------------------------------------------------------------

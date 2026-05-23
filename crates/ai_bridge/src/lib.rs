@@ -35,10 +35,10 @@ use alloc::vec;
 use alloc::vec::Vec;
 
 use ai_runtime::{
-    AiError, DataType, DeviceType, HardwareCaps, ModelConfig, ModelRegistry,
+    DataType, DeviceType, HardwareCaps,
     TensorDescriptor, MAX_DIMS,
 };
-use rvv_simd::{matmul_rvv_f32, softmax_f32, rms_norm_f32, silu_f32};
+use rvv_simd::{matmul_rvv_f32, softmax_f32, silu_f32};
 
 // ---------------------------------------------------------------------------
 // C-Compatible Type Aliases

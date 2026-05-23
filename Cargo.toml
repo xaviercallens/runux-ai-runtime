@@ -18,6 +18,7 @@ members = [
     "crates/perf_model",
     "crates/sim_bench",
     "crates/sim_inference",
+    "crates/sim_train",
     "benchmarks",
 ]
 
@@ -28,9 +29,26 @@ authors = ["Xavier Callens <xavier.callens@socrate.ai>"]
 license = "LicenseRef-RunuX-Commercial"
 repository = "https://github.com/xaviercallens/runux-ai-runtime"
 
+[package]
+name = "runux-report"
+version = "0.1.0"
+edition = "2021"
+license = "LicenseRef-RunuX-Commercial"
+description = "RunuX AI Runtime — Simulation report generator CLI"
+
+[[bin]]
+name = "runux-report"
+path = "src/main.rs"
+
+[dependencies]
+ai_runtime = { path = "crates/ai_runtime" }
+perf_model = { path = "crates/perf_model" }
+power_monitor = { path = "crates/power_monitor" }
+sim_inference = { path = "crates/sim_inference" }
+sim_train = { path = "crates/sim_train" }
+
 [profile.dev]
 opt-level = 0
-panic = "abort"
 
 [profile.release]
 opt-level = 3
