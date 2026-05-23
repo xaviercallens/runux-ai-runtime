@@ -272,6 +272,156 @@ pub fn dequant_matmul_q4(
     }
 }
 
+/// Fused Q4 dot product — single-row activation × quantized weight.
+///
+/// This is the innermost kernel for batch-1 decode steps.
+/// Avoids materializing the dequantized weight vector by fusing
+/// dequant + multiply + accumulate into one pass.
+///
+/// Returns the dot product of `activations[0..in_features]` with one
+/// row of quantized weights.
+pub fn fused_dot_q4(
+    blocks: &[QuantBlockQ4],
+    activations: &[f32],
+    in_features: usize,
+) -> f32 {
+    let blocks_per_row = in_features / Q4_BLOCK_SIZE;
+    let mut sum = 0.0f32;
+
+    for b in 0..blocks_per_row {
+        let block = &blocks[b];
+        let act_base = b * Q4_BLOCK_SIZE;
+
+        // Fused: dequant + multiply + accumulate without temp buffer
+        for i in 0..Q4_BLOCK_SIZE / 2 {
+            let byte = block.quants[i];
+            let lo = (byte & 0x0F) as f32;
+            let hi = ((byte >> 4) & 0x0F) as f32;
+            let val_lo = lo * block.scale + block.min;
+            let val_hi = hi * block.scale + block.min;
+            sum += val_lo * activations[act_base + 2 * i];
+            sum += val_hi * activations[act_base + 2 * i + 1];
+        }
+    }
+    sum
+}
+
+// ---------------------------------------------------------------------------
+// Q8_0 Quantization (8-bit uniform)
+// ---------------------------------------------------------------------------
+
+/// Block size for Q8_0 quantization.
+pub const Q8_BLOCK_SIZE: usize = 32;
+
+/// A quantized INT8 block (Q8_0 format: scale + 32 × i8).
+///
+/// Higher quality than Q4 (less quantization error) but 2× memory.
+/// Preferred for attention output projection and embedding layers.
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct QuantBlockQ8 {
+    /// Scale factor (FP16 stored as f32 for convenience)
+    pub scale: f32,
+    /// 32 signed 8-bit quantized values
+    pub quants: [i8; Q8_BLOCK_SIZE],
+}
+
+impl QuantBlockQ8 {
+    /// Dequantize this block: output[i] = quants[i] * scale
+    pub fn dequantize(&self, output: &mut [f32; Q8_BLOCK_SIZE]) {
+        for i in 0..Q8_BLOCK_SIZE {
+            output[i] = self.quants[i] as f32 * self.scale;
+        }
+    }
+}
+
+/// Fused Q8 dot product — single-row decode kernel.
+pub fn fused_dot_q8(
+    blocks: &[QuantBlockQ8],
+    activations: &[f32],
+    in_features: usize,
+) -> f32 {
+    let blocks_per_row = in_features / Q8_BLOCK_SIZE;
+    let mut sum = 0.0f32;
+
+    for b in 0..blocks_per_row {
+        let block = &blocks[b];
+        let act_base = b * Q8_BLOCK_SIZE;
+
+        // Accumulate using integer multiply + single scale multiply
+        let mut block_sum = 0.0f32;
+        for i in 0..Q8_BLOCK_SIZE {
+            block_sum += block.quants[i] as f32 * activations[act_base + i];
+        }
+        sum += block_sum * block.scale;
+    }
+    sum
+}
+
+// ---------------------------------------------------------------------------
+// FP8 E4M3 (K3 A100 Native)
+// ---------------------------------------------------------------------------
+
+/// Dequantize a single FP8 E4M3 value to FP32.
+///
+/// FP8 E4M3: 1 sign + 4 exponent + 3 mantissa bits.
+/// Range: ±448, precision: 3 mantissa bits.
+/// Native on SpacemiT K3 A100 cores (zero-overhead dequant).
+pub fn fp8_e4m3_to_f32(val: u8) -> f32 {
+    let sign = (val >> 7) & 1;
+    let exp = (val >> 3) & 0x0F;
+    let mantissa = val & 0x07;
+
+    if exp == 0 && mantissa == 0 {
+        return if sign == 1 { -0.0 } else { 0.0 };
+    }
+
+    // Bias = 7 for E4M3
+    let f_exp = exp as i32 - 7;
+    let f_mantissa = if exp == 0 {
+        // Subnormal: 0.mantissa × 2^(-6)
+        mantissa as f32 / 8.0 * fast_pow_2(-6)
+    } else {
+        // Normal: 1.mantissa × 2^(exp-7)
+        (1.0 + mantissa as f32 / 8.0) * fast_pow_2(f_exp)
+    };
+
+    if sign == 1 { -f_mantissa } else { f_mantissa }
+}
+
+/// Dequantize a buffer of FP8 E4M3 values to FP32.
+pub fn dequant_fp8_e4m3(input: &[u8], output: &mut [f32]) {
+    for (i, &val) in input.iter().enumerate() {
+        if i < output.len() {
+            output[i] = fp8_e4m3_to_f32(val);
+        }
+    }
+}
+
+/// Fused FP8 dot product — K3 native inference kernel.
+pub fn fused_dot_fp8(
+    weights: &[u8],  // FP8 E4M3
+    activations: &[f32],
+    n: usize,
+) -> f32 {
+    let mut sum = 0.0f32;
+    for i in 0..n {
+        sum += fp8_e4m3_to_f32(weights[i]) * activations[i];
+    }
+    sum
+}
+
+/// Fast power of 2 for integer exponents.
+fn fast_pow_2(exp: i32) -> f32 {
+    if exp >= 0 && exp < 31 {
+        (1u32 << exp) as f32
+    } else if exp < 0 && exp > -127 {
+        1.0 / (1u32 << (-exp) as u32) as f32
+    } else {
+        0.0
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Softmax
 // ---------------------------------------------------------------------------
@@ -611,5 +761,80 @@ mod tests {
         assert_eq!(VectorLength::Vlen1024.fp32_elements(), 32);
         assert_eq!(VectorLength::Vlen1024.int8_elements(), 128);
         assert_eq!(VectorLength::Vlen1024.int4_elements(), 256);
+    }
+
+    #[test]
+    fn test_fused_dot_q4() {
+        // 1 block of 32 elements
+        let block = QuantBlockQ4 {
+            scale: 1.0,
+            min: 0.0,
+            quants: [0x10; 16], // lo=0, hi=1 for each pair
+        };
+        // Activations: all 1.0
+        let activations = [1.0f32; Q4_BLOCK_SIZE];
+        let result = fused_dot_q4(&[block], &activations, Q4_BLOCK_SIZE);
+        // 16 lo values (0 * 1.0 * 1.0) + 16 hi values (1 * 1.0 * 1.0) = 16.0
+        assert!((result - 16.0).abs() < 1e-4);
+    }
+
+    #[test]
+    fn test_q8_dequantize() {
+        let block = QuantBlockQ8 {
+            scale: 0.5,
+            quants: [2; Q8_BLOCK_SIZE], // all 2
+        };
+        let mut output = [0.0f32; Q8_BLOCK_SIZE];
+        block.dequantize(&mut output);
+        // 2 * 0.5 = 1.0 for each element
+        for &v in &output {
+            assert!((v - 1.0).abs() < 1e-5);
+        }
+    }
+
+    #[test]
+    fn test_fused_dot_q8() {
+        let block = QuantBlockQ8 {
+            scale: 0.1,
+            quants: [10; Q8_BLOCK_SIZE], // all 10
+        };
+        let activations = [1.0f32; Q8_BLOCK_SIZE];
+        let result = fused_dot_q8(&[block], &activations, Q8_BLOCK_SIZE);
+        // sum(10 * 1.0) * 0.1 = 32 * 10 * 0.1 = 32.0
+        assert!((result - 32.0).abs() < 1e-3);
+    }
+
+    #[test]
+    fn test_fp8_e4m3_zero() {
+        assert_eq!(fp8_e4m3_to_f32(0x00), 0.0);
+        // Negative zero
+        let neg_zero = fp8_e4m3_to_f32(0x80);
+        assert!(neg_zero == 0.0 || neg_zero == -0.0);
+    }
+
+    #[test]
+    fn test_fp8_e4m3_one() {
+        // 1.0 in E4M3: sign=0, exp=0111 (=7, bias=7 -> actual 0), mantissa=000
+        // So bits = 0_0111_000 = 0x38
+        let val = fp8_e4m3_to_f32(0x38);
+        assert!((val - 1.0).abs() < 1e-3, "Expected 1.0, got {}", val);
+    }
+
+    #[test]
+    fn test_fp8_e4m3_negative() {
+        // -1.0: sign=1, exp=0111, mantissa=000
+        // bits = 1_0111_000 = 0xB8
+        let val = fp8_e4m3_to_f32(0xB8);
+        assert!((val - (-1.0)).abs() < 1e-3, "Expected -1.0, got {}", val);
+    }
+
+    #[test]
+    fn test_fused_dot_fp8() {
+        // 4 weights = [1.0, 1.0, 1.0, 1.0] encoded as E4M3
+        let weights = [0x38u8; 4]; // All 1.0
+        let activations = [2.0f32; 4];
+        let result = fused_dot_fp8(&weights, &activations, 4);
+        // 4 * 1.0 * 2.0 = 8.0
+        assert!((result - 8.0).abs() < 0.1, "Expected ~8.0, got {}", result);
     }
 }
