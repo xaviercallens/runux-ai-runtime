@@ -584,6 +584,134 @@ impl ModelRegistry {
 }
 
 // ---------------------------------------------------------------------------
+// Inference Engine Trait
+// ---------------------------------------------------------------------------
+
+/// Generation configuration for controlling output.
+#[derive(Debug, Clone)]
+pub struct GenerationConfig {
+    /// Temperature for sampling (1.0 = no change, <1.0 = more deterministic)
+    pub temperature: f32,
+    /// Top-p (nucleus) sampling threshold
+    pub top_p: f32,
+    /// Top-k sampling (0 = disabled)
+    pub top_k: usize,
+    /// Maximum tokens to generate
+    pub max_tokens: usize,
+    /// Repetition penalty (1.0 = disabled)
+    pub repetition_penalty: f32,
+    /// Stop token IDs (generation halts when any is produced)
+    pub stop_tokens: Vec<u32>,
+}
+
+impl Default for GenerationConfig {
+    fn default() -> Self {
+        Self {
+            temperature: 0.7,
+            top_p: 0.9,
+            top_k: 40,
+            max_tokens: 256,
+            repetition_penalty: 1.1,
+            stop_tokens: alloc::vec![],
+        }
+    }
+}
+
+/// Output from a generation run.
+#[derive(Debug, Clone)]
+pub struct GenerationOutput {
+    /// Generated token IDs
+    pub tokens: Vec<u32>,
+    /// Number of tokens generated
+    pub num_tokens: usize,
+    /// Average tokens per second
+    pub tokens_per_second: f32,
+    /// Time to first token (microseconds)
+    pub ttft_us: f32,
+    /// Total generation time (microseconds)
+    pub total_us: f32,
+    /// Peak memory usage (bytes)
+    pub peak_memory_bytes: usize,
+    /// Energy consumed (Joules, 0 if not measured)
+    pub energy_joules: f32,
+}
+
+/// Core trait for LLM inference engines.
+///
+/// Implementations can be hardware-specific (K1 scalar, K3 vectorized,
+/// K3 AI-core FP8) or simulation-only for development.
+///
+/// # Lifecycle
+///
+/// ```text
+/// new() → load_model() → [prefill() → decode_step()* → reset()]* → drop
+/// ```
+pub trait InferenceEngine {
+    /// Load a model from a GGUF file path.
+    fn load_model(&mut self, config: &ModelConfig) -> Result<(), AiError>;
+
+    /// Process prompt tokens (prefill phase).
+    ///
+    /// Returns logits for the last prompt token.
+    fn prefill(&mut self, tokens: &[u32]) -> Result<Vec<f32>, AiError>;
+
+    /// Generate the next token's logits (decode phase).
+    ///
+    /// Takes the previously sampled token as input.
+    fn decode_step(&mut self, token: u32) -> Result<Vec<f32>, AiError>;
+
+    /// Sample a token from logits.
+    fn sample(&self, logits: &[f32], config: &GenerationConfig) -> u32;
+
+    /// Run full generation from prompt tokens.
+    fn generate(
+        &mut self,
+        prompt_tokens: &[u32],
+        config: &GenerationConfig,
+    ) -> Result<GenerationOutput, AiError> {
+        let start_us = 0.0f32; // placeholder for real timing
+
+        // Prefill
+        let mut logits = self.prefill(prompt_tokens)?;
+
+        let mut generated = Vec::new();
+        let mut token = self.sample(&logits, config);
+        generated.push(token);
+
+        // Decode loop
+        for _ in 1..config.max_tokens {
+            if config.stop_tokens.contains(&token) {
+                break;
+            }
+            logits = self.decode_step(token)?;
+            token = self.sample(&logits, config);
+            generated.push(token);
+        }
+
+        let num_tokens = generated.len();
+
+        Ok(GenerationOutput {
+            tokens: generated,
+            num_tokens,
+            tokens_per_second: 0.0, // filled by real implementation
+            ttft_us: 0.0,
+            total_us: 0.0,
+            peak_memory_bytes: 0,
+            energy_joules: 0.0,
+        })
+    }
+
+    /// Reset engine state for a new sequence.
+    fn reset(&mut self);
+
+    /// Get current memory usage in bytes.
+    fn memory_usage(&self) -> usize;
+
+    /// Get the model configuration.
+    fn model_config(&self) -> Option<&ModelConfig>;
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
