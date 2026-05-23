@@ -11,6 +11,11 @@ members = [
     "crates/transformer",
     "crates/k3_a100",
     "crates/gpu_compute",
+    "crates/flash_attention",
+    "crates/arena_mem",
+    "crates/speculative",
+    "crates/power_monitor",
+    "crates/sim_bench",
     "benchmarks",
 ]
 

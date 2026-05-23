@@ -1,0 +1,9 @@
+[package]
+name = "speculative"
+version = "0.1.0"
+edition = "2021"
+license = "LicenseRef-RunuX-Commercial"
+description = "Speculative decoding engine for RISC-V LLM inference (RunuX AI Runtime)"
+
+[dependencies]
+ai_runtime = { path = "../ai_runtime" }

@@ -1,0 +1,10 @@
+[package]
+name = "flash_attention"
+version = "0.1.0"
+edition = "2021"
+license = "LicenseRef-RunuX-Commercial"
+description = "RVV-vectorized FlashAttention for RISC-V LLM inference (RunuX AI Runtime)"
+
+[dependencies]
+ai_runtime = { path = "../ai_runtime" }
+rvv_simd = { path = "../rvv_simd" }

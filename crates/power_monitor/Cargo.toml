@@ -1,0 +1,9 @@
+[package]
+name = "power_monitor"
+version = "0.1.0"
+edition = "2021"
+license = "LicenseRef-RunuX-Commercial"
+description = "Power and CO2 monitoring for sustainable AI on RISC-V (RunuX AI Runtime)"
+
+[dependencies]
+ai_runtime = { path = "../ai_runtime" }

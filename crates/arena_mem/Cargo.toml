@@ -1,0 +1,9 @@
+[package]
+name = "arena_mem"
+version = "0.1.0"
+edition = "2021"
+license = "LicenseRef-RunuX-Commercial"
+description = "Zero-copy arena allocator for deterministic LLM inference memory management"
+
+[dependencies]
+ai_runtime = { path = "../ai_runtime" }

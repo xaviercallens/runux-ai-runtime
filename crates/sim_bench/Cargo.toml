@@ -1,0 +1,15 @@
+[package]
+name = "sim_bench"
+version = "0.1.0"
+edition = "2021"
+license = "LicenseRef-RunuX-Commercial"
+description = "Simulation benchmarks for RunuX AI Runtime optimization stack"
+
+[dependencies]
+ai_runtime = { path = "../ai_runtime" }
+flash_attention = { path = "../flash_attention" }
+arena_mem = { path = "../arena_mem" }
+speculative = { path = "../speculative" }
+power_monitor = { path = "../power_monitor" }
+turbo_quant = { path = "../turbo_quant" }
+transformer = { path = "../transformer" }
