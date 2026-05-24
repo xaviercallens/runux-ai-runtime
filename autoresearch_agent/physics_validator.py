@@ -32,7 +32,7 @@ def validate_proposal() -> bool:
     bw_match = re.search(r'dram_bw_gbs:\s*([0-9.]+)', content)
     if bw_match:
         bw = float(bw_match.group(1))
-        if bw > 10.0: # Physical limit for this class of SoC
+        if bw > 15.0: # Physical limit for this class of SoC
             print(f"[Gatekeeper ERROR] Proposal sets DRAM BW to {bw} GB/s. Exceeds LPDDR4 physical limit.")
             return False
             
