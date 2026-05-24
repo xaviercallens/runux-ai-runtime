@@ -1,0 +1,12 @@
+[package]
+name = "framework_bridge"
+version = "0.1.0"
+edition = "2021"
+description = "RunuX Framework Bridge — C FFI for PyTorch, TensorFlow, JAX integration"
+license = "LicenseRef-RunuX-Commercial"
+
+[dependencies]
+hal = { path = "../hal" }
+
+[lib]
+crate-type = ["lib", "cdylib"]

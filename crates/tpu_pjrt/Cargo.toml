@@ -1,0 +1,9 @@
+[package]
+name = "tpu_pjrt"
+version = "0.1.0"
+edition = "2021"
+description = "RunuX TPU PJRT — Safe Rust bindings for Google TPU via PJRT C API"
+license = "LicenseRef-RunuX-Commercial"
+
+[dependencies]
+hal = { path = "../hal" }

@@ -1,0 +1,9 @@
+[package]
+name = "mlgo_advisor"
+version = "0.1.0"
+edition = "2021"
+description = "RunuX MLGO Advisor — ML-guided compiler optimization decisions"
+license = "LicenseRef-RunuX-Commercial"
+
+[dependencies]
+hal = { path = "../hal" }

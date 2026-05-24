@@ -19,6 +19,11 @@ members = [
     "crates/sim_bench",
     "crates/sim_inference",
     "crates/sim_train",
+    "crates/hal",
+    "crates/tpu_pjrt",
+    "crates/stablehlo",
+    "crates/mlgo_advisor",
+    "crates/framework_bridge",
     "benchmarks",
 ]
 

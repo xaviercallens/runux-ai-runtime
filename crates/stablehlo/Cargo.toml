@@ -1,0 +1,9 @@
+[package]
+name = "stablehlo"
+version = "0.1.0"
+edition = "2021"
+description = "RunuX StableHLO — Rust DSL for building HLO programs targeting XLA/TPU"
+license = "LicenseRef-RunuX-Commercial"
+
+[dependencies]
+hal = { path = "../hal" }

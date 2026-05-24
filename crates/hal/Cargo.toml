@@ -1,0 +1,8 @@
+[package]
+name = "hal"
+version = "0.1.0"
+edition = "2021"
+description = "RunuX Hardware Abstraction Layer — unified API across RISC-V, TPU, GPU, CPU"
+license = "LicenseRef-RunuX-Commercial"
+
+[dependencies]
