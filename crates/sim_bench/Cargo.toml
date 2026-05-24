@@ -13,3 +13,7 @@ speculative = { path = "../speculative" }
 power_monitor = { path = "../power_monitor" }
 turbo_quant = { path = "../turbo_quant" }
 transformer = { path = "../transformer" }
+hal = { path = "../hal" }
+tpu_pjrt = { path = "../tpu_pjrt" }
+mlgo_advisor = { path = "../mlgo_advisor" }
+perf_model = { path = "../perf_model" }

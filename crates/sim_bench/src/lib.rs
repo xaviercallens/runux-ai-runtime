@@ -25,6 +25,8 @@ extern crate alloc;
 use alloc::vec;
 use alloc::vec::Vec;
 
+pub mod tpu_bench;
+
 // no_std trig approximations
 fn approx_sin(x: f32) -> f32 {
     let pi = core::f32::consts::PI;
