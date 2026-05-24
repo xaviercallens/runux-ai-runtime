@@ -26,6 +26,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 
 pub mod tpu_bench;
+pub mod framework_comparison;
 
 // no_std trig approximations
 fn approx_sin(x: f32) -> f32 {

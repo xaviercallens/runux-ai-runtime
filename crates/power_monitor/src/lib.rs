@@ -151,6 +151,12 @@ impl CarbonFactor {
     pub fn iceland() -> Self {
         Self { region: "Iceland", g_co2_per_kwh: 28.0 } // Geothermal
     }
+    pub fn sweden() -> Self {
+        Self { region: "Sweden", g_co2_per_kwh: 20.0 } // Hydro + Nuclear (Borlänge)
+    }
+    pub fn nordic_avg() -> Self {
+        Self { region: "Nordic (avg)", g_co2_per_kwh: 25.0 } // Hydro-dominated mix
+    }
 }
 
 // ---------------------------------------------------------------------------
