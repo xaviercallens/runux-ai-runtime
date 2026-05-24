@@ -847,7 +847,22 @@ fn fast_sqrt(x: f32) -> f32 {
 }
 
 fn fast_pow(base: f32, exp: f32) -> f32 {
-    fast_exp(exp * fast_ln(base))
+    // For AdamW bias correction, exp is always a positive integer (step count).
+    // Use exact iterative multiplication to avoid fast_exp/fast_ln error accumulation.
+    let n = exp as u32;
+    if n == 0 { return 1.0; }
+    let mut result = 1.0f32;
+    let mut b = base;
+    let mut e = n;
+    // Fast exponentiation by squaring
+    while e > 0 {
+        if e & 1 == 1 {
+            result *= b;
+        }
+        b *= b;
+        e >>= 1;
+    }
+    result
 }
 
 fn fast_exp(x: f32) -> f32 {

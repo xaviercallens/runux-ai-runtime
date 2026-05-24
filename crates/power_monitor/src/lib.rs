@@ -450,14 +450,25 @@ mod tests {
         let results = run_power_simulation();
         assert!(results.len() >= 5);
 
-        // Each successive optimization should improve energy efficiency
-        for i in 1..results.len() - 1 { // skip last (A100 reference)
+        // Verify that BPI-F3 optimizations (indices 0-3) progressively improve
+        // energy efficiency (lower joules_per_token)
+        for i in 1..4 {
             assert!(
-                results[i].joules_per_token <= results[i - 1].joules_per_token * 1.1,
-                "Config '{}' should not be significantly worse than '{}'",
-                results[i].config_name, results[i - 1].config_name
+                results[i].joules_per_token <= results[i - 1].joules_per_token * 1.01,
+                "BPI-F3 config '{}' ({:.3} J/tok) should improve on '{}' ({:.3} J/tok)",
+                results[i].config_name, results[i].joules_per_token,
+                results[i - 1].config_name, results[i - 1].joules_per_token
             );
         }
+
+        // K3 should be faster than baseline BPI-F3 (higher tok/s)
+        assert!(results[4].tokens_per_second > results[0].tokens_per_second,
+            "K3 should have higher throughput than baseline BPI-F3");
+
+        // A100 should be fastest overall
+        let last = results.len() - 1;
+        assert!(results[last].tokens_per_second > results[0].tokens_per_second * 10.0,
+            "A100 should be >10× faster than baseline");
     }
 
     #[test]
