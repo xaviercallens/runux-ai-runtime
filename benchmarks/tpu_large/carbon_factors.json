@@ -1,0 +1,49 @@
+{
+  "description": "Regional electricity grid carbon intensities for CO₂ calculation",
+  "unit": "gCO2_per_kWh",
+  "source": "IEA World Energy Outlook 2024, national grid operators",
+  "year": 2024,
+  "regions": {
+    "sweden": {
+      "value": 20,
+      "notes": "Hydro (40%) + Nuclear (30%) dominated grid",
+      "source": "Swedish Energy Agency 2024"
+    },
+    "france": {
+      "value": 56,
+      "notes": "Nuclear (70%) dominated grid",
+      "source": "RTE France 2024"
+    },
+    "usa": {
+      "value": 386,
+      "notes": "National average (gas 40%, renewables 22%, coal 17%)",
+      "source": "EIA 2024"
+    },
+    "china": {
+      "value": 555,
+      "notes": "Coal-dominated grid (60%)",
+      "source": "IEA 2024"
+    },
+    "germany": {
+      "value": 350,
+      "notes": "Post-nuclear shutdown, gas + renewables transition",
+      "source": "Bundesnetzagentur 2024"
+    },
+    "nordic_avg": {
+      "value": 25,
+      "notes": "Average of Nordic countries (SE, NO, FI, DK)",
+      "source": "Eurostat 2024"
+    },
+    "iceland": {
+      "value": 5,
+      "notes": "Geothermal (70%) + Hydro (30%)",
+      "source": "Landsvirkjun 2024"
+    }
+  },
+  "tpu_v5e": {
+    "tdp_watts": 200,
+    "notes": "Thermal Design Power used for energy-per-token calculation",
+    "formula": "joules_per_token = TDP_watts / throughput_tps",
+    "co2_formula": "gCO2_per_1k_tokens = (joules_per_token * 1000) / 3600 * carbon_intensity / 1000"
+  }
+}
