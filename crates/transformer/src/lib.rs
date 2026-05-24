@@ -180,10 +180,14 @@ impl RopeFreqs {
 /// avoiding recomputation during generation.
 #[derive(Debug, Clone)]
 pub struct KvCache {
-    /// Key cache: [n_layers × max_seq_len × n_kv_heads × head_dim]
-    pub keys: Vec<f32>,
-    /// Value cache: [n_layers × max_seq_len × n_kv_heads × head_dim]
-    pub values: Vec<f32>,
+    /// Key cache: [n_layers × max_seq_len × n_kv_heads × head_dim] (INT8)
+    pub keys: Vec<i8>,
+    /// Value cache: [n_layers × max_seq_len × n_kv_heads × head_dim] (INT8)
+    pub values: Vec<i8>,
+    /// Key block scales: [n_layers × max_seq_len × n_kv_heads]
+    pub key_scales: Vec<f32>,
+    /// Value block scales: [n_layers × max_seq_len × n_kv_heads]
+    pub value_scales: Vec<f32>,
     /// Current sequence length (number of cached positions)
     pub seq_len: usize,
     /// Config dimensions
@@ -198,9 +202,12 @@ impl KvCache {
     pub fn new(config: &TransformerConfig) -> Self {
         let head_dim = config.head_dim();
         let cache_size = config.n_layers * config.max_seq_len * config.n_kv_heads * head_dim;
+        let scale_size = config.n_layers * config.max_seq_len * config.n_kv_heads;
         Self {
-            keys: vec![0.0f32; cache_size],
-            values: vec![0.0f32; cache_size],
+            keys: vec![0i8; cache_size],
+            values: vec![0i8; cache_size],
+            key_scales: vec![0.0f32; scale_size],
+            value_scales: vec![0.0f32; scale_size],
             seq_len: 0,
             n_layers: config.n_layers,
             n_kv_heads: config.n_kv_heads,
@@ -227,8 +234,21 @@ impl KvCache {
     ) {
         let (ls, ps, hs) = self.stride();
         let offset = layer * ls + position * ps + kv_head * hs;
+        let scale_offset = layer * (self.max_seq_len * self.n_kv_heads) + position * self.n_kv_heads + kv_head;
         let len = key.len().min(self.head_dim);
-        self.keys[offset..offset + len].copy_from_slice(&key[..len]);
+        
+        let mut max_abs = 0.0f32;
+        for &v in &key[..len] {
+            let abs_v = v.abs();
+            if abs_v > max_abs { max_abs = abs_v; }
+        }
+        let scale = max_abs / 127.0;
+        self.key_scales[scale_offset] = scale;
+        
+        for i in 0..len {
+            let q = if scale == 0.0 { 0.0 } else { key[i] / scale };
+            self.keys[offset + i] = q.clamp(-127.0, 127.0) as i8;
+        }
     }
 
     /// Store a value vector for a given layer, position, and KV head.
@@ -241,27 +261,42 @@ impl KvCache {
     ) {
         let (ls, ps, hs) = self.stride();
         let offset = layer * ls + position * ps + kv_head * hs;
+        let scale_offset = layer * (self.max_seq_len * self.n_kv_heads) + position * self.n_kv_heads + kv_head;
         let len = value.len().min(self.head_dim);
-        self.values[offset..offset + len].copy_from_slice(&value[..len]);
+        
+        let mut max_abs = 0.0f32;
+        for &v in &value[..len] {
+            let abs_v = v.abs();
+            if abs_v > max_abs { max_abs = abs_v; }
+        }
+        let scale = max_abs / 127.0;
+        self.value_scales[scale_offset] = scale;
+        
+        for i in 0..len {
+            let q = if scale == 0.0 { 0.0 } else { value[i] / scale };
+            self.values[offset + i] = q.clamp(-127.0, 127.0) as i8;
+        }
     }
 
-    /// Get a key vector for a given layer, position, and KV head.
-    pub fn get_key(&self, layer: usize, position: usize, kv_head: usize) -> &[f32] {
+    /// Get a key vector and its scale for a given layer, position, and KV head.
+    pub fn get_key(&self, layer: usize, position: usize, kv_head: usize) -> (&[i8], f32) {
         let (ls, ps, hs) = self.stride();
         let offset = layer * ls + position * ps + kv_head * hs;
-        &self.keys[offset..offset + self.head_dim]
+        let scale_offset = layer * (self.max_seq_len * self.n_kv_heads) + position * self.n_kv_heads + kv_head;
+        (&self.keys[offset..offset + self.head_dim], self.key_scales[scale_offset])
     }
 
-    /// Get a value vector for a given layer, position, and KV head.
-    pub fn get_value(&self, layer: usize, position: usize, kv_head: usize) -> &[f32] {
+    /// Get a value vector and its scale for a given layer, position, and KV head.
+    pub fn get_value(&self, layer: usize, position: usize, kv_head: usize) -> (&[i8], f32) {
         let (ls, ps, hs) = self.stride();
         let offset = layer * ls + position * ps + kv_head * hs;
-        &self.values[offset..offset + self.head_dim]
+        let scale_offset = layer * (self.max_seq_len * self.n_kv_heads) + position * self.n_kv_heads + kv_head;
+        (&self.values[offset..offset + self.head_dim], self.value_scales[scale_offset])
     }
 
     /// Memory usage in bytes.
     pub fn memory_bytes(&self) -> usize {
-        (self.keys.len() + self.values.len()) * 4
+        self.keys.len() + self.values.len() + (self.key_scales.len() + self.value_scales.len()) * 4
     }
 
     /// Reset the cache for a new sequence.
@@ -425,12 +460,12 @@ pub fn attention_head(
     // Compute attention scores: Q · K^T for all cached positions
     let mut scores = vec![0.0f32; seq_len];
     for pos in 0..seq_len {
-        let key = kv_cache.get_key(layer, pos, kv_head);
+        let (key, key_scale) = kv_cache.get_key(layer, pos, kv_head);
         let mut dot = 0.0f32;
         for d in 0..head_dim {
-            dot += query[d] * key[d];
+            dot += query[d] * (key[d] as f32);
         }
-        scores[pos] = dot * scale;
+        scores[pos] = dot * key_scale * scale;
     }
 
     // Causal masking is implicit — we only score up to seq_len
@@ -441,10 +476,10 @@ pub fn attention_head(
     // Weighted sum of values: sum(score[pos] * V[pos])
     let mut output = vec![0.0f32; head_dim];
     for pos in 0..seq_len {
-        let value = kv_cache.get_value(layer, pos, kv_head);
-        let s = scores[pos];
+        let (value, val_scale) = kv_cache.get_value(layer, pos, kv_head);
+        let s = scores[pos] * val_scale;
         for d in 0..head_dim {
-            output[d] += s * value[d];
+            output[d] += s * (value[d] as f32);
         }
     }
 
@@ -634,20 +669,26 @@ mod tests {
         cache.store_key(0, 0, 0, &key);
 
         // Retrieve it
-        let retrieved = cache.get_key(0, 0, 0);
-        assert_eq!(retrieved, &[1.0, 2.0, 3.0, 4.0]);
+        let (retrieved, scale) = cache.get_key(0, 0, 0);
+        // It's INT8, so let's dequantize to compare
+        let mut deq = vec![0.0f32; 4];
+        for i in 0..4 { deq[i] = retrieved[i] as f32 * scale; }
+        // 4.0/127.0 * 127 = 4.0. We should expect near original values
+        assert!((deq[3] - 4.0).abs() < 0.1);
 
         // Different position should be zeros
-        let other = cache.get_key(0, 1, 0);
-        assert_eq!(other, &[0.0, 0.0, 0.0, 0.0]);
+        let (other, _) = cache.get_key(0, 1, 0);
+        assert_eq!(other, &[0, 0, 0, 0]);
     }
 
     #[test]
     fn test_kv_cache_memory() {
         let config = TransformerConfig::qwen2_0_5b();
         let cache = KvCache::new(&config);
-        // 2 (K+V) × n_layers × max_seq_len × n_kv_heads × head_dim × 4 bytes
-        let expected = 2 * 24 * 32768 * 2 * 64 * 4;
+        // 2 (K+V) × n_layers × max_seq_len × n_kv_heads × head_dim × 1 bytes + scales
+        let items = 24 * 32768 * 2 * 64;
+        let scales = 24 * 32768 * 2;
+        let expected = 2 * items + 2 * scales * 4;
         assert_eq!(cache.memory_bytes(), expected);
     }
 

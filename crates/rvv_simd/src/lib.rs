@@ -232,6 +232,7 @@ pub struct QuantBlockQ4 {
 
 impl QuantBlockQ4 {
     /// Dequantize this block into FP32 values.
+    #[inline(always)]
     pub fn dequantize(&self, output: &mut [f32; Q4_BLOCK_SIZE]) {
         for i in 0..Q4_BLOCK_SIZE / 2 {
             let byte = self.quants[i];
@@ -280,6 +281,7 @@ pub fn dequant_matmul_q4(
 ///
 /// Returns the dot product of `activations[0..in_features]` with one
 /// row of quantized weights.
+#[inline(always)]
 pub fn fused_dot_q4(
     blocks: &[QuantBlockQ4],
     activations: &[f32],
@@ -328,6 +330,7 @@ pub struct QuantBlockQ8 {
 
 impl QuantBlockQ8 {
     /// Dequantize this block: output[i] = quants[i] * scale
+    #[inline(always)]
     pub fn dequantize(&self, output: &mut [f32; Q8_BLOCK_SIZE]) {
         for i in 0..Q8_BLOCK_SIZE {
             output[i] = self.quants[i] as f32 * self.scale;
@@ -336,6 +339,7 @@ impl QuantBlockQ8 {
 }
 
 /// Fused Q8 dot product — single-row decode kernel.
+#[inline(always)]
 pub fn fused_dot_q8(
     blocks: &[QuantBlockQ8],
     activations: &[f32],
@@ -367,6 +371,7 @@ pub fn fused_dot_q8(
 /// FP8 E4M3: 1 sign + 4 exponent + 3 mantissa bits.
 /// Range: ±448, precision: 3 mantissa bits.
 /// Native on SpacemiT K3 A100 cores (zero-overhead dequant).
+#[inline(always)]
 pub fn fp8_e4m3_to_f32(val: u8) -> f32 {
     let sign = (val >> 7) & 1;
     let exp = (val >> 3) & 0x0F;
@@ -399,6 +404,7 @@ pub fn dequant_fp8_e4m3(input: &[u8], output: &mut [f32]) {
 }
 
 /// Fused FP8 dot product — K3 native inference kernel.
+#[inline(always)]
 pub fn fused_dot_fp8(
     weights: &[u8],  // FP8 E4M3
     activations: &[f32],
@@ -412,6 +418,7 @@ pub fn fused_dot_fp8(
 }
 
 /// Fast power of 2 for integer exponents.
+#[inline(always)]
 fn fast_pow_2(exp: i32) -> f32 {
     if exp >= 0 && exp < 31 {
         (1u32 << exp) as f32
@@ -429,6 +436,7 @@ fn fast_pow_2(exp: i32) -> f32 {
 /// Numerically stable softmax: softmax(x_i) = exp(x_i - max) / Σexp(x_j - max)
 ///
 /// Operates in-place on the input slice.
+#[inline(always)]
 pub fn softmax_f32(x: &mut [f32]) {
     if x.is_empty() {
         return;
@@ -466,6 +474,7 @@ pub fn softmax_f32(x: &mut [f32]) {
 // ---------------------------------------------------------------------------
 
 /// Layer normalization: y = (x - mean) / sqrt(var + eps) * gamma + beta
+#[inline(always)]
 pub fn layer_norm_f32(
     x: &mut [f32],
     gamma: &[f32],
@@ -478,19 +487,13 @@ pub fn layer_norm_f32(
     }
 
     // Compute mean
-    let mut mean = 0.0f32;
-    for &val in x.iter() {
-        mean += val;
-    }
-    mean /= n as f32;
+    let mean = x.iter().copied().sum::<f32>() / (n as f32);
 
     // Compute variance
-    let mut var = 0.0f32;
-    for &val in x.iter() {
+    let var = x.iter().map(|&val| {
         let diff = val - mean;
-        var += diff * diff;
-    }
-    var /= n as f32;
+        diff * diff
+    }).sum::<f32>() / (n as f32);
 
     // Normalize
     let inv_std = 1.0 / fast_sqrt(var + eps);
@@ -501,6 +504,7 @@ pub fn layer_norm_f32(
 
 /// RMS normalization (used by Qwen, LLaMA):
 /// y = x / sqrt(mean(x²) + eps) * gamma
+#[inline(always)]
 pub fn rms_norm_f32(x: &mut [f32], gamma: &[f32], eps: f32) {
     let n = x.len();
     if n == 0 {
@@ -508,11 +512,7 @@ pub fn rms_norm_f32(x: &mut [f32], gamma: &[f32], eps: f32) {
     }
 
     // Compute mean of squares
-    let mut ms = 0.0f32;
-    for &val in x.iter() {
-        ms += val * val;
-    }
-    ms /= n as f32;
+    let ms = x.iter().map(|&val| val * val).sum::<f32>() / (n as f32);
 
     // Normalize
     let inv_rms = 1.0 / fast_sqrt(ms + eps);
@@ -527,6 +527,7 @@ pub fn rms_norm_f32(x: &mut [f32], gamma: &[f32], eps: f32) {
 
 /// SiLU activation: silu(x) = x * sigmoid(x)
 /// Used in Qwen, LLaMA, DeepSeek models.
+#[inline(always)]
 pub fn silu_f32(x: &mut [f32]) {
     for val in x.iter_mut() {
         *val = *val * sigmoid(*val);
@@ -534,6 +535,7 @@ pub fn silu_f32(x: &mut [f32]) {
 }
 
 /// GELU activation (approximate): gelu(x) ≈ 0.5 * x * (1 + tanh(√(2/π) * (x + 0.044715 * x³)))
+#[inline(always)]
 pub fn gelu_f32(x: &mut [f32]) {
     const SQRT_2_OVER_PI: f32 = 0.7978845608;
     const COEFF: f32 = 0.044715;
@@ -553,6 +555,7 @@ pub fn gelu_f32(x: &mut [f32]) {
 ///
 /// RoPE encodes position information by rotating pairs of dimensions
 /// by angles proportional to their position in the sequence.
+#[inline(always)]
 pub fn apply_rope_f32(
     x: &mut [f32],
     seq_pos: usize,
@@ -578,6 +581,7 @@ pub fn apply_rope_f32(
 // ---------------------------------------------------------------------------
 
 /// Fast exponential approximation using the Schraudolph method.
+#[inline(always)]
 fn fast_exp(x: f32) -> f32 {
     if x < -88.0 {
         return 0.0;
@@ -595,16 +599,19 @@ fn fast_exp(x: f32) -> f32 {
 }
 
 /// Fast approximate sigmoid: σ(x) = 1 / (1 + exp(-x))
+#[inline(always)]
 fn sigmoid(x: f32) -> f32 {
     1.0 / (1.0 + fast_exp(-x))
 }
 
 /// Fast approximate tanh using sigmoid: tanh(x) = 2σ(2x) - 1
+#[inline(always)]
 fn fast_tanh(x: f32) -> f32 {
     2.0 * sigmoid(2.0 * x) - 1.0
 }
 
 /// Fast inverse square root (Quake III style, improved).
+#[inline(always)]
 fn fast_sqrt(x: f32) -> f32 {
     if x <= 0.0 {
         return 0.0;
@@ -618,11 +625,13 @@ fn fast_sqrt(x: f32) -> f32 {
 }
 
 /// Fast power approximation: x^y ≈ exp(y * ln(x))
+#[inline(always)]
 fn fast_pow(base: f32, exp: f32) -> f32 {
     fast_exp(exp * fast_ln(base))
 }
 
 /// Fast natural log approximation.
+#[inline(always)]
 fn fast_ln(x: f32) -> f32 {
     if x <= 0.0 {
         return f32::MIN;
@@ -638,11 +647,13 @@ fn fast_ln(x: f32) -> f32 {
 }
 
 /// Fast cosine approximation.
+#[inline(always)]
 fn fast_cos(x: f32) -> f32 {
     fast_sin(x + core::f32::consts::FRAC_PI_2)
 }
 
 /// Fast sine approximation using Bhaskara I's formula.
+#[inline(always)]
 fn fast_sin(mut x: f32) -> f32 {
     // Normalize to [-π, π]
     let pi = core::f32::consts::PI;

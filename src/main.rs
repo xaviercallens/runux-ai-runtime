@@ -88,7 +88,6 @@ fn main() {
     println!();
     println!("  ═══════════════════════════════════════════════════════════════");
     println!("  © 2026 Xavier Callens / Socrate AI — 23 crates, no_std Rust");
-    std::process::exit(0);
 
 
 
@@ -121,8 +120,6 @@ fn main() {
             if e.fits_in_ram { "YES" } else { "NO" }, e.tokens_per_second);
     }
     println!();
-
-    // (remaining sections below are gated by the early exit above)
 
     // ── Section 3: Inference Pipeline ────────────────────────────────────
     println!("  3. INFERENCE SIMULATION");

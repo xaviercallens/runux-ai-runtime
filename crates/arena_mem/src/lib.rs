@@ -395,9 +395,8 @@ pub fn plan_memory(
     // Weight memory: params × bits / 8
     let weights_bytes = (model_params as usize * bits_per_param as usize) / 8;
 
-    // KV-cache: 2 (K+V) × n_layers × seq_len × n_kv_heads × head_dim × bytes_per_element
-    // Using FP16 for KV cache (2 bytes)
-    let kv_per_token = 2 * n_layers * n_kv_heads * head_dim * 2;
+    // KV-cache (INT8): 2 (K+V) × n_layers × n_kv_heads × (head_dim × 1 byte + 4 bytes scale)
+    let kv_per_token = 2 * n_layers * n_kv_heads * (head_dim + 4);
     let kv_cache_bytes = kv_per_token * target_seq_len;
 
     // Scratch: intermediate activations per token

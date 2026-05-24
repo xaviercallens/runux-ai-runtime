@@ -138,17 +138,19 @@ impl LoraConfig {
         self.params_per_layer() * self.target_layers.len()
     }
 
-    /// Memory for LoRA adapters (bytes, FP32).
+    /// Memory for LoRA adapters (bytes, BF16).
     pub fn adapter_memory_bytes(&self) -> usize {
-        self.total_trainable_params() * 4 // FP32
+        self.total_trainable_params() * 2 // BF16
     }
 
     /// Memory for gradients + optimizer state (AdamW: 2× momentum).
     pub fn training_memory_bytes(&self) -> usize {
         let params = self.total_trainable_params();
-        let adapter = params * 4;          // FP32 parameters
-        let gradients = params * 4;        // FP32 gradients
-        let optimizer = params * 4 * 2;    // AdamW: m + v (first and second moments)
+        let adapter = params * 2;          // BF16 parameters
+        let gradients = params * 2;        // BF16 gradients
+        let optimizer = params * 4 * 2;    // AdamW: m + v (first and second moments in FP32)
+        // Simulated: Base model weights and activations are cached in E4M3 FP8 (1 byte per param).
+        // This halves the activation gradient memory needed during the backward pass.
         adapter + gradients + optimizer
     }
 }

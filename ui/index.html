@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RunuX AI Processing</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="app-container">
+        <header class="glass-header">
+            <div class="logo">
+                <span class="gradient-text">RunuX</span> AI Runtime
+            </div>
+            <div class="status-indicator">
+                <div class="pulse-dot"></div>
+                <span>Auto-Research Active</span>
+            </div>
+        </header>
+
+        <main class="dashboard">
+            <section class="card glass-panel hero-panel">
+                <h1>Performance Metrics</h1>
+                <p>Live metrics from the autonomous research agent optimizing RISC-V and TPU targets.</p>
+            </section>
+
+            <div class="metrics-grid">
+                <div class="card glass-panel metric-card">
+                    <div class="metric-icon tpu-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2" ry="2"></rect><line x1="8" y1="2" x2="8" y2="22"></line><line x1="16" y1="2" x2="16" y2="22"></line><line x1="2" y1="8" x2="22" y2="8"></line><line x1="2" y1="16" x2="22" y2="16"></line></svg>
+                    </div>
+                    <h2>TPU v5e Optimization</h2>
+                    <div class="metric-value" id="tpu-flops">150.0 <span class="unit">TFLOPS</span></div>
+                    <div class="metric-trend positive">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                        Optimized Target
+                    </div>
+                </div>
+
+                <div class="card glass-panel metric-card">
+                    <div class="metric-icon risc-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                    </div>
+                    <h2>SpacemiT K1 / RVV</h2>
+                    <div class="metric-value" id="k1-tps">45.2 <span class="unit">Tok/s</span></div>
+                    <div class="metric-trend positive">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                        Target Baseline
+                    </div>
+                </div>
+                
+                <div class="card glass-panel metric-card">
+                    <div class="metric-icon agent-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    </div>
+                    <h2>Agent Score</h2>
+                    <div class="metric-value gradient-text" id="agent-score">602.0</div>
+                    <div class="metric-trend">Fitness Evaluation</div>
+                </div>
+            </div>
+
+            <section class="card glass-panel log-panel">
+                <h2>Auto-Research Pipeline Logs</h2>
+                <div class="terminal" id="terminal-logs">
+                    <div class="log-line">Initializing RunuX agent loop...</div>
+                    <div class="log-line">Measuring baseline hardware performance...</div>
+                    <div class="log-line success">Parsed metrics: TPU=150.0, K1=45.2</div>
+                    <div class="log-line">LLM proposing modifications to RVV SIMD kernels...</div>
+                    <div class="log-line warning">Gatekeeper ERROR: Proposed Memory BW exceeds LPDDR4 spec.</div>
+                    <div class="log-line">Reverting unphysical changes...</div>
+                    <div class="log-line">Waiting for next iteration...</div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
