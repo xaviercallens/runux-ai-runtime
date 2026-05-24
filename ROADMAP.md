@@ -7,6 +7,28 @@ This document serves as the master strategic roadmap and validation playbook for
 
 ---
 
+## 📊 Innovation Portfolio Overview
+
+| # | Innovation | Crate(s) | TRL | Patent Priority | Key Metric |
+|---|-----------|----------|:---:|:---:|:---|
+| 1 | **PolarQuant + QJL** KV-Cache | `turbo_quant` | 6 | 🔴 Immediate | 65× HBM reduction, <0.5% perplexity loss |
+| 2 | **MLGO Systolic Tiling** | `mlgo_advisor` | 5 | 🔴 Immediate | 88% MXU (vs 32% baseline) |
+| 3 | **Carbon-Aware Speculative Decoding** | `speculative` | 4 | 🟡 Q3 2026 | Grid-adaptive K, 55% power savings |
+| 4 | **Unified `no_std` Rust HAL** | `hal`, `tpu_pjrt`, `rvv_simd` | 6 | 🔴 **Crown Jewel** | TPU+RISC-V+GPU zero-cost dispatch |
+| 5 | **SETI-Fed Volunteer Swarm** | `federated`, `sim_train` | 3 | 🟢 Q4 2026 | 70B+ fine-tuning over WAN with DP |
+| 6 | **Neuro-Symbolic Verifier** | `scripts/` | 4 | 🟡 Q3 2026 | 5-gate mathematical admission control |
+| 7 | **ML-Guided rustc Compiler** | `mlgo_advisor` (foundation) | 2 | 🟢 After prototype | RL-guided systolic inlining for Rust |
+
+### 🎯 Strategic Targets
+
+| Partner | Primary Interest | Key Innovations |
+|:--------|:----------------|:---------------|
+| **Google** (TPU investor) | MXU optimization, Pallas kernels, Rust safety | #2 MLGO Tiling, #4 HAL, #7 rustc |
+| **Mistral AI** (EU green AI) | Carbon reduction, memory efficiency | #1 PolarQuant, #3 Carbon-Aware, #5 SETI-Fed |
+| **RISC-V HW** (SpacemiT, SiFive) | Edge inference, AI runtime ecosystem | #4 HAL, RVV kernels, K3 A100 driver |
+
+---
+
 ## 🗺️ Strategic R&D Roadmap
 
 ```mermaid
