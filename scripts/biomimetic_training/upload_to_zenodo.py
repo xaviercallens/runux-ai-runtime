@@ -89,7 +89,7 @@ def publish_to_zenodo():
         print("  [+] Registering publication metadata & CC-BY-NC-ND-4.0 license...")
         print(f"  {GREEN}🎉 Zenodo pre-print successfully published!{NC}")
         print(f"    - Reserved DOI:  {BOLD}{reserved_doi}{NC}")
-        print(f"    - Access Link:   {BOLD}https://zenodo.org/record/{deposition_id}{NC}\n")
+        print(f"    - Access Link:   {BOLD}https://zenodo.org/records/{deposition_id}{NC}\n")
         return
 
     # ── 2. Real Zenodo Upload ──
@@ -136,7 +136,7 @@ def publish_to_zenodo():
             
         print(f"  {GREEN}🎉 Zenodo pre-print successfully published!{NC}")
         print(f"    - Reserved DOI:  {BOLD}{reserved_doi}{NC}")
-        print(f"    - Access Link:   {BOLD}https://zenodo.org/record/{deposition_id}{NC}\n")
+        print(f"    - Access Link:   {BOLD}https://zenodo.org/records/{deposition_id}{NC}\n")
         
     except Exception as e:
         print(f"      [!] Real Zenodo upload failed: {str(e)}. Sandbox mockup remains active.")
