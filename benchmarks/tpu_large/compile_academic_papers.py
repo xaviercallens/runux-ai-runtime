@@ -430,5 +430,13 @@ def main():
     else:
         print(f"⚠ Quantum LTN draft not found at {quantum_md}")
 
+    # 3. Compile Lean 4 Formal Proof Paper
+    proof_md = os.path.join(src_dir, "spec_proof_paper.md")
+    proof_pdf = os.path.join(src_dir, "RunuX_Lean4_Formal_Proof_Paper.pdf")
+    if os.path.exists(proof_md):
+        compile_pdf(proof_md, proof_pdf)
+    else:
+        print(f"⚠ Lean 4 formal proof paper not found at {proof_md}")
+
 if __name__ == "__main__":
     main()
