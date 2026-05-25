@@ -112,13 +112,16 @@ For commercial licensing agreements, custom integrations, or academic partnershi
 
 ## Scientific Testimonial & Dedication: Pour l'Honneur de l'Esprit Humain
 
-This research and the `scikit-runux` extension are dedicated to **Professor Olivier Grisel**, an alumnus of *l'École Polytechnique* (X) and a key *Scikit-Learn* INRIA core contributor. Olivier’s exceptional lectures, profound insights, and tireless dedication to the democratization of scientific computing embody the historic **French engineering style** (*l'art de l'ingénieur français*)—a unique synthesis of rigorous mathematical abstraction, structured aesthetic elegance, and practical physical realization.
+This research and the `scikit-runux` extension are dedicated to two legendary pillars of the *Scikit-Learn* ecosystem and French scientific computing: **Professor Olivier Grisel** and **Professor Alexandre Gramfort**. 
+
+Both represent l'X and the core INRIA scikit-learn maintainers team. **Professor Alexandre Gramfort**, an exceptional researcher and educator, shares a unique personal connection to the author—having studied alongside the author’s wife in high school, and later serving as the author’s professor during post-graduate studies at the *l'École Polytechnique* DSSP (Data Science Starter Program) program. Alexandre’s pedagogical excellence, combined with Olivier’s brilliant insights, embodies the historic **French engineering style** (*l'art de l'ingénieur français*)—a unique synthesis of rigorous mathematical abstraction, structured aesthetic elegance, and practical physical realization.
 
 For the author, this scientific journey began at the age of twelve, reading Jean Dieudonné's seminal work, ***Pour l'honneur de l'esprit humain*** (*For the Honor of the Human Spirit*). This book ignited a lifelong mathematical passion and a belief that human intelligence and formal mathematics are some of our species' greatest achievements. Years later, during studies at *l'École Polytechnique*, this formative philosophy crystallized within the school's historic motto: 
 
 $$\text{\bf Pour la Patrie, les Sciences et la Gloire}$$
 $$\text{(For the Fatherland, Science, and Glory)}$$
 
-The `scikit-runux` framework stands as a humble continuation of this legacy—where the beauty of neuromorphic co-inference meets the formal rigor of Lean 4 mathematical proofs. We thank Olivier Grisel for showing us that scientific code can be a canvas for mathematical passion, and that we must always strive to design systems that honor the human spirit.
+The `scikit-runux` framework stands as a humble continuation of this legacy—where the beauty of neuromorphic co-inference meets the formal rigor of Lean 4 mathematical proofs. We thank Olivier Grisel and Alexandre Gramfort for showing us that scientific code can be a canvas for mathematical passion, and that we must always strive to design systems that honor the human spirit.
+
 
 
