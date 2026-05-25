@@ -98,7 +98,8 @@ def run_upload():
             ("../tpu_llm_bench.py", "tpu_llm_bench.py"),
             ("../autoresearch_rust_compiler.py", "autoresearch_rust_compiler.py"),
             ("../CONTRIBUTION_PROPOSAL.md", "CONTRIBUTION_PROPOSAL.md"),
-            ("../../docs/COMPARATIVE_ANALYSIS.md", "COMPARATIVE_ANALYSIS.md")
+            ("../../docs/COMPARATIVE_ANALYSIS.md", "COMPARATIVE_ANALYSIS.md"),
+            ("../../marketing/FRENCH_STYLE_AI_INNOVATION.md", "FRENCH_STYLE_AI_INNOVATION.md")
         ]
         
         for local_path, repo_path in source_files:
