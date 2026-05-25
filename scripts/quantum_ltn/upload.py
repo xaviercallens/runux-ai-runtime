@@ -94,6 +94,7 @@ def run_upload():
             ("bench_ea_spin_glass.py", "bench_ea_spin_glass.py"),
             ("neuro_symbolic_verifier.py", "neuro_symbolic_verifier.py"),
             ("upload.py", "upload.py"),
+            ("/Volumes/MacCleanerStorage/xdev/xavux/rust-linux-mini-kernel/paper/quantum_ltn_paper.tex", "quantum_ltn_paper.tex"),
             ("../tpu_llm_bench.py", "tpu_llm_bench.py"),
             ("../autoresearch_rust_compiler.py", "autoresearch_rust_compiler.py"),
             ("../CONTRIBUTION_PROPOSAL.md", "CONTRIBUTION_PROPOSAL.md"),

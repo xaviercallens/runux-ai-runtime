@@ -7,3 +7,12 @@ Cargo.lock
 .idea/
 .vscode/
 .env
+scripts/biomimetic_training/scikit_runux_ext.py
+scripts/biomimetic_training/simulator.py
+scripts/biomimetic_training/*.npz
+scripts/biomimetic_training/*.json
+scripts/biomimetic_training/*.log
+scripts/biomimetic_training/__pycache__/
+__pycache__/
+
+
