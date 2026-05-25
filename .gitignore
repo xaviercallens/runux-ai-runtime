@@ -9,10 +9,14 @@ Cargo.lock
 .env
 scripts/biomimetic_training/scikit_runux_ext.py
 scripts/biomimetic_training/simulator.py
+scripts/biomimetic_training/scikit_runux/scikit_runux_ext.py
+scripts/biomimetic_training/scikit_runux/simulator.py
 scripts/biomimetic_training/*.npz
 scripts/biomimetic_training/*.json
 scripts/biomimetic_training/*.log
 scripts/biomimetic_training/__pycache__/
+scripts/biomimetic_training/scikit_runux.egg-info/
 __pycache__/
+
 
 

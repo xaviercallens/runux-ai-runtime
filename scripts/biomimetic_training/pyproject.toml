@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scikit-runux"
+version = "1.0.0"
+description = "Scikit-Learn Biomimetic Extension Utilizing WARS-CI-DFA Training"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "LicenseRef-RunuX-Commercial" }
+authors = [
+    { name = "Xavier Callens", email = "licensing@socrate-ai-lab.com" }
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+dependencies = [
+    "numpy>=1.20.0",
+    "scikit-learn>=1.0.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["scikit_runux*"]

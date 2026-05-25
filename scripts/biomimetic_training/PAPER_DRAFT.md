@@ -109,3 +109,10 @@ We offer commercial licensing, source code access, and integration support for i
 For commercial licensing agreements, custom integrations, or academic partnerships, please contact the licensing board at:
 ✉️ **licensing@socrate-ai-lab.com**  
 🏢 **Socrate AI Lab Intellectual Property Division**
+
+---
+
+## Acknowledgements
+
+The authors would like to express their deepest gratitude to **Professor Olivier Grisel** (École Polytechnique / INRIA), whose exceptional lectures, profound insights, and pioneering contributions to the Scikit-Learn ecosystem inspired the creation of the `scikit-runux` framework. His dedication to democratizing high-performance machine learning has been a fundamental catalyst for this research.
+
