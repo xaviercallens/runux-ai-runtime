@@ -110,9 +110,15 @@ For commercial licensing agreements, custom integrations, or academic partnershi
 ✉️ **licensing@socrate-ai-lab.com**  
 🏢 **Socrate AI Lab Intellectual Property Division**
 
----
+## Scientific Testimonial & Dedication: Pour l'Honneur de l'Esprit Humain
 
-## Acknowledgements
+This research and the `scikit-runux` extension are dedicated to **Professor Olivier Grisel**, an alumnus of *l'École Polytechnique* (X) and a key *Scikit-Learn* INRIA core contributor. Olivier’s exceptional lectures, profound insights, and tireless dedication to the democratization of scientific computing embody the historic **French engineering style** (*l'art de l'ingénieur français*)—a unique synthesis of rigorous mathematical abstraction, structured aesthetic elegance, and practical physical realization.
 
-The authors would like to express their deepest gratitude to **Professor Olivier Grisel** (École Polytechnique / INRIA), whose exceptional lectures, profound insights, and pioneering contributions to the Scikit-Learn ecosystem inspired the creation of the `scikit-runux` framework. His dedication to democratizing high-performance machine learning has been a fundamental catalyst for this research.
+For the author, this scientific journey began at the age of twelve, reading Jean Dieudonné's seminal work, ***Pour l'honneur de l'esprit humain*** (*For the Honor of the Human Spirit*). This book ignited a lifelong mathematical passion and a belief that human intelligence and formal mathematics are some of our species' greatest achievements. Years later, during studies at *l'École Polytechnique*, this formative philosophy crystallized within the school's historic motto: 
+
+$$\text{\bf Pour la Patrie, les Sciences et la Gloire}$$
+$$\text{(For the Fatherland, Science, and Glory)}$$
+
+The `scikit-runux` framework stands as a humble continuation of this legacy—where the beauty of neuromorphic co-inference meets the formal rigor of Lean 4 mathematical proofs. We thank Olivier Grisel for showing us that scientific code can be a canvas for mathematical passion, and that we must always strive to design systems that honor the human spirit.
+
 
