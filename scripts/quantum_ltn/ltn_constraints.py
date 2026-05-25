@@ -31,9 +31,19 @@ class FuzzyLogicGatekeeper:
         truth = np.exp(-self.beta * drift)
         return float(np.clip(truth, 0.0, 1.0))
 
-    def evaluate_fuzzy_satisfaction(self, p_unitary: float, p_energy: float) -> float:
+    def gauge_invariant(self, discrepancy: float) -> float:
+        """
+        Fuzzy predicate: gauge_invariant(v)
+        Evaluates the truth value in [0.0, 1.0] that local gauge symmetry is perfectly preserved.
+        $$I(\\text{gauge\\_invariant}(v)) = e^{-\\beta \\cdot \\text{discrepancy}}$$
+        """
+        truth = np.exp(-self.beta * discrepancy)
+        return float(np.clip(truth, 0.0, 1.0))
+
+    def evaluate_fuzzy_satisfaction(self, p_unitary: float, p_energy: float, p_gauge: float = 1.0) -> float:
         """
         Evaluates the global fuzzy logic satisfaction using Product t-norm:
-        $$I(\\phi \\land \\psi) = I(\\phi) \\times I(\\psi)$$
+        $$I(\\phi \\land \\psi \\land \\chi) = I(\\phi) \\times I(\\psi) \\times I(\\chi)$$
         """
-        return float(p_unitary * p_energy)
+        return float(p_unitary * p_energy * p_gauge)
+
