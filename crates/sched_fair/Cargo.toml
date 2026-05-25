@@ -1,0 +1,10 @@
+[package]
+name = "sched_fair"
+version = "0.1.0"
+edition = "2021"
+description = "RunuX WARS Scheduler — Workload-Adaptive RL Scheduler (Commercial Version)"
+
+[dependencies]
+
+[lib]
+crate-type = ["rlib"]

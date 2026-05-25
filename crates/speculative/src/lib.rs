@@ -362,6 +362,35 @@ impl SpeculativeEngine {
         self.total_accepted = 0;
         self.total_steps = 0;
     }
+
+    /// Adjust speculative draft length K based on real-time grid carbon intensity.
+    ///
+    /// When carbon intensity is high, we scale K down to avoid wasting energy
+    /// on speculative forward passes in the large target model.
+    /// When carbon intensity is low, we scale K up to maximize generation throughput.
+    pub fn adjust_draft_length_carbon_aware(
+        &mut self,
+        grid_co2: f32,          // Current grid CO2 factor (gCO2/kWh)
+        target_co2: f32,        // Target low-carbon threshold (e.g. 50.0 for France/Sweden)
+        max_co2: f32,           // Maximum high-carbon limit (e.g. 500.0 for coal-heavy grids)
+        gamma: f32,             // Scaling sensitivity factor (usually 0.5 - 1.0)
+        baseline_k: usize,      // Standard baseline draft length K
+        max_k: usize,           // Maximum limit for K (hardware capacity bound)
+    ) {
+        if grid_co2 <= target_co2 {
+            // Low carbon intensity: maximize throughput up to max_k
+            self.config.draft_length = max_k;
+        } else {
+            // High carbon intensity: scale down speculative overhead dynamically
+            let range = (max_co2 - target_co2).max(1.0);
+            let overshoot = (grid_co2 - target_co2).min(range);
+            let scaling_factor = 1.0 - gamma * (overshoot / range);
+            
+            let new_k = (baseline_k as f32 * scaling_factor) as usize;
+            // Clamp to at least 2 draft tokens (minimum speculative advantage)
+            self.config.draft_length = new_k.max(2).min(max_k);
+        }
+    }
 }
 
 /// Power efficiency report.
@@ -530,4 +559,46 @@ mod tests {
         let config = SpeculativeConfig::for_edge_cluster();
         assert_eq!(config.draft_length, 5);
     }
+
+    #[test]
+    fn test_modified_rejection_sampling_probability_bounds() {
+        let mut engine = SpeculativeEngine::new(SpeculativeConfig::default());
+        
+        let draft_tokens = vec![DraftToken {
+            token_id: 1,
+            draft_prob: 0.00001,
+            draft_logits: make_logits(1, 100),
+        }];
+        
+        let target_logits = vec![make_logits(99, 100)];
+        
+        let result = engine.verify(&draft_tokens, &target_logits);
+        assert!(!result.accepted_tokens.is_empty());
+    }
+
+    #[test]
+    fn test_empty_draft_fallback() {
+        let mut engine = SpeculativeEngine::new(SpeculativeConfig::default());
+        let draft_tokens = vec![];
+        let target_logits = vec![];
+        let result = engine.verify(&draft_tokens, &target_logits);
+        assert_eq!(result.accepted_count, 0);
+        assert!(result.accepted_tokens.is_empty());
+    }
+
+    #[test]
+    fn test_carbon_aware_dynamic_scaling() {
+        let mut engine = SpeculativeEngine::new(SpeculativeConfig::default());
+        
+        // Target is 50.0 (e.g. France/Sweden), max is 500.0 (e.g. Germany/USA)
+        // With very low carbon: should scale up to max_k
+        engine.adjust_draft_length_carbon_aware(30.0, 50.0, 500.0, 0.5, 5, 8);
+        assert_eq!(engine.config.draft_length, 8);
+        
+        // With moderate carbon: should scale K down
+        engine.adjust_draft_length_carbon_aware(200.0, 50.0, 500.0, 0.5, 8, 8);
+        assert!(engine.config.draft_length < 8);
+        assert!(engine.config.draft_length >= 2);
+    }
 }
+

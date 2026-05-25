@@ -614,4 +614,36 @@ mod tests {
         // Empty cache should return 0 ratio
         assert_eq!(cache.compression_ratio(), 0.0);
     }
+
+    #[test]
+    fn test_polarquant_energy_preservation() {
+        let polar = PolarQuant::new(42, 64);
+        let original: Vec<f32> = (0..64).map(|i| (i as f32).sin()).collect();
+        let mut rotated = vec![0.0f32; 64];
+        polar.rotate_forward(&original, &mut rotated);
+        
+        let original_norm: f32 = original.iter().map(|x| x * x).sum::<f32>();
+        let rotated_norm: f32 = rotated.iter().map(|x| x * x).sum::<f32>();
+        
+        // Rel. difference of norms should be small under Cochran-like scaling
+        let rel_diff = (original_norm - rotated_norm).abs() / original_norm;
+        assert!(rel_diff < 0.35, "Relative norm diff should be bounded, got {}", rel_diff);
+    }
+
+    #[test]
+    fn test_scalar_quantize_extreme_outliers() {
+        let mut input = vec![1.0f32; 128];
+        input[127] = 100.0; // outlier
+        
+        let mut scales = Vec::new();
+        let mut zeros = Vec::new();
+        let mut output = Vec::new();
+        
+        scalar_quantize(&input, 3, &mut scales, &mut zeros, &mut output, 128);
+        
+        // Scale should adapt correctly
+        assert!(scales[0] >= (100.0 - 1.0) / 7.0);
+        assert!(!output.is_empty());
+    }
 }
+

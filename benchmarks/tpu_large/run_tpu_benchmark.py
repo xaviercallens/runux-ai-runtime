@@ -46,6 +46,35 @@ def get_system_info():
     print(f"torch_xla {RESULTS['software']['torch_xla']}")
     print(f"Transformers {RESULTS['software']['transformers']}")
 
+def static_decode(model, tokenizer, input_ids, max_new_tokens, device):
+    import torch
+    import torch_xla.core.xla_model as xm
+    
+    batch_size, input_len = input_ids.shape
+    total_len = input_len + max_new_tokens
+    
+    pad_id = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else tokenizer.eos_token_id
+    if pad_id is None:
+        pad_id = 0
+        
+    static_input_ids = torch.full((batch_size, total_len), pad_id, dtype=torch.long, device=device)
+    static_input_ids[:, :input_len] = input_ids
+    
+    for k in range(max_new_tokens):
+        attention_mask = torch.zeros((batch_size, total_len), dtype=torch.long, device=device)
+        attention_mask[:, :input_len + k] = 1
+        
+        outputs = model(input_ids=static_input_ids, attention_mask=attention_mask)
+        
+        index_tensor = torch.tensor([input_len + k - 1], dtype=torch.long, device=device)
+        next_token_logits = torch.index_select(outputs.logits, 1, index_tensor).squeeze(1)
+        next_token = torch.argmax(next_token_logits, dim=-1)
+        
+        static_input_ids[:, input_len + k] = next_token
+        xm.mark_step()
+        
+    return static_input_ids
+
 def benchmark_model(model_name, model_id, num_warmup=3, num_runs=10):
     """Benchmark a single model on TPU."""
     import torch
@@ -99,6 +128,7 @@ def benchmark_model(model_name, model_id, num_warmup=3, num_runs=10):
             "max_new_tokens": 128,
             "do_sample": False,
             "use_cache": True,
+            "cache_implementation": "static",
         }
         
         # ---- Prefill benchmark (BS=1) ----
@@ -128,8 +158,7 @@ def benchmark_model(model_name, model_id, num_warmup=3, num_runs=10):
         print(f"  Running decode benchmark (128 tokens)...")
         for _ in range(num_warmup):
             with torch.no_grad():
-                gen = model.generate(input_ids, attention_mask=attention_mask, **gen_kwargs)
-                xm.mark_step()
+                gen = static_decode(model, tokenizer, input_ids, 128, device)
             del gen
         
         decode_times = []
@@ -138,8 +167,7 @@ def benchmark_model(model_name, model_id, num_warmup=3, num_runs=10):
             xm.mark_step()
             t0 = time.perf_counter()
             with torch.no_grad():
-                gen = model.generate(input_ids, attention_mask=attention_mask, **gen_kwargs)
-                xm.mark_step()
+                gen = static_decode(model, tokenizer, input_ids, 128, device)
             t1 = time.perf_counter()
             new_tokens = gen.shape[1] - input_len
             decode_times.append(t1 - t0)
@@ -164,8 +192,7 @@ def benchmark_model(model_name, model_id, num_warmup=3, num_runs=10):
             
             for _ in range(num_warmup):
                 with torch.no_grad():
-                    gen8 = model.generate(batch_input, attention_mask=batch_mask, **gen_kwargs)
-                    xm.mark_step()
+                    gen8 = static_decode(model, tokenizer, batch_input, 128, device)
                 del gen8
             
             bs8_times = []
@@ -174,8 +201,7 @@ def benchmark_model(model_name, model_id, num_warmup=3, num_runs=10):
                 xm.mark_step()
                 t0 = time.perf_counter()
                 with torch.no_grad():
-                    gen8 = model.generate(batch_input, attention_mask=batch_mask, **gen_kwargs)
-                    xm.mark_step()
+                    gen8 = static_decode(model, tokenizer, batch_input, 128, device)
                 t1 = time.perf_counter()
                 bs8_new = gen8.shape[1] - input_len
                 bs8_times.append(t1 - t0)

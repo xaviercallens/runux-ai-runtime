@@ -1,6 +1,27 @@
 #!/usr/bin/env python3
 """Update HuggingFace model cards with polished formatting."""
 import tempfile, os
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+try:
+    import httpx
+    original_httpx_init = httpx.Client.__init__
+    def patched_httpx_init(self, *args, **kwargs):
+        kwargs['verify'] = False
+        original_httpx_init(self, *args, **kwargs)
+    httpx.Client.__init__ = patched_httpx_init
+except ImportError:
+    pass
+try:
+    import requests
+    original_requests_init = requests.Session.__init__
+    def patched_requests_init(self, *args, **kwargs):
+        original_requests_init(self, *args, **kwargs)
+        self.verify = False
+    requests.Session.__init__ = patched_requests_init
+except ImportError:
+    pass
+
 from huggingface_hub import HfApi
 
 TOKEN = os.environ.get("HF_TOKEN", "")

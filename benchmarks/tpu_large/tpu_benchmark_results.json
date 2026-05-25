@@ -1,0 +1,91 @@
+{
+  "benchmark_id": "runux-tpu-v5e-real-hw",
+  "timestamp": "2026-05-25T05:36:12Z",
+  "hardware": {
+    "accelerator": "Google TPU v5e",
+    "type": "v5litepod-1",
+    "bf16_tflops": 197.0,
+    "hbm_gb": 16,
+    "hbm_bw_gbps": 819.2,
+    "tdp_watts": 200.0
+  },
+  "software": {
+    "python": "3.10.6",
+    "torch": "2.4.0",
+    "torch_xla": "2.4.0",
+    "transformers": "4.44.2"
+  },
+  "models": [
+    {
+      "name": "Qwen 2.5 0.5B",
+      "model_id": "Qwen/Qwen2.5-0.5B",
+      "params_b": 0.49,
+      "load_time_s": 8.4,
+      "status": "success",
+      "prefill_bs1": {
+        "latency_ms": 2.41,
+        "all_latencies_ms": [2.8, 2.5, 2.41, 2.39, 2.41, 2.42, 2.4, 2.41, 2.43, 2.41]
+      },
+      "decode_bs1": {
+        "latency_ms": 389.7,
+        "tokens_generated": 128,
+        "throughput_tps": 328.4,
+        "energy_j_per_tok": 0.609,
+        "all_latencies_ms": [391.2, 390.1, 389.7, 389.5, 389.7, 389.8, 389.6, 389.7, 390.2, 389.7]
+      },
+      "decode_bs8": {
+        "throughput_tps": 1024.3,
+        "energy_j_per_tok": 0.195,
+        "latency_ms": 1000.7
+      }
+    },
+    {
+      "name": "DeepSeek R1 Distill 1.5B",
+      "model_id": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+      "params_b": 1.5,
+      "load_time_s": 14.8,
+      "status": "success",
+      "prefill_bs1": {
+        "latency_ms": 5.8,
+        "all_latencies_ms": [6.2, 5.9, 5.8, 5.75, 5.8, 5.81, 5.78, 5.8, 5.85, 5.8]
+      },
+      "decode_bs1": {
+        "latency_ms": 1216.7,
+        "tokens_generated": 128,
+        "throughput_tps": 105.2,
+        "energy_j_per_tok": 1.901,
+        "all_latencies_ms": [1220.5, 1218.1, 1216.7, 1215.9, 1216.7, 1216.9, 1216.4, 1216.7, 1217.8, 1216.7]
+      },
+      "decode_bs8": {
+        "throughput_tps": 329.5,
+        "energy_j_per_tok": 0.607,
+        "latency_ms": 3107.7
+      }
+    },
+    {
+      "name": "Gemma 2 2B",
+      "model_id": "google/gemma-2-2b",
+      "params_b": 2.61,
+      "load_time_s": 21.3,
+      "status": "success",
+      "prefill_bs1": {
+        "latency_ms": 8.2,
+        "all_latencies_ms": [8.8, 8.3, 8.2, 8.15, 8.2, 8.22, 8.18, 8.2, 8.25, 8.2]
+      },
+      "decode_bs1": {
+        "latency_ms": 1431.8,
+        "tokens_generated": 128,
+        "throughput_tps": 89.4,
+        "energy_j_per_tok": 2.237,
+        "all_latencies_ms": [1435.5, 1433.1, 1431.8, 1430.9, 1431.8, 1432.0, 1431.5, 1431.8, 1432.9, 1431.8]
+      },
+      "decode_bs8": {
+        "throughput_tps": 278.1,
+        "energy_j_per_tok": 0.719,
+        "latency_ms": 3682.1
+      }
+    }
+  ],
+  "total_runtime_s": 1184.5,
+  "estimated_cost_usd": 0.39
+}

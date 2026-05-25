@@ -174,30 +174,7 @@ For a 200MW datacenter in Borlänge, Sweden (EcoDataCenter), serving 10 billion 
 
 RunuX-AI is implemented as a modular Rust crate ecosystem (23 crates, `no_std` compatible):
 
-```
-┌─────────────────────────────────────────────┐
-│           Application Layer                  │
-│    PyTorch  │  JAX  │  TensorFlow           │
-├─────────────────────────────────────────────┤
-│         RunuX-AI Runtime Layer               │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐    │
-│  │ Attention │ │ Memory   │ │ Power    │    │
-│  │ Engine   │ │ Manager  │ │ Monitor  │    │
-│  │ [Patent  │ │ [Arena + │ │ [Carbon  │    │
-│  │ Pending] │ │  Paged   │ │  Aware]  │    │
-│  │          │ │  KV]     │ │          │    │
-│  └──────────┘ └──────────┘ └──────────┘    │
-│  ┌──────────┐ ┌──────────┐                  │
-│  │Speculative│ │ HAL      │                  │
-│  │ Decoding │ │ (TPU/    │                  │
-│  │ [Patent  │ │  RISC-V) │                  │
-│  │ Pending] │ │          │                  │
-│  └──────────┘ └──────────┘                  │
-├─────────────────────────────────────────────┤
-│        Hardware Abstraction Layer            │
-│    Google TPU v5e  │  RISC-V (future)       │
-└─────────────────────────────────────────────┘
-```
+![RunuX-AI Architecture](runux_ai_architecture.png)
 
 > **IP Notice**: The internal algorithms of the Attention Engine and Speculative Decoding modules are proprietary and patent-pending. The architecture diagram above shows the modular structure without revealing implementation details.
 

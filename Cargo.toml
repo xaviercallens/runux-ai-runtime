@@ -24,6 +24,7 @@ members = [
     "crates/stablehlo",
     "crates/mlgo_advisor",
     "crates/framework_bridge",
+    "crates/sched_fair",
     "benchmarks",
 ]
 

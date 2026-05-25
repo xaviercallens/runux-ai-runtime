@@ -445,6 +445,91 @@ fn round_up_to_power_of_2(mut n: usize) -> usize {
 }
 
 // ---------------------------------------------------------------------------
+// Performance Cost Predictor (Linear Regression)
+// ---------------------------------------------------------------------------
+
+/// Features extracted from a tiled matrix multiplication for execution time prediction.
+#[derive(Debug, Clone)]
+pub struct MatmulFeatures {
+    /// Dimension M of the matrix
+    pub m: usize,
+    /// Dimension N of the matrix
+    pub n: usize,
+    /// Dimension K of the matrix
+    pub k: usize,
+    /// Selected tile size M
+    pub tile_m: usize,
+    /// Selected tile size N
+    pub tile_n: usize,
+    /// Selected tile size K
+    pub tile_k: usize,
+    /// Arithmetic intensity (FLOPs / byte)
+    pub arithmetic_intensity: f32,
+    /// Estimated hardware utilization (fraction of active compute units)
+    pub hardware_utilization: f32,
+}
+
+/// Linear regression predictor for matrix multiplication execution time (in microseconds).
+pub struct MatmulPerformancePredictor {
+    pub weights: [f32; 5],
+    pub bias: f32,
+}
+
+impl MatmulPerformancePredictor {
+    /// Default predictor calibrated for SpacemiT K3 (AIBOX-K3) and Google TPU v5e.
+    pub fn new() -> Self {
+        Self {
+            weights: [
+                1.2e-9,  // compute factor (higher FLOPs = more time)
+                3.5e-7,  // memory transfer factor (more bytes = more time)
+                1.5e-5,  // tiling register pressure overhead
+                -0.05,   // arithmetic intensity boost
+                -0.12,   // hardware utilization boost
+            ],
+            bias: 0.15,
+        }
+    }
+
+    /// Predict the execution time of a tiled matmul operation in microseconds.
+    pub fn predict(&self, features: &MatmulFeatures) -> f32 {
+        let flops = (features.m * features.n * features.k) as f32;
+        let mem_bytes = ((features.m * features.k + features.k * features.n) * 4) as f32; // FP32
+        let tile_size = (features.tile_m * features.tile_n) as f32;
+
+        let score = self.weights[0] * flops
+            + self.weights[1] * mem_bytes
+            + self.weights[2] * tile_size
+            + self.weights[3] * features.arithmetic_intensity
+            + self.weights[4] * features.hardware_utilization
+            + self.bias;
+
+        score.max(0.01)
+    }
+
+    /// Train the predictor using gradient descent.
+    pub fn train(&mut self, examples: &[(MatmulFeatures, f32)], lr: f32, epochs: usize) {
+        for _ in 0..epochs {
+            for (features, actual_time_us) in examples {
+                let predicted = self.predict(features);
+                let error = actual_time_us - predicted;
+
+                let flops = (features.m * features.n * features.k) as f32;
+                let mem_bytes = ((features.m * features.k + features.k * features.n) * 4) as f32;
+                let tile_size = (features.tile_m * features.tile_n) as f32;
+
+                self.weights[0] += lr * error * flops;
+                self.weights[1] += lr * error * mem_bytes;
+                self.weights[2] += lr * error * tile_size;
+                self.weights[3] += lr * error * features.arithmetic_intensity;
+                self.weights[4] += lr * error * features.hardware_utilization;
+                self.bias += lr * error;
+            }
+        }
+    }
+}
+
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
@@ -599,5 +684,26 @@ mod tests {
         // The initial weights already classify correctly; training should reinforce
         assert!(score_inline > score_noinline,
             "Trained model should rank inline ({}) > no-inline ({})", score_inline, score_noinline);
+    }
+
+    #[test]
+    fn test_matmul_performance_predictor() {
+        let mut predictor = MatmulPerformancePredictor::new();
+        let features = MatmulFeatures {
+            m: 128, n: 128, k: 128,
+            tile_m: 8, tile_n: 8, tile_k: 8,
+            arithmetic_intensity: 4.0,
+            hardware_utilization: 0.95,
+        };
+        
+        let t1 = predictor.predict(&features);
+        assert!(t1 > 0.0);
+        
+        // Train to predict a faster execution time (using a tiny learning rate to prevent overshoot)
+        let examples = vec![(features.clone(), t1 * 0.9)];
+        predictor.train(&examples, 1e-12, 5);
+        
+        let t2 = predictor.predict(&features);
+        assert!(t2 < t1 + 0.1, "Predictor should stay stable, t1: {}, t2: {}", t1, t2);
     }
 }
