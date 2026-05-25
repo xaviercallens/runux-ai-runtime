@@ -226,9 +226,6 @@ def parse_markdown_to_story(md_path, styles):
                 in_code_block = False
                 # Compile code block
                 code_text = "<br/>".join(code_lines)
-                # Escaping basic chars for HTML-like reportlab paragraphs
-                code_text = code_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-                code_text = code_text.replace('&amp;lt;', '&lt;').replace('&amp;gt;', '&gt;')
                 
                 table_data = [[Paragraph(code_text, code_block_style)]]
                 cb_table = Table(table_data, colWidths=[480])
@@ -248,8 +245,10 @@ def parse_markdown_to_story(md_path, styles):
             continue
             
         if in_code_block:
-            # Preserve spacing and encode tabs
-            processed_line = line.replace(' ', '&nbsp;').replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;').rstrip('\r\n')
+            # Escape HTML special characters first to avoid double-escaping
+            escaped_line = line.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            # Replace spaces and tabs with non-breaking spaces
+            processed_line = escaped_line.replace(' ', '&nbsp;').replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;').rstrip('\r\n')
             code_lines.append(processed_line)
             i += 1
             continue
