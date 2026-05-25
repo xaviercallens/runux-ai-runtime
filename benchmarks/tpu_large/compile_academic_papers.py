@@ -17,6 +17,16 @@ from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
 
 def clean_md_inline(text):
     """Convert Markdown inline styles to ReportLab HTML-like tags."""
+    # 1. Extract inline code blocks to avoid them being styled as bold/italic
+    code_blocks = []
+    def placeholder_code(match):
+        code_blocks.append(match.group(1))
+        return f"__CODE_PLACEHOLDER_{len(code_blocks)-1}__"
+    
+    # Temporarily substitute inline code
+    text = re.sub(r'`(.*?)`', placeholder_code, text)
+    
+    # 2. Run standard bold/italic markdown replacements
     # Convert bold-italic (***text*** or ___text___)
     text = re.sub(r'\*\*\*(.*?)\*\*\*', r'<b><i>\1</i></b>', text)
     text = re.sub(r'___(.*?)___', r'<b><i>\1</i></b>', text)
@@ -26,8 +36,13 @@ def clean_md_inline(text):
     # Convert italic (*text* or _text_)
     text = re.sub(r'\*(.*?)\*', r'<i>\1</i>', text)
     text = re.sub(r'_(.*?)_', r'<i>\1</i>', text)
-    # Convert inline code (`code`)
-    text = re.sub(r'`(.*?)`', r'<font name="Courier" size="9" color="#C7254E" backColor="#F9F2F4">\1</font>', text)
+    
+    # 3. Restore inline code and wrap them in font tags (escaping HTML entities)
+    for idx, code in enumerate(code_blocks):
+        escaped_code = code.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+        font_tag = f'<font name="Courier" size="9" color="#C7254E" backColor="#F9F2F4">{escaped_code}</font>'
+        text = text.replace(f"__CODE_PLACEHOLDER_{idx}__", font_tag)
+        
     # Remove HTML comments
     text = re.sub(r'<!--.*?-->', '', text)
     return text.strip()
@@ -436,6 +451,14 @@ def main():
         compile_pdf(proof_md, proof_pdf)
     else:
         print(f"⚠ Lean 4 formal proof paper not found at {proof_md}")
+
+    # 4. Compile Auto-Research Agent Architecture Proposal
+    proposal_md = "/Volumes/MacCleanerStorage/xdev/xavux/runux-ai-runtime/docs/AUTO_RESEARCH_AGENT_ARCHITECTURE.md"
+    proposal_pdf = "/Volumes/MacCleanerStorage/xdev/xavux/runux-ai-runtime/docs/RunuX_Auto_Research_Agent_Architecture.pdf"
+    if os.path.exists(proposal_md):
+        compile_pdf(proposal_md, proposal_pdf)
+    else:
+        print(f"⚠ Auto-Research Agent Architecture Proposal not found at {proposal_md}")
 
 if __name__ == "__main__":
     main()
