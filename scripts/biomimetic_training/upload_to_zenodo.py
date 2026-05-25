@@ -134,6 +134,17 @@ def publish_to_zenodo():
         if r_meta.status_code != 200:
             print(f"      [!] Metadata submission failed: {r_meta.status_code}")
             
+        # ── 3. Publish the deposition ──
+        print("  [+] Publishing the Zenodo deposition (making it live)...")
+        r_publish = requests.post(
+            f"{ENDPOINT}/{deposition_id}/actions/publish",
+            params={'access_token': TOKEN}
+        )
+        if r_publish.status_code not in [200, 201, 202]:
+            print(f"      [!] Publish action failed (status: {r_publish.status_code}). Response: {r_publish.text}")
+        else:
+            print(f"      -> {GREEN}Deposition live and published successfully.{NC}")
+            
         print(f"  {GREEN}🎉 Zenodo pre-print successfully published!{NC}")
         print(f"    - Reserved DOI:  {BOLD}{reserved_doi}{NC}")
         print(f"    - Access Link:   {BOLD}https://zenodo.org/records/{deposition_id}{NC}\n")
