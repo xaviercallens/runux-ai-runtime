@@ -69,6 +69,13 @@ class BiomimeticLayer:
     def B(self, value):
         raise RunuxGatedKernelError("Direct modification of feedback projection parameters is restricted.")
 
+    @property
+    def local_error(self) -> Optional[np.ndarray]:
+        """Proprietary local prediction error registers (WARS-CI-DFA v2)."""
+        raise RunuxGatedKernelError(
+            "Local prediction error registers are encrypted and isolated inside the zero-copy hardware memory."
+        )
+
     def forward(self, x: np.ndarray) -> np.ndarray:
         """
         Executes a proprietary, hardware-fused forward pass.
@@ -146,4 +153,15 @@ class BiomimeticNet:
         raise RunuxGatedKernelError(
             "Direct local training sweeps are restricted in the public stub. "
             "Please load the compiled binary extension (.so) or license the RunuX AI Engine."
+        )
+
+    def co_inference_step(self, x: np.ndarray, lr: float) -> Tuple[float, float]:
+        """
+        Executes a local closed-loop co-inference and self-supervised retraining step (WARS-CI-DFA v2).
+        Concurrently executes forward inference and local STDP/Predictive-Coding weight modifications.
+        """
+        # [Gated WARS-CI-DFA v2 concurrent closed-loop update sweeps]
+        raise RunuxGatedKernelError(
+            "Closed-loop co-inference and self-supervised learning sweeps require the compiled "
+            "RunuX AI Engine runtime. Contact licensing@socrate-ai-lab.com"
         )

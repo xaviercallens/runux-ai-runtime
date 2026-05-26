@@ -183,7 +183,7 @@ def build_pdf():
     # Metadata Block
     story.append(Paragraph(
         "<b>IP Status:</b> Patent Pending (US-PAT-PEND-2026-0525) &nbsp;|&nbsp; <b>License:</b> LicenseRef-RunuX-Commercial<br/>"
-        "<b>Lean 4 Mathematical Verification Hash:</b> <code>CERT-LEAN4-BIOMIMETIC-CI-DFA-76A159BF</code> &nbsp;|&nbsp; <b>DOI:</b> 10.5281/zenodo.20392380",
+        "<b>Lean 4 Mathematical Verification Hash:</b> <code>CERT-LEAN4-BIOMIMETIC-CI-DFA-76A159BF</code> &nbsp;|&nbsp; <b>DOI:</b> 10.5281/zenodo.20392541",
         meta_style
     ))
     
