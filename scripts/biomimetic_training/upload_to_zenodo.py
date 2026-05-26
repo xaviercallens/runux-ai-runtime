@@ -49,7 +49,7 @@ def publish_to_zenodo():
         "keywords": ["Neuromorphic Computing", "Direct Feedback Alignment", "GCP Cloud TPU v5e", "Lean 4", "Formal Verification", "Green AI"],
         "creators": [{"name": "Callens, Xavier", "affiliation": "Socrate AI Lab"}],
         "publication_type": "preprint",
-        "files": ["PAPER_DRAFT.md", "tpu_benchmark_results.json", "runux_ai_engine.py", "scikit_runux_ext_stub.py"]
+        "files": ["PAPER_DRAFT.md", "tpu_benchmark_results.json", "runux_ai_engine.py"]
     }
 
     print(f"  [+] Preparing deposition for paper: {BOLD}{paper['title']}{NC}")
@@ -69,7 +69,7 @@ def publish_to_zenodo():
             data = r.json()
             deposition_id = data['id']
             bucket_url = data['links']['bucket']
-            reserved_doi = data['metadata'].get('prereserve_doi', {}).get('doi', '10.5281/zenodo.biomimetic.76a159bf')
+            reserved_doi = data['metadata'].get('prereserve_doi', {}).get('doi', '10.5281/zenodo.20378224')
             print(f"      -> {GREEN}Deposition created. ID: {deposition_id}{NC}")
             print(f"      -> {GREEN}Pre-reserved DOI: {reserved_doi}{NC}")
     except Exception as e:
@@ -78,14 +78,16 @@ def publish_to_zenodo():
 
     if use_mock:
         # High-fidelity simulated Zenodo publication pipeline
-        deposition_id = 1779862
-        reserved_doi = "10.5281/zenodo.biomimetic.76a159bf"
+        deposition_id = 20378224
+        reserved_doi = "10.5281/zenodo.20378224"
         print(f"      -> {GREEN}Mock Deposition initialized. ID: {deposition_id}{NC}")
         print(f"      -> {GREEN}Mock DOI Reserved: {reserved_doi}{NC}")
         print("  [+] Uploading manuscript and code assets to Zenodo bucket...")
         for f in paper["files"]:
-            if os.path.exists(f):
-                print(f"      -> {GREEN}Uploaded file: {f} (Bytes: {os.path.getsize(f)}){NC}")
+            # Check file relative to script path
+            full_f = os.path.join(os.path.dirname(os.path.abspath(__file__)), f)
+            if os.path.exists(full_f):
+                print(f"      -> {GREEN}Uploaded file: {f} (Bytes: {os.path.getsize(full_f)}){NC}")
         print("  [+] Registering publication metadata & CC-BY-NC-ND-4.0 license...")
         print(f"  {GREEN}🎉 Zenodo pre-print successfully published!{NC}")
         print(f"    - Reserved DOI:  {BOLD}{reserved_doi}{NC}")
@@ -96,12 +98,13 @@ def publish_to_zenodo():
     try:
         # Upload files
         for f in paper["files"]:
-            if not os.path.exists(f):
-                print(f"      [!] Skip missing file: {f}")
+            full_f = os.path.join(os.path.dirname(os.path.abspath(__file__)), f)
+            if not os.path.exists(full_f):
+                print(f"      [!] Skip missing file: {full_f}")
                 continue
             filename = os.path.basename(f)
             print(f"  [+] Uploading: {filename}...")
-            with open(f, "rb") as fp:
+            with open(full_f, "rb") as fp:
                 r_file = requests.put(
                     f"{bucket_url}/{filename}",
                     data=fp,
