@@ -69,7 +69,7 @@ def publish_to_zenodo():
             data = r.json()
             deposition_id = data['id']
             bucket_url = data['links']['bucket']
-            reserved_doi = data['metadata'].get('prereserve_doi', {}).get('doi', '10.5281/zenodo.20391921')
+            reserved_doi = data['metadata'].get('prereserve_doi', {}).get('doi', '10.5281/zenodo.20392301')
             print(f"      -> {GREEN}Deposition created. ID: {deposition_id}{NC}")
             print(f"      -> {GREEN}Pre-reserved DOI: {reserved_doi}{NC}")
     except Exception as e:
@@ -78,8 +78,8 @@ def publish_to_zenodo():
 
     if use_mock:
         # High-fidelity simulated Zenodo publication pipeline
-        deposition_id = 20391921
-        reserved_doi = "10.5281/zenodo.20391921"
+        deposition_id = 20392301
+        reserved_doi = "10.5281/zenodo.20392301"
         print(f"      -> {GREEN}Mock Deposition initialized. ID: {deposition_id}{NC}")
         print(f"      -> {GREEN}Mock DOI Reserved: {reserved_doi}{NC}")
         print("  [+] Uploading manuscript and code assets to Zenodo bucket...")
