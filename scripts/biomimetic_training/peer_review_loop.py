@@ -91,7 +91,7 @@ def run_peer_review_loop():
     client = None
     use_api = False
     
-    if api_key and not api_key.startswith("AIzaSyDmfPzg"):  # Avoid dummy/default keys
+    if api_key and not len(api_key) < 10:  # Avoid dummy/default keys
         try:
             client = GeminiClient(api_key)
             # Test connection

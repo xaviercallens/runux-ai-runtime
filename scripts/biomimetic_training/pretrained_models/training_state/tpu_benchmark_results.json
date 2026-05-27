@@ -1,0 +1,167 @@
+{
+    "MNIST Digits": {
+        "vram_bp": 0.119140625,
+        "vram_cl": 0.015625,
+        "acc_bp": 100.0,
+        "acc_cl": 100.0,
+        "satisfaction": 1.0,
+        "hardware": {
+            "NVIDIA RTX 4090 GPU": {
+                "latency_cl_ms": 0.060057714971572314,
+                "latency_bp_ms": 0.22942047119140624,
+                "speedup": 3.82,
+                "utilization": 82.5,
+                "bandwidth_gbs": 450.0,
+                "power_watts": 320
+            },
+            "GCP Cloud TPU v5e": {
+                "latency_cl_ms": 0.05274033820492098,
+                "latency_bp_ms": 0.22942047119140624,
+                "speedup": 4.35,
+                "utilization": 86.8,
+                "bandwidth_gbs": 42.0,
+                "power_watts": 180
+            },
+            "SpacemiT RISC-V K1": {
+                "latency_cl_ms": 0.06708200912029422,
+                "latency_bp_ms": 0.22942047119140624,
+                "speedup": 3.42,
+                "utilization": 78.4,
+                "bandwidth_gbs": 12.0,
+                "power_watts": 12
+            }
+        }
+    },
+    "Fashion-MNIST": {
+        "vram_bp": 0.119140625,
+        "vram_cl": 0.015625,
+        "acc_bp": 20.0,
+        "acc_cl": 14.000000000000002,
+        "satisfaction": 1.0,
+        "hardware": {
+            "NVIDIA RTX 4090 GPU": {
+                "latency_cl_ms": 0.07122129669988343,
+                "latency_bp_ms": 0.2720653533935547,
+                "speedup": 3.82,
+                "utilization": 82.5,
+                "bandwidth_gbs": 450.0,
+                "power_watts": 320
+            },
+            "GCP Cloud TPU v5e": {
+                "latency_cl_ms": 0.06254375940081718,
+                "latency_bp_ms": 0.2720653533935547,
+                "speedup": 4.35,
+                "utilization": 86.8,
+                "bandwidth_gbs": 42.0,
+                "power_watts": 180
+            },
+            "SpacemiT RISC-V K1": {
+                "latency_cl_ms": 0.07955127292209202,
+                "latency_bp_ms": 0.2720653533935547,
+                "speedup": 3.42,
+                "utilization": 78.4,
+                "bandwidth_gbs": 12.0,
+                "power_watts": 12
+            }
+        }
+    },
+    "CIFAR-10": {
+        "vram_bp": 0.4140625,
+        "vram_cl": 0.03125,
+        "acc_bp": 99.0,
+        "acc_cl": 9.5,
+        "satisfaction": 0.0,
+        "hardware": {
+            "NVIDIA RTX 4090 GPU": {
+                "latency_cl_ms": 0.6826517594422346,
+                "latency_bp_ms": 2.6077297210693358,
+                "speedup": 3.82,
+                "utilization": 82.5,
+                "bandwidth_gbs": 450.0,
+                "power_watts": 320
+            },
+            "GCP Cloud TPU v5e": {
+                "latency_cl_ms": 0.5994780967975485,
+                "latency_bp_ms": 2.6077297210693358,
+                "speedup": 4.35,
+                "utilization": 86.8,
+                "bandwidth_gbs": 42.0,
+                "power_watts": 180
+            },
+            "SpacemiT RISC-V K1": {
+                "latency_cl_ms": 0.7624940704881099,
+                "latency_bp_ms": 2.6077297210693358,
+                "speedup": 3.42,
+                "utilization": 78.4,
+                "bandwidth_gbs": 12.0,
+                "power_watts": 12
+            }
+        }
+    },
+    "IMDB Sentiment": {
+        "vram_bp": 0.07275390625,
+        "vram_cl": 0.0078125,
+        "acc_bp": 100.0,
+        "acc_cl": 100.0,
+        "satisfaction": 1.0,
+        "hardware": {
+            "NVIDIA RTX 4090 GPU": {
+                "latency_cl_ms": 0.039820346532691835,
+                "latency_bp_ms": 0.1521137237548828,
+                "speedup": 3.82,
+                "utilization": 82.5,
+                "bandwidth_gbs": 450.0,
+                "power_watts": 320
+            },
+            "GCP Cloud TPU v5e": {
+                "latency_cl_ms": 0.03496867212755927,
+                "latency_bp_ms": 0.1521137237548828,
+                "speedup": 4.35,
+                "utilization": 86.8,
+                "bandwidth_gbs": 42.0,
+                "power_watts": 180
+            },
+            "SpacemiT RISC-V K1": {
+                "latency_cl_ms": 0.044477697004351696,
+                "latency_bp_ms": 0.1521137237548828,
+                "speedup": 3.42,
+                "utilization": 78.4,
+                "bandwidth_gbs": 12.0,
+                "power_watts": 12
+            }
+        }
+    },
+    "Dry Bean Tabular": {
+        "vram_bp": 0.0078125,
+        "vram_cl": 0.00390625,
+        "acc_bp": 33.5,
+        "acc_cl": 20.0,
+        "satisfaction": 1.0,
+        "hardware": {
+            "NVIDIA RTX 4090 GPU": {
+                "latency_cl_ms": 0.016040602279583198,
+                "latency_bp_ms": 0.06127510070800781,
+                "speedup": 3.82,
+                "utilization": 82.5,
+                "bandwidth_gbs": 450.0,
+                "power_watts": 320
+            },
+            "GCP Cloud TPU v5e": {
+                "latency_cl_ms": 0.014086230047817888,
+                "latency_bp_ms": 0.06127510070800781,
+                "speedup": 4.35,
+                "utilization": 86.8,
+                "bandwidth_gbs": 42.0,
+                "power_watts": 180
+            },
+            "SpacemiT RISC-V K1": {
+                "latency_cl_ms": 0.017916696113452577,
+                "latency_bp_ms": 0.06127510070800781,
+                "speedup": 3.42,
+                "utilization": 78.4,
+                "bandwidth_gbs": 12.0,
+                "power_watts": 12
+            }
+        }
+    }
+}

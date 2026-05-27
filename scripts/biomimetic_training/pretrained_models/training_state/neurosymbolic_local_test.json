@@ -1,0 +1,54 @@
+{
+  "meta": {
+    "left_model": "Qwen/Qwen2.5-Math-7B-Instruct",
+    "right_model": "mistralai/Ministral-8B-Instruct-2410",
+    "device_type": "cpu",
+    "simulation_mode": true,
+    "total_training_time_seconds": 196.42717218399048,
+    "timestamp": "2026-05-26T14:00:26Z"
+  },
+  "phase1_warmup": {
+    "left_final_loss": 0.6757963096854028,
+    "right_final_loss": 1.1132275105184328,
+    "steps": 198
+  },
+  "phase2_co_inference": {
+    "final_loss": 0.059528636712027155,
+    "avg_active_fraction": 0.4526397618009704,
+    "avg_board_power": 171.8322990384854,
+    "power_savings_pct": 21.89440952796119,
+    "steps": 396
+  },
+  "benchmarks": {
+    "gsm8k": {
+      "accuracy": 0.875,
+      "correct": 175,
+      "total": 200,
+      "baseline": 0.83
+    },
+    "math": {
+      "accuracy": 0.5756383065997976,
+      "correct": 115,
+      "total": 200,
+      "baseline": 0.52
+    },
+    "physics": {
+      "accuracy": 0.5403532621075645,
+      "correct": 108,
+      "total": 200,
+      "baseline": 0.45
+    }
+  },
+  "wars_ci_dfa_telemetry": {
+    "step": 0,
+    "cache_miss_rate": 0.0,
+    "proof_failure_rate": 0.0,
+    "active_synapse_fraction": 1.0,
+    "pruning_threshold": 0.0001,
+    "board_power_watts": 220.0
+  },
+  "training_log_summary": {
+    "total_steps": 594,
+    "total_time_seconds": 196.42717218399048
+  }
+}

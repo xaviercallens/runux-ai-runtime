@@ -62,7 +62,7 @@ def main():
         results = json.load(f)
 
     api_key = os.environ.get("GEMINI_API_KEY")
-    use_api = api_key and not api_key.startswith("AIzaSyDmfPzg")
+    use_api = api_key and not api_key.startswith("DUMMY_") or len(api_key) < 10
     
     review_prompt = f"""You are a senior peer reviewer for the Journal of Machine Learning Research (JMLR) and MLSys.
 Provide a highly technical, deep-think review of our synthesized LFS benchmark dataset and physical Cloud TPU v5e benchmarking results:

@@ -1,0 +1,156 @@
+[
+  {
+    "iteration": 1,
+    "hypothesis_id": "H1",
+    "mathematical_soundness": "Unable to evaluate via API (error). Manual review recommended.",
+    "statistical_significance": "N/A (API error)",
+    "suggested_improvements": [
+      "Retry with valid API key",
+      "Check network connectivity",
+      "Verify google-genai version \u2265 1.0"
+    ],
+    "raw_response": "ERROR: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}",
+    "thinking_budget_used": 0,
+    "timestamp": "2026-05-26T20:33:24.902663+00:00"
+  },
+  {
+    "iteration": 1,
+    "hypothesis_id": "H2",
+    "mathematical_soundness": "Unable to evaluate via API (error). Manual review recommended.",
+    "statistical_significance": "N/A (API error)",
+    "suggested_improvements": [
+      "Retry with valid API key",
+      "Check network connectivity",
+      "Verify google-genai version \u2265 1.0"
+    ],
+    "raw_response": "ERROR: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}",
+    "thinking_budget_used": 0,
+    "timestamp": "2026-05-26T20:33:25.043794+00:00"
+  },
+  {
+    "iteration": 1,
+    "hypothesis_id": "H3",
+    "mathematical_soundness": "Unable to evaluate via API (error). Manual review recommended.",
+    "statistical_significance": "N/A (API error)",
+    "suggested_improvements": [
+      "Retry with valid API key",
+      "Check network connectivity",
+      "Verify google-genai version \u2265 1.0"
+    ],
+    "raw_response": "ERROR: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}",
+    "thinking_budget_used": 0,
+    "timestamp": "2026-05-26T20:33:25.217228+00:00"
+  },
+  {
+    "iteration": 1,
+    "hypothesis_id": "H4",
+    "mathematical_soundness": "Unable to evaluate via API (error). Manual review recommended.",
+    "statistical_significance": "N/A (API error)",
+    "suggested_improvements": [
+      "Retry with valid API key",
+      "Check network connectivity",
+      "Verify google-genai version \u2265 1.0"
+    ],
+    "raw_response": "ERROR: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}",
+    "thinking_budget_used": 0,
+    "timestamp": "2026-05-26T20:33:25.283337+00:00"
+  },
+  {
+    "iteration": 1,
+    "hypothesis_id": "H5",
+    "mathematical_soundness": "Unable to evaluate via API (error). Manual review recommended.",
+    "statistical_significance": "N/A (API error)",
+    "suggested_improvements": [
+      "Retry with valid API key",
+      "Check network connectivity",
+      "Verify google-genai version \u2265 1.0"
+    ],
+    "raw_response": "ERROR: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}",
+    "thinking_budget_used": 0,
+    "timestamp": "2026-05-26T20:33:25.358990+00:00"
+  },
+  {
+    "iteration": 1,
+    "hypothesis_id": "H6",
+    "mathematical_soundness": "Unable to evaluate via API (error). Manual review recommended.",
+    "statistical_significance": "N/A (API error)",
+    "suggested_improvements": [
+      "Retry with valid API key",
+      "Check network connectivity",
+      "Verify google-genai version \u2265 1.0"
+    ],
+    "raw_response": "ERROR: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}",
+    "thinking_budget_used": 0,
+    "timestamp": "2026-05-26T20:33:25.451735+00:00"
+  },
+  {
+    "iteration": 1,
+    "hypothesis_id": "H7",
+    "mathematical_soundness": "Unable to evaluate via API (error). Manual review recommended.",
+    "statistical_significance": "N/A (API error)",
+    "suggested_improvements": [
+      "Retry with valid API key",
+      "Check network connectivity",
+      "Verify google-genai version \u2265 1.0"
+    ],
+    "raw_response": "ERROR: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}",
+    "thinking_budget_used": 0,
+    "timestamp": "2026-05-26T20:33:25.516817+00:00"
+  },
+  {
+    "iteration": 2,
+    "hypothesis_id": "H5",
+    "mathematical_soundness": "Unable to evaluate via API (error). Manual review recommended.",
+    "statistical_significance": "N/A (API error)",
+    "suggested_improvements": [
+      "Retry with valid API key",
+      "Check network connectivity",
+      "Verify google-genai version \u2265 1.0"
+    ],
+    "raw_response": "ERROR: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}",
+    "thinking_budget_used": 0,
+    "timestamp": "2026-05-26T20:33:43.895484+00:00"
+  },
+  {
+    "iteration": 2,
+    "hypothesis_id": "H4",
+    "mathematical_soundness": "Unable to evaluate via API (error). Manual review recommended.",
+    "statistical_significance": "N/A (API error)",
+    "suggested_improvements": [
+      "Retry with valid API key",
+      "Check network connectivity",
+      "Verify google-genai version \u2265 1.0"
+    ],
+    "raw_response": "ERROR: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}",
+    "thinking_budget_used": 0,
+    "timestamp": "2026-05-26T20:33:44.011996+00:00"
+  },
+  {
+    "iteration": 2,
+    "hypothesis_id": "H7",
+    "mathematical_soundness": "Unable to evaluate via API (error). Manual review recommended.",
+    "statistical_significance": "N/A (API error)",
+    "suggested_improvements": [
+      "Retry with valid API key",
+      "Check network connectivity",
+      "Verify google-genai version \u2265 1.0"
+    ],
+    "raw_response": "ERROR: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}",
+    "thinking_budget_used": 0,
+    "timestamp": "2026-05-26T20:33:44.082086+00:00"
+  },
+  {
+    "iteration": 3,
+    "hypothesis_id": "H5",
+    "mathematical_soundness": "Unable to evaluate via API (error). Manual review recommended.",
+    "statistical_significance": "N/A (API error)",
+    "suggested_improvements": [
+      "Retry with valid API key",
+      "Check network connectivity",
+      "Verify google-genai version \u2265 1.0"
+    ],
+    "raw_response": "ERROR: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}",
+    "thinking_budget_used": 0,
+    "timestamp": "2026-05-26T20:33:50.372213+00:00"
+  }
+]

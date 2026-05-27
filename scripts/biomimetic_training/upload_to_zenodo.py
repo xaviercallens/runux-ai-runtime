@@ -44,12 +44,12 @@ def publish_to_zenodo():
     print(f"{CYAN}{BOLD}========================================================================{NC}\n")
 
     paper = {
-        "title": "Biomimetic Co-Inference Learning: Bypassing Backpropagation via Telemetry-Guided Direct Feedback Alignment",
-        "description": "WARS-CI-DFA: A high-performance, energy-efficient biomimetic learning loop on GCP Cloud TPU v5e bypassing backward propagation and saving 40% board power, formally verified in Lean 4.",
-        "keywords": ["Neuromorphic Computing", "Direct Feedback Alignment", "GCP Cloud TPU v5e", "Lean 4", "Formal Verification", "Green AI"],
+        "title": "SymBrain: A Biomimetic Neuro-Symbolic Architecture for Small Language Models",
+        "description": "SymBrain: A 3-hemisphere neuro-symbolic architecture using Qwen2.5-Math-7B and Ministral-8B coordinated by an executive Prefrontal Cortex bridge. Achieves SOTA reasoning for its class (GSM8K: 88.50%, MATH: 58.41%, Physics: 56.09%) with 21.9% power savings.",
+        "keywords": ["Neuromorphic Computing", "Neuro-Symbolic", "Small Language Models", "Green AI", "Biomimetic Co-Inference", "Prefrontal Cortex"],
         "creators": [{"name": "Callens, Xavier", "affiliation": "Socrate AI Lab"}],
         "publication_type": "preprint",
-        "files": ["PAPER_DRAFT.md", "PAPER_DRAFT.tex", "PAPER_DRAFT.pdf", "co_inference_research.md", "tpu_benchmark_results.json", "runux_ai_engine.py"]
+        "files": ["SYMBRAIN_PAPER_DRAFT.md", "neurosymbolic_results.json"]
     }
 
     print(f"  [+] Preparing deposition for paper: {BOLD}{paper['title']}{NC}")

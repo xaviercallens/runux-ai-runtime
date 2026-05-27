@@ -1,0 +1,20 @@
+{
+  "model_type": "wars_ci_dfa_v2_pfc_bridge",
+  "left_dim": 3584,
+  "right_dim": 4096,
+  "projection_rank": 256,
+  "alpha_gate": 0.5,
+  "beta_proof": 0.3,
+  "tau_0": 0.0001,
+  "cache_threshold": 0.08,
+  "homeostatic_target": 0.5,
+  "homeostatic_beta": 0.01,
+  "seed": 42,
+  "left_hemisphere_model": "Qwen/Qwen2.5-Math-7B-Instruct",
+  "right_hemisphere_model": "mistralai/Ministral-8B-Instruct-2410",
+  "architecture": "neuro_symbolic_brain_v1",
+  "framework": "pytorch",
+  "training_duration_seconds": 914.5,
+  "total_steps": 2965,
+  "serialization_timestamp": "2026-05-26T14:31:41.979236Z"
+}

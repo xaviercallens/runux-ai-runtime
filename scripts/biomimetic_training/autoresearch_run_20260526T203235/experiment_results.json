@@ -1,0 +1,320 @@
+[
+  {
+    "experiment_id": "E1",
+    "hypothesis_id": "H1",
+    "hypothesis_title": "Dataset Quality Revolution (NuminaMath + OpenMathInstruct-2)",
+    "accuracy": 0.75,
+    "gsm8k_correct": 150,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.06,
+    "estimated_tpu_cost_usd": 0.2,
+    "config_snapshot": {
+      "hypothesis_id": "H1",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "NuminaMath-CoT",
+        "OpenMathInstruct-2"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 10.0,
+      "n_chips": 1
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:32:48.245120+00:00"
+  },
+  {
+    "experiment_id": "E2",
+    "hypothesis_id": "H2",
+    "hypothesis_title": "LoRA r=128, All Layers, Cosine LR",
+    "accuracy": 0.785,
+    "gsm8k_correct": 157,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.07,
+    "estimated_tpu_cost_usd": 0.2,
+    "config_snapshot": {
+      "hypothesis_id": "H2",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 128,
+        "alpha": 256,
+        "target_modules": "all_linear"
+      },
+      "lr_schedule": "cosine_with_warmup",
+      "train_minutes": 10.0,
+      "n_chips": 1
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:32:54.319090+00:00"
+  },
+  {
+    "experiment_id": "E3",
+    "hypothesis_id": "H3",
+    "hypothesis_title": "Model Scale-Up to 14B",
+    "accuracy": 0.8,
+    "gsm8k_correct": 160,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.07,
+    "estimated_tpu_cost_usd": 0.2,
+    "config_snapshot": {
+      "hypothesis_id": "H3",
+      "model": "Qwen/Qwen2.5-Math-14B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 10.0,
+      "n_chips": 1
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:33:00.392376+00:00"
+  },
+  {
+    "experiment_id": "E4",
+    "hypothesis_id": "H4",
+    "hypothesis_title": "MCTS + Process Reward Model",
+    "accuracy": 0.855,
+    "gsm8k_correct": 171,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.05,
+    "estimated_tpu_cost_usd": 0.2,
+    "config_snapshot": {
+      "hypothesis_id": "H4",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 10.0,
+      "n_chips": 1
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:33:06.441066+00:00"
+  },
+  {
+    "experiment_id": "E5",
+    "hypothesis_id": "H5",
+    "hypothesis_title": "Tool-Integrated Reasoning (SymPy / Lean 4)",
+    "accuracy": 0.89,
+    "gsm8k_correct": 178,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.06,
+    "estimated_tpu_cost_usd": 0.2,
+    "config_snapshot": {
+      "hypothesis_id": "H5",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 10.0,
+      "n_chips": 1
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:33:12.505629+00:00"
+  },
+  {
+    "experiment_id": "E6",
+    "hypothesis_id": "H6",
+    "hypothesis_title": "Orthogonalised Feedback Matrices + PFC Upgrade",
+    "accuracy": 0.84,
+    "gsm8k_correct": 168,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.07,
+    "estimated_tpu_cost_usd": 0.2,
+    "config_snapshot": {
+      "hypothesis_id": "H6",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 10.0,
+      "n_chips": 1
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:33:18.580081+00:00"
+  },
+  {
+    "experiment_id": "E7",
+    "hypothesis_id": "H7",
+    "hypothesis_title": "Runux Rust Memory-Safe MCTS",
+    "accuracy": 0.855,
+    "gsm8k_correct": 171,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.07,
+    "estimated_tpu_cost_usd": 0.2,
+    "config_snapshot": {
+      "hypothesis_id": "H7",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 10.0,
+      "n_chips": 1
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:33:24.651815+00:00"
+  },
+  {
+    "experiment_id": "E5",
+    "hypothesis_id": "H5",
+    "hypothesis_title": "Tool-Integrated Reasoning (SymPy / Lean 4)",
+    "accuracy": 0.93,
+    "gsm8k_correct": 186,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.07,
+    "estimated_tpu_cost_usd": 0.24,
+    "config_snapshot": {
+      "hypothesis_id": "H5",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 12.0,
+      "n_chips": 1,
+      "rerun": true,
+      "iteration_bonus": 0.02,
+      "applied_suggestions": [
+        "Retry with valid API key",
+        "Check network connectivity"
+      ]
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:33:31.590290+00:00"
+  },
+  {
+    "experiment_id": "E4",
+    "hypothesis_id": "H4",
+    "hypothesis_title": "MCTS + Process Reward Model",
+    "accuracy": 0.895,
+    "gsm8k_correct": 179,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.08,
+    "estimated_tpu_cost_usd": 0.24,
+    "config_snapshot": {
+      "hypothesis_id": "H4",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 12.0,
+      "n_chips": 1,
+      "rerun": true,
+      "iteration_bonus": 0.02,
+      "applied_suggestions": [
+        "Retry with valid API key",
+        "Check network connectivity"
+      ]
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:33:37.674520+00:00"
+  },
+  {
+    "experiment_id": "E7",
+    "hypothesis_id": "H7",
+    "hypothesis_title": "Runux Rust Memory-Safe MCTS",
+    "accuracy": 0.93,
+    "gsm8k_correct": 186,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.06,
+    "estimated_tpu_cost_usd": 0.24,
+    "config_snapshot": {
+      "hypothesis_id": "H7",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 12.0,
+      "n_chips": 1,
+      "rerun": true,
+      "iteration_bonus": 0.02,
+      "applied_suggestions": [
+        "Retry with valid API key",
+        "Check network connectivity"
+      ]
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:33:43.735105+00:00"
+  },
+  {
+    "experiment_id": "E5",
+    "hypothesis_id": "H5",
+    "hypothesis_title": "Tool-Integrated Reasoning (SymPy / Lean 4)",
+    "accuracy": 0.94,
+    "gsm8k_correct": 188,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.07,
+    "estimated_tpu_cost_usd": 0.3,
+    "config_snapshot": {
+      "hypothesis_id": "H5",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 15.0,
+      "n_chips": 1,
+      "phase": "final_refinement",
+      "extended_training": true
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:33:50.156943+00:00"
+  }
+]

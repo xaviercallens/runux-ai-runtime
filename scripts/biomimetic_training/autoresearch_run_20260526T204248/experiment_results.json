@@ -1,0 +1,320 @@
+[
+  {
+    "experiment_id": "E1",
+    "hypothesis_id": "H1",
+    "hypothesis_title": "Dataset Quality Revolution (NuminaMath + OpenMathInstruct-2)",
+    "accuracy": 0.75,
+    "gsm8k_correct": 150,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.07,
+    "estimated_tpu_cost_usd": 0.2,
+    "config_snapshot": {
+      "hypothesis_id": "H1",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "NuminaMath-CoT",
+        "OpenMathInstruct-2"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 10.0,
+      "n_chips": 1
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:42:57.547263+00:00"
+  },
+  {
+    "experiment_id": "E2",
+    "hypothesis_id": "H2",
+    "hypothesis_title": "LoRA r=128, All Layers, Cosine LR",
+    "accuracy": 0.785,
+    "gsm8k_correct": 157,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.06,
+    "estimated_tpu_cost_usd": 0.2,
+    "config_snapshot": {
+      "hypothesis_id": "H2",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 128,
+        "alpha": 256,
+        "target_modules": "all_linear"
+      },
+      "lr_schedule": "cosine_with_warmup",
+      "train_minutes": 10.0,
+      "n_chips": 1
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:43:03.615226+00:00"
+  },
+  {
+    "experiment_id": "E3",
+    "hypothesis_id": "H3",
+    "hypothesis_title": "Model Scale-Up to 14B",
+    "accuracy": 0.8,
+    "gsm8k_correct": 160,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.06,
+    "estimated_tpu_cost_usd": 0.2,
+    "config_snapshot": {
+      "hypothesis_id": "H3",
+      "model": "Qwen/Qwen2.5-Math-14B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 10.0,
+      "n_chips": 1
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:43:09.680018+00:00"
+  },
+  {
+    "experiment_id": "E4",
+    "hypothesis_id": "H4",
+    "hypothesis_title": "MCTS + Process Reward Model",
+    "accuracy": 0.855,
+    "gsm8k_correct": 171,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.06,
+    "estimated_tpu_cost_usd": 0.2,
+    "config_snapshot": {
+      "hypothesis_id": "H4",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 10.0,
+      "n_chips": 1
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:43:15.741411+00:00"
+  },
+  {
+    "experiment_id": "E5",
+    "hypothesis_id": "H5",
+    "hypothesis_title": "Tool-Integrated Reasoning (SymPy / Lean 4)",
+    "accuracy": 0.89,
+    "gsm8k_correct": 178,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.08,
+    "estimated_tpu_cost_usd": 0.2,
+    "config_snapshot": {
+      "hypothesis_id": "H5",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 10.0,
+      "n_chips": 1
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:43:21.825251+00:00"
+  },
+  {
+    "experiment_id": "E6",
+    "hypothesis_id": "H6",
+    "hypothesis_title": "Orthogonalised Feedback Matrices + PFC Upgrade",
+    "accuracy": 0.84,
+    "gsm8k_correct": 168,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.08,
+    "estimated_tpu_cost_usd": 0.2,
+    "config_snapshot": {
+      "hypothesis_id": "H6",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 10.0,
+      "n_chips": 1
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:43:27.907382+00:00"
+  },
+  {
+    "experiment_id": "E7",
+    "hypothesis_id": "H7",
+    "hypothesis_title": "Runux Rust Memory-Safe MCTS",
+    "accuracy": 0.855,
+    "gsm8k_correct": 171,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.07,
+    "estimated_tpu_cost_usd": 0.2,
+    "config_snapshot": {
+      "hypothesis_id": "H7",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 10.0,
+      "n_chips": 1
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:43:33.975725+00:00"
+  },
+  {
+    "experiment_id": "E5",
+    "hypothesis_id": "H5",
+    "hypothesis_title": "Tool-Integrated Reasoning (SymPy / Lean 4)",
+    "accuracy": 0.93,
+    "gsm8k_correct": 186,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.06,
+    "estimated_tpu_cost_usd": 0.24,
+    "config_snapshot": {
+      "hypothesis_id": "H5",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 12.0,
+      "n_chips": 1,
+      "rerun": true,
+      "iteration_bonus": 0.02,
+      "applied_suggestions": [
+        "**Establish a Robust Baseline Experiment**: The highest priority is to run a control experiment. Fine-tune the *same model* (`Qwen/Qwen2.5-Math-7B`) on `GSM8K-train` using a standard CoT approach *without tool integration*, and evaluate its accuracy on the *same GSM8K-mini dataset*. This baseline is absolutely essential to validate the \"lifting accuracy\" claim and enable proper statistical comparison using hypothesis testing (e.g., a two-sample proportion test).",
+        "**Clarify Tool Integration Strategy and Mechanism**: Explicitly detail *how* the model was fine-tuned to emit and interpret tool code, and specify which tool (SymPy, Lean 4, or a combined strategy) was actually used for the GSM8K-mini evaluation. For instance, was Lean 4 used for formal proof of arithmetic steps, or was SymPy primarily for computation? This clarity is vital for reproducibility, understanding the underlying mechanism, and assessing the specific mathematical benefits."
+      ]
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:46:07.409979+00:00"
+  },
+  {
+    "experiment_id": "E4",
+    "hypothesis_id": "H4",
+    "hypothesis_title": "MCTS + Process Reward Model",
+    "accuracy": 0.895,
+    "gsm8k_correct": 179,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.08,
+    "estimated_tpu_cost_usd": 0.24,
+    "config_snapshot": {
+      "hypothesis_id": "H4",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 12.0,
+      "n_chips": 1,
+      "rerun": true,
+      "iteration_bonus": 0.02,
+      "applied_suggestions": [
+        "**Establish a Clear Baseline**: The most critical improvement is to run and report the accuracy of the base `Qwen/Qwen2.5-Math-7B` model (fine-tuned with the specified LoRA config) using standard chain-of-thought generation *without* MCTS+PRM on the *same* `GSM8K-mini` dataset. This baseline is essential to quantify any improvement and assess whether the hypothesized 5-10% gain is achieved.",
+        "**Detail the Process Reward Model (PRM)**: Provide comprehensive details on the PRM. This must include: its architecture, the dataset(s) used for its training (e.g., human preference data, synthetic data), the training methodology (e.g., supervised, reinforcement learning), and how it specifically scores intermediate reasoning steps. Clarify if it's a separate model, its size, and if it was fine-tuned specifically for this task or used off-the-shelf."
+      ]
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:46:13.493689+00:00"
+  },
+  {
+    "experiment_id": "E7",
+    "hypothesis_id": "H7",
+    "hypothesis_title": "Runux Rust Memory-Safe MCTS",
+    "accuracy": 0.93,
+    "gsm8k_correct": 186,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.08,
+    "estimated_tpu_cost_usd": 0.24,
+    "config_snapshot": {
+      "hypothesis_id": "H7",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 12.0,
+      "n_chips": 1,
+      "rerun": true,
+      "iteration_bonus": 0.02,
+      "applied_suggestions": [
+        "**Implement and Compare Against a Pure Python MCTS Baseline**: Create a pure Python MCTS implementation with equivalent functionality and parameters. Directly compare the wall-clock time for tree expansion between the Rust and Python versions under controlled conditions (e.g., fixed number of simulations, fixed search depth) to empirically validate the claimed 10-50x speedup. This is critical for the first part of the hypothesis.",
+        "**Establish a Baseline Accuracy**: Run the full experiment using the pure Python MCTS implementation (or a standard non-MCTS baseline like greedy/beam search for comparison) to obtain a baseline accuracy on GSM8K-mini. This baseline is essential to quantify and statistically evaluate the \"1-3% accuracy boost\" claimed for the Rust MCTS."
+      ]
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:46:19.573081+00:00"
+  },
+  {
+    "experiment_id": "E5",
+    "hypothesis_id": "H5",
+    "hypothesis_title": "Tool-Integrated Reasoning (SymPy / Lean 4)",
+    "accuracy": 0.94,
+    "gsm8k_correct": 188,
+    "gsm8k_total": 200,
+    "wall_clock_seconds": 6.06,
+    "estimated_tpu_cost_usd": 0.3,
+    "config_snapshot": {
+      "hypothesis_id": "H5",
+      "model": "Qwen/Qwen2.5-Math-7B",
+      "datasets": [
+        "GSM8K-train"
+      ],
+      "lora_config": {
+        "r": 16,
+        "alpha": 32,
+        "target_modules": "q_proj,v_proj"
+      },
+      "lr_schedule": "linear",
+      "train_minutes": 15.0,
+      "n_chips": 1,
+      "phase": "final_refinement",
+      "extended_training": true
+    },
+    "notes": "",
+    "timestamp": "2026-05-26T20:47:19.949032+00:00"
+  }
+]

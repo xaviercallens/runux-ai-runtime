@@ -1,0 +1,162 @@
+[
+  {
+    "iteration": 1,
+    "hypothesis_id": "H1",
+    "mathematical_soundness": "The hypothesis is mathematically well-motivated. The observed accuracy of 75.0% is consistent with the expected gain of +15% over baseline. The experimental design is sound but would benefit from larger sample sizes and ablation studies to isolate the causal effect.",
+    "statistical_significance": "With N=200 samples, the observed accuracy of 75.0% yields a Wilson score 95% CI of [68.6%, 80.5%]. This is statistically significant at p<0.05. Effect size (Cohen's h) \u2248 0.524 relative to a 50% baseline.",
+    "suggested_improvements": [
+      "Stratify NuminaMath by difficulty tier (AMC\u2192AIME\u2192Olympiad) and measure per-tier gains.",
+      "Add contamination check: verify GSM8K-mini samples are not in OpenMathInstruct-2.",
+      "Experiment with different mixture ratios (e.g. 70/30 vs 50/50 NuminaMath/OMI-2).",
+      "Include MATH-500 as an additional held-out evaluation set for robustness."
+    ],
+    "raw_response": "[SIMULATED] Iteration 1 review for H1",
+    "thinking_budget_used": 8192,
+    "timestamp": "2026-05-26T20:41:30.283035+00:00"
+  },
+  {
+    "iteration": 1,
+    "hypothesis_id": "H2",
+    "mathematical_soundness": "The hypothesis is mathematically well-motivated. The observed accuracy of 78.5% is consistent with the expected gain of +7% over baseline. The experimental design is sound but would benefit from larger sample sizes and ablation studies to isolate the causal effect.",
+    "statistical_significance": "With N=200 samples, the observed accuracy of 78.5% yields a Wilson score 95% CI of [72.3%, 83.6%]. This is statistically significant at p<0.05. Effect size (Cohen's h) \u2248 0.607 relative to a 50% baseline.",
+    "suggested_improvements": [
+      "Ablate LoRA rank: test r \u2208 {32, 64, 128, 256} to find the knee of the curve.",
+      "Compare cosine annealing vs OneCycleLR vs constant LR with warm restarts.",
+      "Profile memory: report peak VRAM for r=128 all-linear vs r=16 q/v-only.",
+      "Add gradient accumulation to handle larger effective batch sizes."
+    ],
+    "raw_response": "[SIMULATED] Iteration 1 review for H2",
+    "thinking_budget_used": 8192,
+    "timestamp": "2026-05-26T20:41:30.882812+00:00"
+  },
+  {
+    "iteration": 1,
+    "hypothesis_id": "H3",
+    "mathematical_soundness": "The hypothesis is mathematically well-motivated. The observed accuracy of 80.0% is consistent with the expected gain of +4% over baseline. The experimental design is sound but would benefit from larger sample sizes and ablation studies to isolate the causal effect.",
+    "statistical_significance": "With N=200 samples, the observed accuracy of 80.0% yields a Wilson score 95% CI of [73.9%, 85.0%]. This is statistically significant at p<0.05. Effect size (Cohen's h) \u2248 0.644 relative to a 50% baseline.",
+    "suggested_improvements": [
+      "Compare 14B vs 7B at equal compute budget (fewer steps for 14B) to isolate scale effect.",
+      "Report per-step training throughput (tokens/sec) for cost-effectiveness analysis.",
+      "Test whether 14B benefits more from higher LoRA rank than 7B.",
+      "Evaluate latency at inference: is the 2\u00d7 parameter increase acceptable for deployment?"
+    ],
+    "raw_response": "[SIMULATED] Iteration 1 review for H3",
+    "thinking_budget_used": 8192,
+    "timestamp": "2026-05-26T20:41:31.464363+00:00"
+  },
+  {
+    "iteration": 1,
+    "hypothesis_id": "H4",
+    "mathematical_soundness": "The hypothesis is mathematically well-motivated. The observed accuracy of 85.5% is consistent with the expected gain of +8% over baseline. The experimental design is sound but would benefit from larger sample sizes and ablation studies to isolate the causal effect.",
+    "statistical_significance": "With N=200 samples, the observed accuracy of 85.5% yields a Wilson score 95% CI of [80.0%, 89.7%]. This is statistically significant at p<0.05. Effect size (Cohen's h) \u2248 0.789 relative to a 50% baseline.",
+    "suggested_improvements": [
+      "Ablate MCTS rollouts: test {8, 16, 32, 64, 128} to find optimal compute/accuracy trade-off.",
+      "Validate PRM calibration: check if reward scores correlate with actual correctness.",
+      "Report inference-time cost: MCTS multiplies FLOPs by rollout count.",
+      "Compare MCTS vs Best-of-N sampling as a simpler baseline."
+    ],
+    "raw_response": "[SIMULATED] Iteration 1 review for H4",
+    "thinking_budget_used": 8192,
+    "timestamp": "2026-05-26T20:41:32.042698+00:00"
+  },
+  {
+    "iteration": 1,
+    "hypothesis_id": "H5",
+    "mathematical_soundness": "The hypothesis is mathematically well-motivated. The observed accuracy of 89.0% is consistent with the expected gain of +5% over baseline. The experimental design is sound but would benefit from larger sample sizes and ablation studies to isolate the causal effect.",
+    "statistical_significance": "With N=200 samples, the observed accuracy of 89.0% yields a Wilson score 95% CI of [83.9%, 92.6%]. This is statistically significant at p<0.05. Effect size (Cohen's h) \u2248 0.895 relative to a 50% baseline.",
+    "suggested_improvements": [
+      "Measure what fraction of errors are pure arithmetic vs logical reasoning failures.",
+      "Define a clear grammar for tool-call emission to avoid malformed code blocks.",
+      "Test SymPy-only vs Lean 4-only vs combined to isolate each tool's contribution.",
+      "Add a fallback: if SymPy/Lean times out, continue with pure CoT."
+    ],
+    "raw_response": "[SIMULATED] Iteration 1 review for H5",
+    "thinking_budget_used": 8192,
+    "timestamp": "2026-05-26T20:41:32.626870+00:00"
+  },
+  {
+    "iteration": 1,
+    "hypothesis_id": "H6",
+    "mathematical_soundness": "The hypothesis is mathematically well-motivated. The observed accuracy of 84.0% is consistent with the expected gain of +3% over baseline. The experimental design is sound but would benefit from larger sample sizes and ablation studies to isolate the causal effect.",
+    "statistical_significance": "With N=200 samples, the observed accuracy of 84.0% yields a Wilson score 95% CI of [78.3%, 88.4%]. This is statistically significant at p<0.05. Effect size (Cohen's h) \u2248 0.748 relative to a 50% baseline.",
+    "suggested_improvements": [
+      "Verify orthogonality is maintained after training: measure \u2016B\u1d40B - I\u2016_F periodically.",
+      "Compare QR-initialised B vs Gram-Schmidt vs random orthogonal matrices.",
+      "Ablate the PFC attention mechanism: how many heads, what key/query dimension?",
+      "Report alignment angle \u03b8 between DFA update direction and true gradient."
+    ],
+    "raw_response": "[SIMULATED] Iteration 1 review for H6",
+    "thinking_budget_used": 8192,
+    "timestamp": "2026-05-26T20:41:33.256090+00:00"
+  },
+  {
+    "iteration": 1,
+    "hypothesis_id": "H7",
+    "mathematical_soundness": "The hypothesis is mathematically well-motivated. The observed accuracy of 85.5% is consistent with the expected gain of +2% over baseline. The experimental design is sound but would benefit from larger sample sizes and ablation studies to isolate the causal effect.",
+    "statistical_significance": "With N=200 samples, the observed accuracy of 85.5% yields a Wilson score 95% CI of [80.0%, 89.7%]. This is statistically significant at p<0.05. Effect size (Cohen's h) \u2248 0.789 relative to a 50% baseline.",
+    "suggested_improvements": [
+      "Benchmark Rust MCTS vs Python MCTS on identical rollout counts and tree depths.",
+      "Profile: measure time in tree expansion vs policy network inference to identify bottleneck.",
+      "Test thread-safe parallel MCTS with Rayon for multi-core TPU host utilisation.",
+      "Ensure PyO3 bindings have zero-copy numpy array transfer."
+    ],
+    "raw_response": "[SIMULATED] Iteration 1 review for H7",
+    "thinking_budget_used": 8192,
+    "timestamp": "2026-05-26T20:41:33.855459+00:00"
+  },
+  {
+    "iteration": 2,
+    "hypothesis_id": "H5",
+    "mathematical_soundness": "The hypothesis is mathematically well-motivated. The observed accuracy of 93.0% is consistent with the expected gain of +5% over baseline. The experimental design is sound but would benefit from larger sample sizes and ablation studies to isolate the causal effect.",
+    "statistical_significance": "With N=200 samples, the observed accuracy of 93.0% yields a Wilson score 95% CI of [88.6%, 95.8%]. This is statistically significant at p<0.05. Effect size (Cohen's h) \u2248 1.035 relative to a 50% baseline.",
+    "suggested_improvements": [
+      "Fine-tune the model specifically on tool-augmented reasoning traces.",
+      "Benchmark tool-call latency: SymPy parse+exec vs Lean 4 type-check time.",
+      "Evaluate on competition problems where symbolic verification is most impactful."
+    ],
+    "raw_response": "[SIMULATED] Iteration 2 review for H5",
+    "thinking_budget_used": 8192,
+    "timestamp": "2026-05-26T20:41:52.810517+00:00"
+  },
+  {
+    "iteration": 2,
+    "hypothesis_id": "H4",
+    "mathematical_soundness": "The hypothesis is mathematically well-motivated. The observed accuracy of 89.5% is consistent with the expected gain of +8% over baseline. The experimental design is sound but would benefit from larger sample sizes and ablation studies to isolate the causal effect.",
+    "statistical_significance": "With N=200 samples, the observed accuracy of 89.5% yields a Wilson score 95% CI of [84.5%, 93.0%]. This is statistically significant at p<0.05. Effect size (Cohen's h) \u2248 0.911 relative to a 50% baseline.",
+    "suggested_improvements": [
+      "Train a custom PRM on NuminaMath step-level annotations for better reward signal.",
+      "Test tree pruning strategies: alpha-beta or PUCT to reduce wasted rollouts.",
+      "Measure accuracy vs wall-clock time Pareto frontier."
+    ],
+    "raw_response": "[SIMULATED] Iteration 2 review for H4",
+    "thinking_budget_used": 8192,
+    "timestamp": "2026-05-26T20:41:53.397316+00:00"
+  },
+  {
+    "iteration": 2,
+    "hypothesis_id": "H7",
+    "mathematical_soundness": "The hypothesis is mathematically well-motivated. The observed accuracy of 93.0% is consistent with the expected gain of +2% over baseline. The experimental design is sound but would benefit from larger sample sizes and ablation studies to isolate the causal effect.",
+    "statistical_significance": "With N=200 samples, the observed accuracy of 93.0% yields a Wilson score 95% CI of [88.6%, 95.8%]. This is statistically significant at p<0.05. Effect size (Cohen's h) \u2248 1.035 relative to a 50% baseline.",
+    "suggested_improvements": [
+      "Implement MCTS node pooling in Rust to reduce allocation overhead.",
+      "Add ONNX Runtime integration for fast policy/value network inference in Rust.",
+      "Measure memory footprint of the Rust tree vs Python tree at 10K+ nodes."
+    ],
+    "raw_response": "[SIMULATED] Iteration 2 review for H7",
+    "thinking_budget_used": 8192,
+    "timestamp": "2026-05-26T20:41:53.982784+00:00"
+  },
+  {
+    "iteration": 3,
+    "hypothesis_id": "H5",
+    "mathematical_soundness": "The hypothesis is mathematically well-motivated. The observed accuracy of 94.0% is consistent with the expected gain of +5% over baseline. The experimental design is sound but would benefit from larger sample sizes and ablation studies to isolate the causal effect.",
+    "statistical_significance": "With N=200 samples, the observed accuracy of 94.0% yields a Wilson score 95% CI of [89.8%, 96.5%]. This is statistically significant at p<0.05. Effect size (Cohen's h) \u2248 1.076 relative to a 50% baseline.",
+    "suggested_improvements": [
+      "Implement sandboxed execution with resource limits (CPU time, memory).",
+      "Explore using Z3 SMT solver as an additional verification backend."
+    ],
+    "raw_response": "[SIMULATED] Iteration 3 review for H5",
+    "thinking_budget_used": 8192,
+    "timestamp": "2026-05-26T20:42:00.716457+00:00"
+  }
+]
