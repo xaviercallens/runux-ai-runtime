@@ -26,6 +26,7 @@ members = [
     "crates/framework_bridge",
     "crates/sched_fair",
     "benchmarks",
+    "examples/edge_inference_demo",
 ]
 
 [workspace.package]

@@ -1,0 +1,119 @@
+{
+  "system_name": "SymBrain v3 Swarm Bourbaki",
+  "version": "3.4.0",
+  "architectural_family": "Dual-Hemisphere Hybrid Transformer",
+  "total_parameters_billions": 32.0,
+  "license": "LicenseRef-RunuX-Commercial",
+  "profiles": {
+    "edge_spacemit_k1": {
+      "target_hardware": "SpacemiT K1 (8x X60 Cores)",
+      "vlen_bits": 256,
+      "max_system_ram_gb": 8,
+      "target_bandwidth_gb_s": 10.0,
+      "tops": 2.0
+    },
+    "cloud_spacemit_k3": {
+      "target_hardware": "SpacemiT K3 (8x X100 + 8x A100 AI Cores)",
+      "vlen_bits": 1024,
+      "max_system_ram_gb": 32,
+      "target_bandwidth_gb_s": 80.0,
+      "tops": 60.0
+    }
+  },
+  "hemispheres": {
+    "left_hemisphere": {
+      "name": "Qwen-7B-Reasoning",
+      "parameters_billions": 7.0,
+      "hidden_dim": 4096,
+      "num_heads": 32,
+      "num_kv_heads": 8,
+      "num_layers": 32,
+      "vocab_size": 151936,
+      "precision_mappings": {
+        "edge_spacemit_k1": {
+          "weight_quantization": "GgufQ4KM",
+          "block_size": 32,
+          "effective_bits_per_param": 4.5,
+          "vram_allocated_bytes": 3937500000,
+          "kv_cache_quantization": "FP16",
+          "execution_device": "Cpu",
+          "vector_kernel": "dequant_matmul_q4"
+        },
+        "cloud_spacemit_k3": {
+          "weight_quantization": "Fp8E4M3",
+          "block_size": 1,
+          "effective_bits_per_param": 8.0,
+          "vram_allocated_bytes": 7000000000,
+          "kv_cache_quantization": "FP8",
+          "execution_device": "A100AiCore",
+          "vector_kernel": "matmul_rvv_f8"
+        }
+      }
+    },
+    "right_hemisphere": {
+      "name": "Ministral-8B-Creative",
+      "parameters_billions": 8.0,
+      "hidden_dim": 4096,
+      "num_heads": 32,
+      "num_kv_heads": 8,
+      "num_layers": 32,
+      "vocab_size": 151936,
+      "precision_mappings": {
+        "edge_spacemit_k1": {
+          "weight_quantization": "GgufQ8_0",
+          "block_size": 32,
+          "effective_bits_per_param": 8.5,
+          "vram_allocated_bytes": 8500000000,
+          "kv_cache_quantization": "FP16",
+          "execution_device": "Cpu",
+          "vector_kernel": "matmul_rvv_f32"
+        },
+        "cloud_spacemit_k3": {
+          "weight_quantization": "GgufQ8_0",
+          "block_size": 32,
+          "effective_bits_per_param": 8.5,
+          "vram_allocated_bytes": 8500000000,
+          "kv_cache_quantization": "TurboQuant",
+          "turbo_quant_config": {
+            "target_bits": 3,
+            "block_size": 128,
+            "rotation_seed": 42,
+            "use_qjl_correction": true,
+            "qjl_dim": 1024
+          },
+          "execution_device": "A100AiCore",
+          "vector_kernel": "matmul_rvv_f32"
+        }
+      }
+    },
+    "pfc_controller": {
+      "name": "WARS-CI-DFA-Bridge",
+      "parameters_billions": 0.5,
+      "hidden_dim": 1024,
+      "num_heads": 8,
+      "num_kv_heads": 2,
+      "num_layers": 12,
+      "vocab_size": 151936,
+      "precision_mappings": {
+        "edge_spacemit_k1": {
+          "weight_quantization": "FP16",
+          "block_size": 1,
+          "effective_bits_per_param": 16.0,
+          "vram_allocated_bytes": 1000000000,
+          "kv_cache_quantization": "FP16",
+          "execution_device": "Cpu",
+          "vector_kernel": "matmul_rvv_f32"
+        },
+        "cloud_spacemit_k3": {
+          "weight_quantization": "FP16",
+          "block_size": 1,
+          "effective_bits_per_param": 16.0,
+          "vram_allocated_bytes": 1000000000,
+          "kv_cache_quantization": "FP16",
+          "execution_device": "Cpu",
+          "vector_kernel": "matmul_rvv_f32"
+        }
+      }
+    }
+  }
+}

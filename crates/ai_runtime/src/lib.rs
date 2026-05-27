@@ -287,8 +287,6 @@ pub enum ModelArch {
 /// Configuration for loading and running an ML model.
 #[derive(Debug, Clone)]
 pub struct ModelConfig {
-    /// Human-readable model name
-    pub name: String,
     /// Model architecture family
     pub arch: ModelArch,
     /// Number of parameters (in billions, approximate)
@@ -370,8 +368,6 @@ pub enum AiError {
     ComputeError,
     /// Invalid configuration
     InvalidConfig(String),
-    /// Unsupported hardware feature
-    UnsupportedHardware,
 }
 
 impl fmt::Display for AiError {
@@ -388,7 +384,6 @@ impl fmt::Display for AiError {
             Self::ShapeMismatch { .. } => write!(f, "Tensor shape mismatch"),
             Self::ComputeError => write!(f, "Compute error"),
             Self::InvalidConfig(msg) => write!(f, "Invalid config: {}", msg),
-            Self::UnsupportedHardware => write!(f, "Unsupported hardware feature"),
         }
     }
 }
@@ -502,7 +497,6 @@ impl ModelRegistry {
     /// Qwen 2.5 0.5B — ultra-lightweight, ideal for draft model / classification
     pub fn qwen_0_5b(device: DeviceType) -> ModelConfig {
         ModelConfig {
-            name: String::from("Qwen 2.5 0.5B"),
             arch: ModelArch::Qwen,
             params_billions: 1, // rounded up for estimation
             quant_format: QuantFormat::GgufQ4KM,
@@ -520,7 +514,6 @@ impl ModelRegistry {
     /// DeepSeek R1 1.5B — reasoning distill, good on BPI-F3 (8GB)
     pub fn deepseek_r1_1_5b(device: DeviceType) -> ModelConfig {
         ModelConfig {
-            name: String::from("DeepSeek R1 1.5B"),
             arch: ModelArch::DeepSeekR1,
             params_billions: 2, // rounded up
             quant_format: QuantFormat::GgufQ4KM,
@@ -538,7 +531,6 @@ impl ModelRegistry {
     /// DeepSeek R1 7B — advanced reasoning, needs AIBOX-K3
     pub fn deepseek_r1_7b(device: DeviceType) -> ModelConfig {
         ModelConfig {
-            name: String::from("DeepSeek R1 7B"),
             arch: ModelArch::DeepSeekR1,
             params_billions: 7,
             quant_format: QuantFormat::Fp8E4M3,
@@ -556,7 +548,6 @@ impl ModelRegistry {
     /// Qwen 2.5 14B — high-quality generation, AIBOX-K3 32GB
     pub fn qwen_14b(device: DeviceType) -> ModelConfig {
         ModelConfig {
-            name: String::from("Qwen 2.5 14B"),
             arch: ModelArch::Qwen,
             params_billions: 14,
             quant_format: QuantFormat::GgufQ4KM,
@@ -570,145 +561,159 @@ impl ModelRegistry {
             weights_path: String::new(),
         }
     }
+}
 
-    /// Returns all pre-configured model profiles.
-    pub fn all_models() -> Vec<ModelConfig> {
-        let dev = DeviceType::Cpu;
-        alloc::vec![
-            Self::qwen_0_5b(dev),
-            Self::deepseek_r1_1_5b(dev),
-            Self::deepseek_r1_7b(dev),
-            Self::qwen_14b(dev),
-        ]
+// ---------------------------------------------------------------------------
+// SymBrain v3 Dual-Hemisphere Configuration & Quantization Mapping
+// ---------------------------------------------------------------------------
+
+/// Represents one of the dual hemispheres or components of SymBrain v3.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SymBrainHemisphere {
+    /// Left Hemisphere (Qwen-7B-Reasoning): dense logical inference
+    LeftHemisphere,
+    /// Right Hemisphere (Ministral-8B-Creative): creative formulation & MCTS rollouts
+    RightHemisphere,
+    /// PFC Controller (WARS-CI-DFA Bridge): coordinating attention and routing
+    PfcController,
+}
+
+/// Dynamic config describing the quantization mapping for one SymBrain hemisphere.
+#[derive(Debug, Clone)]
+pub struct SymBrainHemisphereConfig {
+    /// Name of the hemisphere module
+    pub name: String,
+    /// Component type
+    pub component: SymBrainHemisphere,
+    /// Weight quantization format used
+    pub weight_quant: QuantFormat,
+    /// KV-cache compression or format used
+    pub kv_cache_dtype: DataType,
+    /// Size of the parameter set in billions
+    pub params_billions: f32,
+    /// Hidden dimension
+    pub hidden_dim: usize,
+    /// Number of attention layers
+    pub num_layers: usize,
+    /// Target execution device
+    pub device: DeviceType,
+}
+
+impl SymBrainHemisphereConfig {
+    /// Calculates the precise estimated memory footprint for this hemisphere.
+    pub fn estimated_vram_bytes(&self, max_context_len: usize) -> usize {
+        let params = (self.params_billions * 1_000_000_000.0) as usize;
+        let weight_bytes = match self.weight_quant {
+            QuantFormat::None => params * 4,
+            QuantFormat::Fp8E4M3 | QuantFormat::GgufQ8_0 => params,
+            QuantFormat::GgufQ6K => params * 6 / 8,
+            QuantFormat::GgufQ4KM | QuantFormat::GgufQ4KS | QuantFormat::Awq | QuantFormat::Gptq => params * 9 / 16, // ~4.5 bits
+        };
+
+        // KV cache footprint
+        let kv_bytes_per_element = match self.kv_cache_dtype {
+            DataType::FP32 => 4,
+            DataType::FP16 | DataType::BF16 => 2,
+            DataType::FP8 | DataType::INT8 => 1,
+            DataType::INT4 => 1, // PolarQuant 3-bit effective
+            _ => 2,
+        };
+
+        // Standard sequence cache size: 2 * layers * kv_heads * head_dim * seq_len
+        // Let's assume standard GQA with 8 KV heads and head_dim=128
+        let head_dim = 128;
+        let num_kv_heads = 8;
+        let kv_cache_bytes = 2 * self.num_layers * num_kv_heads * head_dim * max_context_len * kv_bytes_per_element;
+
+        weight_bytes + kv_cache_bytes
     }
 }
 
-// ---------------------------------------------------------------------------
-// Inference Engine Trait
-// ---------------------------------------------------------------------------
-
-/// Generation configuration for controlling output.
+/// Unified quantization mapping config for the complete SymBrain v3 system.
 #[derive(Debug, Clone)]
-pub struct GenerationConfig {
-    /// Temperature for sampling (1.0 = no change, <1.0 = more deterministic)
-    pub temperature: f32,
-    /// Top-p (nucleus) sampling threshold
-    pub top_p: f32,
-    /// Top-k sampling (0 = disabled)
-    pub top_k: usize,
-    /// Maximum tokens to generate
-    pub max_tokens: usize,
-    /// Repetition penalty (1.0 = disabled)
-    pub repetition_penalty: f32,
-    /// Stop token IDs (generation halts when any is produced)
-    pub stop_tokens: Vec<u32>,
+pub struct SymBrainQuantConfig {
+    /// Left hemisphere config
+    pub left: SymBrainHemisphereConfig,
+    /// Right hemisphere config
+    pub right: SymBrainHemisphereConfig,
+    /// PFC coordinator config
+    pub pfc: SymBrainHemisphereConfig,
+    /// Profile identifier
+    pub profile_name: String,
 }
 
-impl Default for GenerationConfig {
-    fn default() -> Self {
+impl SymBrainQuantConfig {
+    /// Create the official SymBrain v3 Swarm Bourbaki preset.
+    ///
+    /// Configures precision targets adaptively based on hardware capabilities:
+    /// - **Cloud (K3)**: Left (FP8), Right (Q8_0 + PolarQuant 3-bit), PFC (FP16)
+    /// - **Edge (K1)**: Left (Q4_K_M), Right (Q8_0), PFC (FP16)
+    pub fn v3_bourbaki(caps: &HardwareCaps) -> Self {
+        let is_k3 = caps.has_fp8 && caps.vlen_bits >= 1024;
+        let (left_quant, left_kv, left_device) = if is_k3 {
+            (QuantFormat::Fp8E4M3, DataType::FP8, DeviceType::A100AiCore)
+        } else {
+            (QuantFormat::GgufQ4KM, DataType::FP16, DeviceType::Cpu)
+        };
+
+        let (right_quant, right_kv, right_device) = if is_k3 {
+            (QuantFormat::GgufQ8_0, DataType::INT4, DeviceType::A100AiCore) // INT4 represent PolarQuant 3-bit
+        } else {
+            (QuantFormat::GgufQ8_0, DataType::FP16, DeviceType::Cpu)
+        };
+
+        let profile_name = if is_k3 {
+            String::from("cloud_spacemit_k3")
+        } else {
+            String::from("edge_spacemit_k1")
+        };
+
         Self {
-            temperature: 0.7,
-            top_p: 0.9,
-            top_k: 40,
-            max_tokens: 256,
-            repetition_penalty: 1.1,
-            stop_tokens: alloc::vec![],
+            left: SymBrainHemisphereConfig {
+                name: String::from("Qwen-7B-Reasoning"),
+                component: SymBrainHemisphere::LeftHemisphere,
+                weight_quant: left_quant,
+                kv_cache_dtype: left_kv,
+                params_billions: 7.0,
+                hidden_dim: 4096,
+                num_layers: 32,
+                device: left_device,
+            },
+            right: SymBrainHemisphereConfig {
+                name: String::from("Ministral-8B-Creative"),
+                component: SymBrainHemisphere::RightHemisphere,
+                weight_quant: right_quant,
+                kv_cache_dtype: right_kv,
+                params_billions: 8.0,
+                hidden_dim: 4096,
+                num_layers: 32,
+                device: right_device,
+            },
+            pfc: SymBrainHemisphereConfig {
+                name: String::from("WARS-CI-DFA-Bridge"),
+                component: SymBrainHemisphere::PfcController,
+                weight_quant: QuantFormat::None, // FP16 (represented as None in QuantFormat)
+                kv_cache_dtype: DataType::FP16,
+                params_billions: 0.5,
+                hidden_dim: 1024,
+                num_layers: 12,
+                device: DeviceType::Cpu,
+            },
+            profile_name,
         }
     }
-}
 
-/// Output from a generation run.
-#[derive(Debug, Clone)]
-pub struct GenerationOutput {
-    /// Generated token IDs
-    pub tokens: Vec<u32>,
-    /// Number of tokens generated
-    pub num_tokens: usize,
-    /// Average tokens per second
-    pub tokens_per_second: f32,
-    /// Time to first token (microseconds)
-    pub ttft_us: f32,
-    /// Total generation time (microseconds)
-    pub total_us: f32,
-    /// Peak memory usage (bytes)
-    pub peak_memory_bytes: usize,
-    /// Energy consumed (Joules, 0 if not measured)
-    pub energy_joules: f32,
-}
-
-/// Core trait for LLM inference engines.
-///
-/// Implementations can be hardware-specific (K1 scalar, K3 vectorized,
-/// K3 AI-core FP8) or simulation-only for development.
-///
-/// # Lifecycle
-///
-/// ```text
-/// new() → load_model() → [prefill() → decode_step()* → reset()]* → drop
-/// ```
-pub trait InferenceEngine {
-    /// Load a model from a GGUF file path.
-    fn load_model(&mut self, config: &ModelConfig) -> Result<(), AiError>;
-
-    /// Process prompt tokens (prefill phase).
-    ///
-    /// Returns logits for the last prompt token.
-    fn prefill(&mut self, tokens: &[u32]) -> Result<Vec<f32>, AiError>;
-
-    /// Generate the next token's logits (decode phase).
-    ///
-    /// Takes the previously sampled token as input.
-    fn decode_step(&mut self, token: u32) -> Result<Vec<f32>, AiError>;
-
-    /// Sample a token from logits.
-    fn sample(&self, logits: &[f32], config: &GenerationConfig) -> u32;
-
-    /// Run full generation from prompt tokens.
-    fn generate(
-        &mut self,
-        prompt_tokens: &[u32],
-        config: &GenerationConfig,
-    ) -> Result<GenerationOutput, AiError> {
-        let start_us = 0.0f32; // placeholder for real timing
-
-        // Prefill
-        let mut logits = self.prefill(prompt_tokens)?;
-
-        let mut generated = Vec::new();
-        let mut token = self.sample(&logits, config);
-        generated.push(token);
-
-        // Decode loop
-        for _ in 1..config.max_tokens {
-            if config.stop_tokens.contains(&token) {
-                break;
-            }
-            logits = self.decode_step(token)?;
-            token = self.sample(&logits, config);
-            generated.push(token);
-        }
-
-        let num_tokens = generated.len();
-
-        Ok(GenerationOutput {
-            tokens: generated,
-            num_tokens,
-            tokens_per_second: 0.0, // filled by real implementation
-            ttft_us: 0.0,
-            total_us: 0.0,
-            peak_memory_bytes: 0,
-            energy_joules: 0.0,
-        })
+    /// Computes the total VRAM/RAM required to execute this configuration.
+    pub fn total_vram_bytes(&self, max_context_len: usize) -> usize {
+        self.left.estimated_vram_bytes(max_context_len)
+            + self.right.estimated_vram_bytes(max_context_len)
+            + self.pfc.estimated_vram_bytes(max_context_len)
     }
 
-    /// Reset engine state for a new sequence.
-    fn reset(&mut self);
-
-    /// Get current memory usage in bytes.
-    fn memory_usage(&self) -> usize;
-
-    /// Get the model configuration.
-    fn model_config(&self) -> Option<&ModelConfig>;
+    /// Checks if this configuration fits within the system's available RAM.
+    pub fn fits_in_ram(&self, max_context_len: usize, available_ram: usize) -> bool {
+        self.total_vram_bytes(max_context_len) <= available_ram
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -770,5 +775,28 @@ mod tests {
         let k1 = HardwareCaps::spacemit_k1(8);
         let small = ModelRegistry::qwen_0_5b(DeviceType::Cpu);
         assert!(small.fits_in_ram(k1.available_ram));
+    }
+
+    #[test]
+    fn test_symbrain_v3_config_edge() {
+        let k1 = HardwareCaps::spacemit_k1(8);
+        let config = SymBrainQuantConfig::v3_bourbaki(&k1);
+        assert_eq!(config.profile_name, "edge_spacemit_k1");
+        assert_eq!(config.left.weight_quant, QuantFormat::GgufQ4KM);
+        assert_eq!(config.right.weight_quant, QuantFormat::GgufQ8_0);
+        
+        let total_ram_needed = config.total_vram_bytes(4096);
+        // Total footprint should fit inside 8GB easily since 7B is Q4 and 8B is Q8
+        assert!(total_ram_needed < 15 * 1024 * 1024 * 1024);
+    }
+
+    #[test]
+    fn test_symbrain_v3_config_cloud() {
+        let k3 = HardwareCaps::spacemit_k3(32);
+        let config = SymBrainQuantConfig::v3_bourbaki(&k3);
+        assert_eq!(config.profile_name, "cloud_spacemit_k3");
+        assert_eq!(config.left.weight_quant, QuantFormat::Fp8E4M3);
+        assert_eq!(config.right.weight_quant, QuantFormat::GgufQ8_0);
+        assert_eq!(config.right.kv_cache_dtype, DataType::INT4); // PolarQuant 3-bit
     }
 }
