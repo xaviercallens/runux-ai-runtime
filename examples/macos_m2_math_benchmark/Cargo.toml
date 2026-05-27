@@ -1,0 +1,8 @@
+[package]
+name = "macos_m2_math_benchmark"
+version = "0.1.0"
+edition = "2021"
+license = "LicenseRef-RunuX-Commercial"
+publish = false
+
+[dependencies]

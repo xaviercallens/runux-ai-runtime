@@ -28,6 +28,7 @@ members = [
     "benchmarks",
     "examples/edge_inference_demo",
     "examples/macos_m2_inference_demo",
+    "examples/macos_m2_math_benchmark",
 ]
 
 [workspace.package]
