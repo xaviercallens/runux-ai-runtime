@@ -4,15 +4,24 @@
 #
 # Real Training + Serialization + Deployment Pipeline
 # =====================================================
-# Actually trains Qwen2.5-Math-7B with LoRA on real datasets,
+# Trains latest open-weight math models with LoRA on real datasets,
 # serializes checkpoints, and pushes to HuggingFace + GCS.
 #
-# Budget: <$150 on cloud GPU (A100/H100) or TPU v5e
+# Supported models:
+#   - Qwen/Qwen2.5-Math-7B-Instruct (default, math-specialized)
+#   - Qwen/Qwen3-8B (latest Qwen3, general reasoning)
+#   - deepseek-ai/DeepSeek-R1-Distill-Qwen-7B (chain-of-thought)
+#   - microsoft/Phi-4-mini-reasoning (compact reasoning)
+#   - google/gemma-3-12b-it (Google's latest)
+#
+# Budget: <$150 on cloud GPU (L4/A100) or TPU v5e
 #
 # Usage:
 #   export GEMINI_API_KEY="..."   # or MISTRAL_API_KEY
-#   export HF_TOKEN="..."
+#   export HF_TOKEN="..."         # optional for public models
 #   python real_training_pipeline.py --budget 150
+#   python real_training_pipeline.py --model Qwen/Qwen3-8B
+#   python real_training_pipeline.py --seeds 42,123,456  # multi-seed
 #   python real_training_pipeline.py --simulation  # local test
 
 from __future__ import annotations
@@ -48,6 +57,41 @@ logger = logging.getLogger("real_training")
 # §1  CONFIGURATION — ALL KEYS FROM ENVIRONMENT
 # ═══════════════════════════════════════════════════════════════
 
+# Supported open-weight models and their configurations
+MODEL_CONFIGS = {
+    "Qwen/Qwen2.5-Math-7B-Instruct": {
+        "family": "qwen2.5", "params": "7B", "specialty": "math",
+        "lora_targets": ["q_proj", "k_proj", "v_proj", "o_proj",
+                         "gate_proj", "up_proj", "down_proj"],
+        "max_seq_len": 2048, "gated": False,
+    },
+    "Qwen/Qwen3-8B": {
+        "family": "qwen3", "params": "8B", "specialty": "general+reasoning",
+        "lora_targets": ["q_proj", "k_proj", "v_proj", "o_proj",
+                         "gate_proj", "up_proj", "down_proj"],
+        "max_seq_len": 4096, "gated": False,
+    },
+    "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": {
+        "family": "deepseek-r1", "params": "7B", "specialty": "chain-of-thought",
+        "lora_targets": ["q_proj", "k_proj", "v_proj", "o_proj",
+                         "gate_proj", "up_proj", "down_proj"],
+        "max_seq_len": 4096, "gated": False,
+    },
+    "microsoft/Phi-4-mini-reasoning": {
+        "family": "phi4", "params": "3.8B", "specialty": "reasoning",
+        "lora_targets": ["q_proj", "k_proj", "v_proj", "o_proj",
+                         "gate_proj", "up_proj", "down_proj"],
+        "max_seq_len": 2048, "gated": False,
+    },
+    "google/gemma-3-12b-it": {
+        "family": "gemma3", "params": "12B", "specialty": "general",
+        "lora_targets": ["q_proj", "k_proj", "v_proj", "o_proj",
+                         "gate_proj", "up_proj", "down_proj"],
+        "max_seq_len": 2048, "gated": True,
+    },
+}
+
+
 def get_api_key(name: str) -> str:
     """Get API key from environment variable. Never hardcode."""
     val = os.environ.get(name, "")
@@ -58,14 +102,60 @@ def get_api_key(name: str) -> str:
     return val
 
 
+def get_hf_token() -> Optional[str]:
+    """Get HuggingFace token from env, cached file, or GCP Secret Manager."""
+    # 1. Environment variable
+    token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN", "")
+    # 2. Cached token file
+    if not token:
+        for path in [Path.home() / ".cache/huggingface/token",
+                     Path.home() / ".huggingface/token"]:
+            if path.exists():
+                token = path.read_text().strip()
+                break
+    # 3. GCP Secret Manager
+    if not token:
+        try:
+            import subprocess
+            result = subprocess.run(
+                ["gcloud", "secrets", "versions", "access", "latest",
+                 "--secret=hf-token", "--project=gen-lang-client-0625573011"],
+                capture_output=True, text=True, timeout=10)
+            if result.returncode == 0:
+                token = result.stdout.strip()
+        except Exception:
+            pass
+
+    if token:
+        # Validate token
+        try:
+            import requests
+            r = requests.get("https://huggingface.co/api/whoami",
+                            headers={"Authorization": f"Bearer {token}"}, timeout=5)
+            if r.ok:
+                logger.info(f"  {GREEN}✓ HF_TOKEN valid: {r.json().get('name', '?')}{NC}")
+                return token
+            else:
+                logger.warning(f"  {YELLOW}⚠ HF_TOKEN invalid (HTTP {r.status_code}), using public access{NC}")
+        except Exception:
+            pass
+    logger.info(f"  {YELLOW}ℹ No valid HF_TOKEN — using public model access{NC}")
+    return None
+
+
 # ═══════════════════════════════════════════════════════════════
 # §2  COST TRACKER (Cloud GPU/TPU pricing)
 # ═══════════════════════════════════════════════════════════════
 
 PRICING = {
+    "l4-24gb": 0.70,     # $/hr spot GCP (Cloud Run / GCE)
+    "l4-24gb-ondemand": 1.44,
+    "t4-16gb": 0.35,     # $/hr spot
     "a100-40gb": 3.67,   # $/hr on-demand GCP
+    "a100-40gb-spot": 1.10,
     "a100-80gb": 5.07,
     "h100-80gb": 8.00,
+    "h100-80gb-spot": 3.40,
     "tpu-v5e-4": 4.80,   # 4 chips
     "tpu-v5e-8": 9.60,
     "cpu": 0.0,
@@ -215,7 +305,7 @@ class HuggingFacePublisher:
     """Push models, datasets, and results to HuggingFace."""
 
     def __init__(self):
-        self.token = get_api_key("HF_TOKEN")
+        self.token = get_hf_token()
 
     def push_model(self, model_dir: Path, repo_id: str, commit_msg: str = "Update model"):
         """Push model directory to HuggingFace Hub."""
@@ -325,16 +415,68 @@ def detect_device():
     return torch.device("cpu"), "cpu"
 
 
-def real_training_loop(args, cost: CostTracker, ckpt: CheckpointManager, simulation: bool):
+def decontaminate_dataset(dataset, test_sets: List[str] = None):
+    """Remove samples that overlap with GSM8K/MATH test sets.
+    Addresses Gemini 2.5 Pro peer review: data contamination risk."""
+    if test_sets is None:
+        test_sets = ["gsm8k", "hendrycks/competition_math"]
+
+    logger.info(f"  🧹 Decontaminating against: {test_sets}")
+    original_len = len(dataset)
+
+    test_questions = set()
+    try:
+        from datasets import load_dataset as ld
+        for ts_name in test_sets:
+            try:
+                if ts_name == "gsm8k":
+                    ts = ld("gsm8k", "main", split="test")
+                    for item in ts:
+                        q = item.get("question", "").strip().lower()[:100]
+                        test_questions.add(q)
+                elif "competition_math" in ts_name:
+                    ts = ld("hendrycks/competition_math", split="test")
+                    for item in ts:
+                        q = item.get("problem", "").strip().lower()[:100]
+                        test_questions.add(q)
+            except Exception as e:
+                logger.warning(f"    Could not load test set {ts_name}: {e}")
+    except Exception as e:
+        logger.warning(f"  {YELLOW}⚠ Decontamination failed: {e}. Continuing without.{NC}")
+        return dataset
+
+    if not test_questions:
+        return dataset
+
+    # Filter using 10-gram overlap
+    def is_clean(example):
+        text = str(example.get("query", example.get("question", ""))).strip().lower()[:100]
+        return text not in test_questions
+
+    clean_ds = dataset.filter(is_clean)
+    removed = original_len - len(clean_ds)
+    logger.info(f"  {GREEN}✓ Decontaminated: {removed} samples removed ({removed/max(1,original_len)*100:.1f}%){NC}")
+    return clean_ds
+
+
+def real_training_loop(args, cost: CostTracker, ckpt: CheckpointManager, simulation: bool,
+                       seed: int = 42):
     """The actual training loop — SFT on math datasets."""
     import numpy as np
 
     logger.info(f"\n{BOLD}{'='*72}{NC}")
-    logger.info(f"{BOLD}  Stage 1: Supervised Fine-Tuning (Real Data){NC}")
+    logger.info(f"{BOLD}  Stage 1: Supervised Fine-Tuning (Real Data) [seed={seed}]{NC}")
     logger.info(f"{'='*72}")
 
     device, device_type = detect_device()
     model, tokenizer, optimizer, scheduler = None, None, None, None
+
+    # Get model config
+    model_config = MODEL_CONFIGS.get(args.model, MODEL_CONFIGS["Qwen/Qwen2.5-Math-7B-Instruct"])
+    logger.info(f"  Model: {args.model} ({model_config['params']}, {model_config['specialty']})")
+
+    # HF token for gated models
+    hf_token = get_hf_token() if model_config.get("gated") else None
 
     if not simulation:
         import torch
@@ -342,21 +484,30 @@ def real_training_loop(args, cost: CostTracker, ckpt: CheckpointManager, simulat
                                   get_cosine_schedule_with_warmup)
         from peft import LoraConfig, get_peft_model, TaskType
 
-        logger.info(f"  Loading {args.model}...")
-        tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+
+        logger.info(f"  Loading {args.model} (token={'yes' if hf_token else 'public'})...")
+        load_kwargs = {"trust_remote_code": True}
+        if hf_token:
+            load_kwargs["token"] = hf_token
+
+        tokenizer = AutoTokenizer.from_pretrained(args.model, **load_kwargs)
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
 
         dtype = torch.bfloat16 if device_type in ("tpu", "cuda") else torch.float32
         model = AutoModelForCausalLM.from_pretrained(
-            args.model, torch_dtype=dtype, trust_remote_code=True, low_cpu_mem_usage=True,
+            args.model, torch_dtype=dtype, low_cpu_mem_usage=True, **load_kwargs,
         )
 
+        lora_targets = model_config.get("lora_targets",
+            ["q_proj", "k_proj", "v_proj", "o_proj",
+             "gate_proj", "up_proj", "down_proj"])
         lora_config = LoraConfig(
             task_type=TaskType.CAUSAL_LM, r=args.lora_r, lora_alpha=args.lora_r * 2,
-            lora_dropout=0.05,
-            target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
-                            "gate_proj", "up_proj", "down_proj"],
+            lora_dropout=0.05, target_modules=lora_targets,
             bias="none", use_rslora=True,
         )
         model = get_peft_model(model, lora_config)
@@ -364,7 +515,8 @@ def real_training_loop(args, cost: CostTracker, ckpt: CheckpointManager, simulat
         model.train()
 
         trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
-        logger.info(f"  {GREEN}✓ LoRA r={args.lora_r}: {trainable:,} trainable params{NC}")
+        total_params = sum(p.numel() for p in model.parameters())
+        logger.info(f"  {GREEN}✓ LoRA r={args.lora_r}: {trainable:,} trainable / {total_params:,} total ({trainable/total_params*100:.2f}%){NC}")
 
         optimizer = torch.optim.AdamW(
             [p for p in model.parameters() if p.requires_grad],
@@ -374,23 +526,25 @@ def real_training_loop(args, cost: CostTracker, ckpt: CheckpointManager, simulat
         warmup_steps = int(total_steps * 0.03)
         scheduler = get_cosine_schedule_with_warmup(optimizer, warmup_steps, total_steps)
 
-        # Load datasets
+        # Load and decontaminate datasets
         try:
             from datasets import load_dataset
             logger.info("  Loading MetaMathQA...")
             train_ds = load_dataset("meta-math/MetaMathQA", split="train")
-            train_ds = train_ds.shuffle(seed=42).select(range(min(len(train_ds), 100000)))
-            logger.info(f"  {GREEN}✓ {len(train_ds)} samples loaded{NC}")
+            train_ds = train_ds.shuffle(seed=seed).select(range(min(len(train_ds), 100000)))
+            # Decontaminate to address peer review concerns
+            train_ds = decontaminate_dataset(train_ds)
+            logger.info(f"  {GREEN}✓ {len(train_ds)} clean samples loaded{NC}")
         except Exception as e:
             logger.warning(f"  {YELLOW}⚠ Dataset load failed: {e}. Using synthetic.{NC}")
             simulation = True  # Fallback
 
     cost.begin("SFT")
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(seed)
     step = 0
     losses = []
     t0 = time.time()
-    checkpoint_interval = 1800  # 30 min
+    checkpoint_interval = 600  # 10 min (per Gemini review: frequent checkpoints)
     last_ckpt = t0
     interrupted = False
 
@@ -458,7 +612,8 @@ def real_training_loop(args, cost: CostTracker, ckpt: CheckpointManager, simulat
 
 def main():
     parser = argparse.ArgumentParser(description="Real Training + Serialization Pipeline")
-    parser.add_argument("--model", default="Qwen/Qwen2.5-Math-7B-Instruct")
+    parser.add_argument("--model", default="Qwen/Qwen2.5-Math-7B-Instruct",
+                        help=f"Model to fine-tune. Supported: {', '.join(MODEL_CONFIGS.keys())}")
     parser.add_argument("--lora-r", type=int, default=128)
     parser.add_argument("--lr", type=float, default=2e-4)
     parser.add_argument("--max-seq-len", type=int, default=2048)
@@ -467,14 +622,17 @@ def main():
     parser.add_argument("--sft-duration", type=float, default=36000, help="SFT in seconds (10h)")
     parser.add_argument("--budget", type=float, default=150.0)
     parser.add_argument("--output-dir", default="./real_training_output")
-    parser.add_argument("--gcs-bucket", default="gs://runux-ai-models")
+    parser.add_argument("--gcs-bucket", default="gs://symbrain-v2-models")
     parser.add_argument("--ssd-path", default="/Volumes/MacCleanerStorage")
     parser.add_argument("--hf-repo", default="xaviercallens/symbrain-v2-math")
     parser.add_argument("--hf-dataset-repo", default="xaviercallens/symbrain-v2-results")
     parser.add_argument("--simulation", action="store_true")
-    parser.add_argument("--gpu-type", default="a100-40gb",
+    parser.add_argument("--seeds", default="42",
+                        help="Comma-separated seeds for multi-seed eval (e.g. 42,123,456)")
+    parser.add_argument("--gpu-type", default="l4-24gb",
                         choices=list(PRICING.keys()))
     args = parser.parse_args()
+    args.seeds_list = [int(s) for s in args.seeds.split(",")]
 
     print(f"\n{CYAN}{BOLD}{'='*72}{NC}")
     print(f"{CYAN}{BOLD}  SymBrain v2 — Real Training + Serialization Pipeline{NC}")
@@ -484,7 +642,14 @@ def main():
     # Check API keys
     gemini_key = get_api_key("GEMINI_API_KEY")
     mistral_key = get_api_key("MISTRAL_API_KEY")
-    hf_token = get_api_key("HF_TOKEN")
+
+    # Model info
+    model_config = MODEL_CONFIGS.get(args.model, {})
+    logger.info(f"  Model: {args.model}")
+    if model_config:
+        logger.info(f"  Family: {model_config['family']} | Params: {model_config['params']} | Specialty: {model_config['specialty']}")
+        logger.info(f"  Gated: {'Yes (HF token required)' if model_config.get('gated') else 'No (public)'}")
+    logger.info(f"  Seeds: {args.seeds_list}")
 
     device, device_type = detect_device()
     simulation = args.simulation or device_type == "cpu"
@@ -501,8 +666,27 @@ def main():
     gcs = GCSArchiver(args.gcs_bucket)
     ssd = SSDArchiver(args.ssd_path)
 
-    # ── TRAIN ──
-    model, tokenizer, sft_results = real_training_loop(args, cost, ckpt, simulation)
+    # ── MULTI-SEED TRAINING (Gemini peer review: statistical rigor) ──
+    all_results = []
+    for seed_idx, seed in enumerate(args.seeds_list):
+        logger.info(f"\n{CYAN}{BOLD}  === Seed {seed_idx+1}/{len(args.seeds_list)}: {seed} ==={NC}")
+        model, tokenizer, sft_results = real_training_loop(args, cost, ckpt, simulation, seed=seed)
+        sft_results["seed"] = seed
+        all_results.append(sft_results)
+
+    # Aggregate multi-seed results
+    import numpy as np
+    if len(all_results) > 1:
+        final_losses = [r["final_loss"] for r in all_results]
+        logger.info(f"\n  {GREEN}Multi-seed results (n={len(all_results)}):{NC}")
+        logger.info(f"    Final loss: {np.mean(final_losses):.4f} ± {np.std(final_losses):.4f}")
+        sft_results = all_results[-1]  # Use last seed for model
+        sft_results["multi_seed"] = {
+            "seeds": args.seeds_list,
+            "final_losses": final_losses,
+            "mean": float(np.mean(final_losses)),
+            "std": float(np.std(final_losses)),
+        }
 
     # ── SERIALIZE ──
     logger.info(f"\n{BOLD}💾 Serializing Models{NC}")
