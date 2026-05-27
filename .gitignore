@@ -20,3 +20,8 @@ __pycache__/
 
 
 
+.env.*
+*.secret
+*.key
+secrets/
+vertex_job_config.yaml
