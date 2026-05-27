@@ -292,6 +292,23 @@ impl HardwareCaps {
         }
     }
 
+    /// Apple Silicon M2: 8-core CPU + 10-core GPU, unified memory UMA, 100 GB/s.
+    pub fn apple_silicon_m2(ram_gb: usize) -> Self {
+        Self {
+            name: "Apple Silicon M2 (GPU + CPU UMA)",
+            backend_type: BackendType::Gpu,
+            peak_tflops: 5.6, // 5.6 TFLOPS half-precision
+            native_dtype: DType::F16,
+            memory_bytes: ram_gb * 1024 * 1024 * 1024,
+            memory_bw_gbs: 100.0, // base M2 UMA bandwidth
+            optimal_tile_size: 64, // Metal threadgroup SIMD width
+            tdp_watts: 20.0, // average power under full GPU/CPU load
+            ridge_point: 0.056, // 5.6 / 100
+            supports_distributed: false,
+            ici_bw_gbs: 0.0,
+        }
+    }
+
     // --- CPU Reference ---
 
     /// Generic CPU reference backend (for testing).
@@ -695,6 +712,112 @@ impl Accelerator for TpuSimulatorBackend {
 }
 
 // ---------------------------------------------------------------------------
+// Apple Silicon (M2 UMA) Backend
+// ---------------------------------------------------------------------------
+
+/// Apple Silicon backend — models M2 UMA with CPU/GPU dynamic partitioning.
+///
+/// In a real macOS deployment, this binds directly to Metal Performance Shaders (MPS)
+/// via FFI for GPU operations and Apple Accelerate (vDSP/BLAS) for CPU vectorization.
+pub struct AppleSiliconBackend {
+    caps: HardwareCaps,
+    cpu: CpuBackend,
+}
+
+impl AppleSiliconBackend {
+    /// Create a new Apple Silicon backend with the specified RAM size.
+    pub fn m2(ram_gb: usize) -> Self {
+        Self {
+            caps: HardwareCaps::apple_silicon_m2(ram_gb),
+            cpu: CpuBackend::new(),
+        }
+    }
+}
+
+impl Accelerator for AppleSiliconBackend {
+    fn caps(&self) -> &HardwareCaps { &self.caps }
+
+    fn alloc_tensor(&self, shape: &Shape, dtype: DType) -> TensorDesc {
+        // Zero-copy UMA allocation: data is shared directly between CPU and GPU
+        let mut desc = TensorDesc::new("m2_uma_tensor", shape.clone(), dtype);
+        // Under Apple's MTLResourceStorageModeShared, the CPU and GPU share the pointer
+        desc.handle = shape.total_bytes(dtype) as u64;
+        desc
+    }
+
+    fn matmul(
+        &self,
+        a: &[f32], b: &[f32], c: &mut [f32],
+        m: usize, n: usize, k: usize,
+    ) {
+        // GPU Accelerate MPS matrix multiplication simulation
+        // In real macOS M2, this executes: [MPSMatrixMultiplication encodeToCommandBuffer:...]
+        let tile = self.caps.optimal_tile_size; // 64 (threadgroup size)
+
+        // Clear output
+        for v in c.iter_mut() { *v = 0.0; }
+
+        let tm = tile.min(m);
+        let tn = tile.min(n);
+        let tk = tile.min(k);
+
+        // Simulated tiled multiplication modeled after MPS cache tiling
+        for i0 in (0..m).step_by(tm) {
+            for j0 in (0..n).step_by(tn) {
+                for p0 in (0..k).step_by(tk) {
+                    let i_end = (i0 + tm).min(m);
+                    let j_end = (j0 + tn).min(n);
+                    let p_end = (p0 + tk).min(k);
+
+                    for i in i0..i_end {
+                        for j in j0..j_end {
+                            let mut sum = 0.0f32;
+                            for p in p0..p_end {
+                                sum += a[i * k + p] * b[p * n + j];
+                            }
+                            c[i * n + j] += sum;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fn flash_attention(
+        &self,
+        q: &[f32], k: &[f32], v: &[f32],
+        output: &mut [f32],
+        config: &FlashConfig,
+    ) {
+        // In real macOS M2, this executes MPS Graph-fused scaled dot-product attention
+        let m2_config = FlashConfig {
+            tile_q: self.caps.optimal_tile_size.min(config.tile_q.max(16)),
+            tile_kv: self.caps.optimal_tile_size.min(config.tile_kv.max(16)),
+            ..config.clone()
+        };
+        self.cpu.flash_attention(q, k, v, output, &m2_config);
+    }
+
+    fn softmax(&self, x: &mut [f32]) {
+        // Local ARM NEON vectorized stable softmax execution
+        self.cpu.softmax(x);
+    }
+
+    fn rms_norm(&self, x: &mut [f32], weight: &[f32], eps: f32) {
+        // Apple Accelerate / vDSP fast root-mean-square normalization
+        self.cpu.rms_norm(x, weight, eps);
+    }
+
+    fn silu(&self, x: &mut [f32]) {
+        self.cpu.silu(x);
+    }
+
+    fn rope(&self, x: &mut [f32], position: usize, head_dim: usize, theta: f32) {
+        self.cpu.rope(x, position, head_dim, theta);
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Cross-backend comparison utilities
 // ---------------------------------------------------------------------------
 
@@ -948,5 +1071,22 @@ mod tests {
         let decode_bytes: u64 = 1024 * 1024 * 2; // load full weight matrix
         assert!(v5e.is_memory_bound(decode_flops as u64, decode_bytes as u64),
             "Batch-1 decode should be memory-bound on TPU");
+    }
+
+    #[test]
+    fn test_apple_silicon_m2_matmul() {
+        let m2 = AppleSiliconBackend::m2(16);
+        let cpu = CpuBackend::new();
+
+        let a = vec![1.0, 2.0, 3.0, 4.0];
+        let b = vec![5.0, 6.0, 7.0, 8.0];
+        let mut c_m2 = vec![0.0f32; 4];
+        let mut c_cpu = vec![0.0f32; 4];
+
+        m2.matmul(&a, &b, &mut c_m2, 2, 2, 2);
+        cpu.matmul(&a, &b, &mut c_cpu, 2, 2, 2);
+
+        let err = compare_outputs(&c_cpu, &c_m2);
+        assert!(err < 1e-5, "M2 simulated matmul matches CPU reference");
     }
 }

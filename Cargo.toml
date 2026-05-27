@@ -27,6 +27,7 @@ members = [
     "crates/sched_fair",
     "benchmarks",
     "examples/edge_inference_demo",
+    "examples/macos_m2_inference_demo",
 ]
 
 [workspace.package]

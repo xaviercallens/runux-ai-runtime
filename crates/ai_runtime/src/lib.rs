@@ -287,6 +287,8 @@ pub enum ModelArch {
 /// Configuration for loading and running an ML model.
 #[derive(Debug, Clone)]
 pub struct ModelConfig {
+    /// Human-readable model name
+    pub name: String,
     /// Model architecture family
     pub arch: ModelArch,
     /// Number of parameters (in billions, approximate)
@@ -368,6 +370,8 @@ pub enum AiError {
     ComputeError,
     /// Invalid configuration
     InvalidConfig(String),
+    /// Unsupported hardware feature
+    UnsupportedHardware,
 }
 
 impl fmt::Display for AiError {
@@ -384,6 +388,7 @@ impl fmt::Display for AiError {
             Self::ShapeMismatch { .. } => write!(f, "Tensor shape mismatch"),
             Self::ComputeError => write!(f, "Compute error"),
             Self::InvalidConfig(msg) => write!(f, "Invalid config: {}", msg),
+            Self::UnsupportedHardware => write!(f, "Unsupported hardware feature"),
         }
     }
 }
@@ -497,6 +502,7 @@ impl ModelRegistry {
     /// Qwen 2.5 0.5B — ultra-lightweight, ideal for draft model / classification
     pub fn qwen_0_5b(device: DeviceType) -> ModelConfig {
         ModelConfig {
+            name: String::from("Qwen 2.5 0.5B"),
             arch: ModelArch::Qwen,
             params_billions: 1, // rounded up for estimation
             quant_format: QuantFormat::GgufQ4KM,
@@ -514,6 +520,7 @@ impl ModelRegistry {
     /// DeepSeek R1 1.5B — reasoning distill, good on BPI-F3 (8GB)
     pub fn deepseek_r1_1_5b(device: DeviceType) -> ModelConfig {
         ModelConfig {
+            name: String::from("DeepSeek R1 1.5B"),
             arch: ModelArch::DeepSeekR1,
             params_billions: 2, // rounded up
             quant_format: QuantFormat::GgufQ4KM,
@@ -531,6 +538,7 @@ impl ModelRegistry {
     /// DeepSeek R1 7B — advanced reasoning, needs AIBOX-K3
     pub fn deepseek_r1_7b(device: DeviceType) -> ModelConfig {
         ModelConfig {
+            name: String::from("DeepSeek R1 7B"),
             arch: ModelArch::DeepSeekR1,
             params_billions: 7,
             quant_format: QuantFormat::Fp8E4M3,
@@ -548,6 +556,7 @@ impl ModelRegistry {
     /// Qwen 2.5 14B — high-quality generation, AIBOX-K3 32GB
     pub fn qwen_14b(device: DeviceType) -> ModelConfig {
         ModelConfig {
+            name: String::from("Qwen 2.5 14B"),
             arch: ModelArch::Qwen,
             params_billions: 14,
             quant_format: QuantFormat::GgufQ4KM,
@@ -560,6 +569,17 @@ impl ModelRegistry {
             device,
             weights_path: String::new(),
         }
+    }
+
+    /// Returns all pre-configured model profiles.
+    pub fn all_models() -> Vec<ModelConfig> {
+        let dev = DeviceType::Cpu;
+        alloc::vec![
+            Self::qwen_0_5b(dev),
+            Self::deepseek_r1_1_5b(dev),
+            Self::deepseek_r1_7b(dev),
+            Self::qwen_14b(dev),
+        ]
     }
 }
 
@@ -703,6 +723,43 @@ impl SymBrainQuantConfig {
         }
     }
 
+    /// Create the official SymBrain v3 macos_m2_unified preset for local edge inference.
+    pub fn macos_m2_unified(_caps: &HardwareCaps) -> Self {
+        Self {
+            left: SymBrainHemisphereConfig {
+                name: String::from("Qwen-7B-Reasoning"),
+                component: SymBrainHemisphere::LeftHemisphere,
+                weight_quant: QuantFormat::GgufQ4KM, // MPS-accelerated GGUF Q4
+                kv_cache_dtype: DataType::FP16,     // standard F16 GPU cache
+                params_billions: 7.0,
+                hidden_dim: 4096,
+                num_layers: 32,
+                device: DeviceType::PowerVrGpu,      // represents Metal GPU core in HAL
+            },
+            right: SymBrainHemisphereConfig {
+                name: String::from("Ministral-8B-Creative"),
+                component: SymBrainHemisphere::RightHemisphere,
+                weight_quant: QuantFormat::GgufQ8_0, // uniform Q8 weights
+                kv_cache_dtype: DataType::INT4,      // PolarQuant 3-bit cache
+                params_billions: 8.0,
+                hidden_dim: 4096,
+                num_layers: 32,
+                device: DeviceType::PowerVrGpu,      // running on GPU
+            },
+            pfc: SymBrainHemisphereConfig {
+                name: String::from("WARS-CI-DFA-Bridge"),
+                component: SymBrainHemisphere::PfcController,
+                weight_quant: QuantFormat::None,     // FP16 controller
+                kv_cache_dtype: DataType::FP16,
+                params_billions: 0.5,
+                hidden_dim: 1024,
+                num_layers: 12,
+                device: DeviceType::Cpu,             // CPU AMX/NEON coordinator
+            },
+            profile_name: String::from("macos_m2_unified"),
+        }
+    }
+
     /// Computes the total VRAM/RAM required to execute this configuration.
     pub fn total_vram_bytes(&self, max_context_len: usize) -> usize {
         self.left.estimated_vram_bytes(max_context_len)
@@ -798,5 +855,16 @@ mod tests {
         assert_eq!(config.left.weight_quant, QuantFormat::Fp8E4M3);
         assert_eq!(config.right.weight_quant, QuantFormat::GgufQ8_0);
         assert_eq!(config.right.kv_cache_dtype, DataType::INT4); // PolarQuant 3-bit
+    }
+
+    #[test]
+    fn test_symbrain_v3_config_m2() {
+        let k1 = HardwareCaps::spacemit_k1(16); // mock
+        let config = SymBrainQuantConfig::macos_m2_unified(&k1);
+        assert_eq!(config.profile_name, "macos_m2_unified");
+        assert_eq!(config.left.weight_quant, QuantFormat::GgufQ4KM);
+        assert_eq!(config.right.weight_quant, QuantFormat::GgufQ8_0);
+        assert_eq!(config.right.kv_cache_dtype, DataType::INT4); // PolarQuant 3-bit
+        assert_eq!(config.left.device, DeviceType::PowerVrGpu); // represents Metal GPU
     }
 }
