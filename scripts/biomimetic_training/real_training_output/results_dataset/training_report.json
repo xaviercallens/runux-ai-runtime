@@ -1,23 +1,24 @@
 {
   "meta": {
     "model": "Qwen/Qwen2.5-Math-7B-Instruct",
-    "lora_r": 128,
+    "lora_r": 32,
     "simulation": true,
     "device": "cpu",
-    "timestamp": "2026-05-27T06:34:15.699090+00:00"
+    "timestamp": "2026-05-27T18:02:23.966106+00:00"
   },
   "cost": {
     "budget": 150.0,
-    "spent": 0.03,
-    "gpu_type": "a100-40gb",
+    "spent": 0.01,
+    "gpu_type": "l4-24gb",
     "stages": {
-      "SFT": 0.03
+      "SFT": 0.01
     }
   },
   "sft": {
     "steps": 148,
-    "initial_loss": 2.964901424588436,
-    "final_loss": 0.11043150656169909,
-    "simulation": true
+    "initial_loss": 2.964901424588605,
+    "final_loss": 0.1104001520901765,
+    "simulation": true,
+    "seed": 42
   }
 }

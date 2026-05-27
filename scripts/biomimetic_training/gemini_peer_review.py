@@ -212,12 +212,12 @@ class PeerReviewer:
 
         prompt = f"""Review this ML training implementation for a mathematical reasoning system.
 
-The system (SymBrain v2) fine-tunes Qwen2.5-Math-7B with LoRA for GSM8K/MATH/MMLU-STEM benchmarks.
+The system (SymBrain v2) fine-tunes Qwen2.5-Math-7B with LoRA for GSM8K/MATH/Physics benchmarks.
 
 Key claims:
-- GSM8K: 93.7% (baseline 78.65%)
-- MATH-500: 93.5% (baseline 50.80%)
-- MMLU-STEM: 88.6% (baseline 51.68%)
+- GSM8K: 88.50% (baseline 83.00%)
+- MATH-500: 58.41% (baseline 52.00%)
+- Physics: 56.09% (baseline 45.00%)
 - Training cost: <$150 on TPU/GPU spot
 - LoRA r=128 with RSLoRA across all linear layers
 

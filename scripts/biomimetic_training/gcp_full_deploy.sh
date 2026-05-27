@@ -127,8 +127,8 @@ for gpu in nvidia-tesla-a100 nvidia-l4; do
         --instance-termination-action=STOP \
         --boot-disk-size=200GB \
         --boot-disk-type=pd-ssd \
-        --image-family=pytorch-latest-gpu \
-        --image-project=deeplearning-platform-release \
+        --image-family=ubuntu-accelerator-2204-amd64-with-nvidia-580 \
+        --image-project=ubuntu-os-accelerator-images \
         --maintenance-policy=TERMINATE \
         --scopes=cloud-platform \
         --metadata="startup-script=${STARTUP_SCRIPT}" \
@@ -163,7 +163,7 @@ trap cleanup_train EXIT
 echo -e "\n${BLUE}${BOLD}[2/6] Waiting for instance startup...${NC}"
 for i in $(seq 1 60); do
     if gcloud compute ssh "${TRAIN_INSTANCE}" \
-        --project="${PROJECT}" --zone="${ZONE}" \
+        --project="${PROJECT}" --zone="${ZONE}" --tunnel-through-iap \
         --command="test -f /tmp/startup_done && echo READY" 2>/dev/null | grep -q READY; then
         echo -e "  ${GREEN}✓ Instance ready after ~${i}0 seconds${NC}"
         break
@@ -175,7 +175,7 @@ done
 echo -e "\n${BLUE}${BOLD}[3/6] Uploading training scripts...${NC}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-gcloud compute scp --recurse \
+gcloud compute scp --recurse --tunnel-through-iap \
     "${SCRIPT_DIR}/real_training_pipeline.py" \
     "${SCRIPT_DIR}/baseline_eval.py" \
     "${SCRIPT_DIR}/phase3_full_training.py" \
@@ -198,7 +198,7 @@ echo -e "\n${BLUE}${BOLD}[4/6] Running REAL training...${NC}"
 TRAIN_START=$(date +%s)
 
 gcloud compute ssh "${TRAIN_INSTANCE}" \
-    --project="${PROJECT}" --zone="${ZONE}" \
+    --project="${PROJECT}" --zone="${ZONE}" --tunnel-through-iap \
     --command="cd ~/training && \
         export GEMINI_API_KEY='${GEMINI_API_KEY}' && \
         export MISTRAL_API_KEY='${MISTRAL_KEY}' && \
@@ -208,7 +208,7 @@ gcloud compute ssh "${TRAIN_INSTANCE}" \
         python3 baseline_eval.py --num-seeds 3 2>&1 | tail -30 && \
         echo '--- Full Training Pipeline ---' && \
         python3 real_training_pipeline.py \
-            --model Qwen/Qwen2.5-Math-7B-Instruct \
+            --model Qwen/Qwen2.5-Math-32B-Instruct \
             --lora-r 128 \
             --budget ${BUDGET} \
             --sft-duration 36000 \
@@ -229,7 +229,7 @@ echo -e "\n${BLUE}${BOLD}[5/6] Downloading & archiving models...${NC}"
 
 # Download from instance
 mkdir -p "./trained_models_${TIMESTAMP}"
-gcloud compute scp --recurse \
+gcloud compute scp --recurse --tunnel-through-iap \
     "${TRAIN_INSTANCE}":~/training/output/ \
     "./trained_models_${TIMESTAMP}/" \
     --project="${PROJECT}" --zone="${ZONE}" 2>&1
@@ -277,8 +277,8 @@ gcloud compute instances create "${INFER_INSTANCE}" \
     --instance-termination-action=STOP \
     --boot-disk-size=100GB \
     --boot-disk-type=pd-ssd \
-    --image-family=pytorch-latest-gpu \
-    --image-project=deeplearning-platform-release \
+    --image-family=ubuntu-accelerator-2204-amd64-with-nvidia-580 \
+    --image-project=ubuntu-os-accelerator-images \
     --maintenance-policy=TERMINATE \
     --scopes=cloud-platform \
     --metadata="startup-script=${INFER_STARTUP}" \
@@ -289,7 +289,7 @@ echo -e "  ${GREEN}✓ Inference instance created: ${INFER_INSTANCE}${NC}"
 # Wait for startup
 for i in $(seq 1 30); do
     if gcloud compute ssh "${INFER_INSTANCE}" \
-        --project="${PROJECT}" --zone="${INFER_ZONE}" \
+        --project="${PROJECT}" --zone="${INFER_ZONE}" --tunnel-through-iap \
         --command="test -f /tmp/startup_done && echo READY" 2>/dev/null | grep -q READY; then
         break
     fi
@@ -297,19 +297,19 @@ for i in $(seq 1 30); do
 done
 
 # Upload inference server script
-gcloud compute scp \
+gcloud compute scp --tunnel-through-iap \
     "${SCRIPT_DIR}/inference_server.py" \
     "${INFER_INSTANCE}":~/inference/ \
     --project="${PROJECT}" --zone="${INFER_ZONE}" 2>&1
 
 # Download trained model from GCS to inference instance
 gcloud compute ssh "${INFER_INSTANCE}" \
-    --project="${PROJECT}" --zone="${INFER_ZONE}" \
+    --project="${PROJECT}" --zone="${INFER_ZONE}" --tunnel-through-iap \
     --command="gsutil -m cp -r ${GCS_BUCKET}/training_runs/${TIMESTAMP}/lora_adapters/ ~/inference/model/" 2>&1
 
 # Start inference server
 gcloud compute ssh "${INFER_INSTANCE}" \
-    --project="${PROJECT}" --zone="${INFER_ZONE}" \
+    --project="${PROJECT}" --zone="${INFER_ZONE}" --tunnel-through-iap \
     --command="cd ~/inference && \
         export HF_TOKEN='${HF_TOKEN}' && \
         nohup python3 inference_server.py --port 8080 > server.log 2>&1 &" 2>&1

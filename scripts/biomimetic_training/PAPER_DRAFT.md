@@ -1,3 +1,15 @@
+---
+language:
+- en
+tags:
+- neurosymbolic
+- direct-feedback-alignment
+- green-it
+- tpu
+license: "other"
+pretty_name: "Biomimetic Co-Inference Learning"
+---
+
 # Biomimetic Co-Inference Learning: Bypassing Backpropagation via Telemetry-Guided Direct Feedback Alignment
 
 **Authors**: Xavier Callens, Socrate AI Lab  

@@ -25,3 +25,13 @@ __pycache__/
 *.key
 secrets/
 vertex_job_config.yaml
+
+# === SECURITY: Never commit secrets ===
+*.key
+*.secret
+*.token
+.env
+.env.*
+secrets/
+**/api_key*
+**/secret*key*

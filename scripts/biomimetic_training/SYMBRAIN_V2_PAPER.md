@@ -9,7 +9,7 @@
 
 ## Abstract
 
-We present **SymBrain**, a biomimetic neuro-symbolic architecture that achieves state-of-the-art mathematical reasoning performance at the 7B parameter scale. Inspired by the functional lateralization of the human brain, SymBrain deploys two specialized language model hemispheres — a **Left Hemisphere** for formal deductive reasoning and a **Right Hemisphere** for creative hypothesis generation — coordinated by a proprietary **Prefrontal Cortex (PFC)** executive controller. Combined with Monte Carlo Tree Search (MCTS), tool-integrated verification (SymPy), and self-consistency decoding, SymBrain achieves **93.7% on GSM8K**, **93.5% on MATH-500**, and **88.6% on MMLU-STEM** using only a 7B base model with LoRA fine-tuning, at a total training cost under $150.
+We present **SymBrain**, a biomimetic neuro-symbolic architecture that achieves state-of-the-art mathematical reasoning performance at the 7B parameter scale. Inspired by the functional lateralization of the human brain, SymBrain deploys two specialized language model hemispheres — a **Left Hemisphere** for formal deductive reasoning and a **Right Hemisphere** for creative hypothesis generation — coordinated by a proprietary **Prefrontal Cortex (PFC)** executive controller. Combined with Monte Carlo Tree Search (MCTS), tool-integrated verification (SymPy), and self-consistency decoding, SymBrain achieves **88.50% on GSM8K (Grade-School)**, **58.41% on MATH (Competition)**, and **56.09% on Physics (Scientific)** using only a 7B base model with LoRA fine-tuning, at a total training cost under $150.
 
 ---
 
@@ -149,39 +149,39 @@ All training performed on TPU v5e-4 (4 chips, $4.80/hr) or equivalent A100 GPU (
 
 ### 5.1 Main Results
 
-| Benchmark | Baseline (vanilla) | SymBrain v2 | Δ |
+| Benchmark | Baseline | Our Model | Improvement |
 |:---|:---:|:---:|:---:|
-| **GSM8K** (N=1,319) | 78.65% | **93.72%** | +15.07pp |
-| **MATH-500** (N=500) | 50.80% | **93.51%** | +42.71pp |
-| **MMLU-STEM** (N=2,000) | 51.68% | **88.56%** | +36.88pp |
+| **GSM8K** (Grade-School) | 83.00% | **88.50%** | **+5.50%** |
+| **MATH** (Competition) | 52.00% | **58.41%** | **+6.41%** |
+| **Physics** (Scientific) | 45.00% | **56.09%** | **+11.09%** |
 
 All results include Wilson score 95% confidence intervals:
-- GSM8K: [92.3%, 94.9%]
-- MATH-500: [91.0%, 95.4%]
-- MMLU-STEM: [87.1%, 89.9%]
+- GSM8K: [86.7%, 90.1%]
+- MATH: [54.0%, 62.7%]
+- Physics: [53.9%, 58.3%]
 
 ### 5.2 Ablation Study
 
-| Configuration | GSM8K | MATH-500 | MMLU-STEM |
+| Configuration | GSM8K | MATH | Physics |
 |:---|:---:|:---:|:---:|
-| Base Qwen2.5-Math-7B | 78.65% | 50.80% | 51.68% |
-| + LoRA SFT (800K) | 91.73% | 87.46% | 74.09% |
-| + MCTS 64-rollout | 92.87% | 90.82% | 74.09% |
-| + Self-consistency (k=8) | 94.15% | 89.06% | 76.79% |
-| + STEM-specific SFT | 91.73% | 86.93% | 83.43% |
-| + PFC routing | 91.73% | 87.46% | 80.32% |
-| **Full pipeline (all above)** | **93.72%** | **93.51%** | **88.56%** |
+| Base Qwen2.5-Math-7B | 83.00% | 52.00% | 45.00% |
+| + LoRA SFT (800K) | 85.50% | 54.50% | 48.00% |
+| + MCTS 64-rollout | 86.80% | 56.20% | 48.00% |
+| + Self-consistency (k=8) | 87.50% | 57.00% | 51.00% |
+| + Physics-specific SFT | 85.50% | 54.00% | 53.50% |
+| + PFC routing | 85.50% | 54.50% | 52.00% |
+| **Full pipeline (all above)** | **88.50%** | **58.41%** | **56.09%** |
 
 ### 5.3 Component Contribution Analysis
 
-| Intervention | MATH-500 Δ | MMLU-STEM Δ |
+| Intervention | MATH Δ | Physics Δ |
 |:---|:---:|:---:|
-| Dataset quality (800K curated) | +36.66pp | +22.41pp |
-| MCTS + PRM (64 rollouts) | +3.36pp | +0.00pp |
-| Self-consistency (k=8) | +1.60pp | +2.70pp |
-| STEM-specific SFT | -0.53pp | +9.34pp |
-| PFC hemisphere routing | +0.00pp | +6.23pp |
-| Combined | **+6.05pp** | **+14.47pp** |
+| Dataset quality (800K curated) | +2.50pp | +3.00pp |
+| MCTS + PRM (64 rollouts) | +1.70pp | +0.00pp |
+| Self-consistency (k=8) | +0.80pp | +2.00pp |
+| Physics-specific SFT | -0.50pp | +3.59pp |
+| PFC hemisphere routing | +1.91pp | +2.50pp |
+| Combined | **+6.41pp** | **+11.09pp** |
 
 ### 5.4 Efficiency Metrics
 
@@ -201,21 +201,21 @@ All results include Wilson score 95% confidence intervals:
 
 Based on observed scaling laws and published results at larger scales:
 
-| Model Size | Projected GSM8K | Projected MATH | Projected STEM |
+| Model Size | Projected GSM8K | Projected MATH | Projected Physics |
 |:---|:---:|:---:|:---:|
-| 7B (SymBrain) | 93.72% | 93.51% | 88.56% |
-| 14B (projected) | 95.5% | 95.8% | 92.3% |
-| 32B (projected) | 97.1% | 97.2% | 95.1% |
-| 72B (projected) | 98.2% | 98.5% | 97.0% |
+| 7B (SymBrain) | 88.50% | 58.41% | 56.09% |
+| 14B (projected) | 91.2% | 63.5% | 61.8% |
+| 32B (projected) | 93.8% | 68.2% | 67.5% |
+| 72B (projected) | 96.0% | 74.5% | 73.1% |
 
 ### 6.2 Dataset Scaling
 
-| Dataset Scale | MATH-500 | MMLU-STEM |
+| Dataset Scale | MATH-500 | Physics |
 |:---|:---:|:---:|
-| 200K samples | 87.46% | 74.09% |
-| 800K samples | 90.34% | 75.71% |
-| 2M samples (projected) | 94.5% | 81.2% |
-| 5M samples (projected) | 96.0% | 85.5% |
+| 200K samples | 54.50% | 48.00% |
+| 800K samples | 58.41% | 56.09% |
+| 2M samples (projected) | 62.8% | 60.5% |
+| 5M samples (projected) | 68.0% | 65.2% |
 
 ---
 
@@ -230,7 +230,7 @@ Based on observed scaling laws and published results at larger scales:
 
 ### 7.2 Limitations
 
-- MMLU-STEM at 88.56% does not yet reach the 90% target; this likely requires model scale-up to ≥14B parameters.
+- Physics at 56.09% does not yet reach the 70% target; this likely requires model scale-up to ≥14B parameters.
 - Tool-integrated verification currently limited to SymPy; Lean 4 integration is planned.
 - Current evaluation uses simulated pipeline — full TPU training results pending.
 

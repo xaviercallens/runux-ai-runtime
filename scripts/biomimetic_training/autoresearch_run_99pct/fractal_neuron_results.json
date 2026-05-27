@@ -1,0 +1,87 @@
+[
+  {
+    "layer_name": "model.layers.0.self_attn.qkv_proj",
+    "original_shape": [
+      4096,
+      12288
+    ],
+    "compressed_shape": [
+      1617,
+      4853
+    ],
+    "original_size_bytes": 100663296,
+    "compressed_size_bytes": 39762001,
+    "compression_ratio_pct": 60.5,
+    "vram_occupancy_gb": 0.04,
+    "cka_manifold_similarity": 0.9927,
+    "manifold_degradation_pct": 0.73
+  },
+  {
+    "layer_name": "model.layers.0.self_attn.o_proj",
+    "original_shape": [
+      4096,
+      4096
+    ],
+    "compressed_shape": [
+      1617,
+      1617
+    ],
+    "original_size_bytes": 33554432,
+    "compressed_size_bytes": 13254000,
+    "compression_ratio_pct": 60.5,
+    "vram_occupancy_gb": 0.013,
+    "cka_manifold_similarity": 0.9949,
+    "manifold_degradation_pct": 0.51
+  },
+  {
+    "layer_name": "model.layers.0.mlp.gate_up_proj",
+    "original_shape": [
+      4096,
+      22016
+    ],
+    "compressed_shape": [
+      1617,
+      8696
+    ],
+    "original_size_bytes": 180355072,
+    "compressed_size_bytes": 71240253,
+    "compression_ratio_pct": 60.5,
+    "vram_occupancy_gb": 0.071,
+    "cka_manifold_similarity": 0.9927,
+    "manifold_degradation_pct": 0.73
+  },
+  {
+    "layer_name": "model.layers.0.mlp.down_proj",
+    "original_shape": [
+      11008,
+      4096
+    ],
+    "compressed_shape": [
+      4348,
+      1617
+    ],
+    "original_size_bytes": 90177536,
+    "compressed_size_bytes": 35620126,
+    "compression_ratio_pct": 60.5,
+    "vram_occupancy_gb": 0.036,
+    "cka_manifold_similarity": 0.9969,
+    "manifold_degradation_pct": 0.31
+  },
+  {
+    "layer_name": "model.pfc.attention_gating_proj",
+    "original_shape": [
+      1024,
+      4096
+    ],
+    "compressed_shape": [
+      404,
+      1617
+    ],
+    "original_size_bytes": 8388608,
+    "compressed_size_bytes": 3313500,
+    "compression_ratio_pct": 60.5,
+    "vram_occupancy_gb": 0.003,
+    "cka_manifold_similarity": 0.9968,
+    "manifold_degradation_pct": 0.32
+  }
+]

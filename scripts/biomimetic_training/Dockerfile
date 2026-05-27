@@ -1,32 +1,38 @@
-FROM python:3.11-slim
+FROM nvidia/cuda:12.1.1-devel-ubuntu22.04 as builder
 
-# Install system dependencies
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PATH="/root/.elan/bin:${PATH}"
+
+# Install core runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential git curl && \
+    build-essential git curl python3-pip python3-dev libgmp-dev && \
     rm -rf /var/lib/apt/lists/*
 
+# Install Elan and Lean 4 toolchain (Standard for formal verification)
+RUN curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y --default-toolchain leanprover/lean4:v4.8.0
+
 # Install Python packages
-RUN pip install --no-cache-dir \
+RUN pip3 install --no-cache-dir --upgrade pip && \
+    pip3 install --no-cache-dir \
     torch --index-url https://download.pytorch.org/whl/cu121 && \
-    pip install --no-cache-dir \
-    transformers peft datasets accelerate trl \
-    sympy safetensors sentencepiece huggingface-hub \
-    google-genai google-cloud-storage bitsandbytes \
-    numpy scipy requests tqdm
+    pip3 install --no-cache-dir \
+    transformers peft datasets accelerate trl fastapi uvicorn pydantic \
+    sympy safetensors sentencepiece huggingface-hub google-genai \
+    google-cloud-storage bitsandbytes numpy scipy requests tqdm python-multipart
 
-# Copy training code
 WORKDIR /app
-COPY real_training_pipeline.py baseline_eval.py neuro_symbolic_brain.py \
-     wars_ci_dfa_bridge.py deepprolog_verifier.py mcts_inference.py \
-     real_benchmark_eval.py inference_server.py ./
-COPY pretrained_models/ ./pretrained_models/
 
-# Default: run training
-CMD ["python3", "real_training_pipeline.py", \
-     "--model", "Qwen/Qwen2.5-Math-7B-Instruct", \
-     "--lora-r", "64", "--budget", "150", \
-     "--sft-duration", "2400", \
-     "--max-seq-len", "1024", "--batch-size", "2", "--grad-accum", "16", \
-     "--hf-repo", "xaviercallens/symbrain-v2-math", \
-     "--hf-dataset-repo", "xaviercallens/symbrain-v2-results", \
-     "--output-dir", "/app/output"]
+# Copy SymBrain codebase
+COPY real_training_pipeline.py neuro_symbolic_brain.py wars_ci_dfa_bridge.py \
+     deepprolog_verifier.py mcts_inference.py inference_server.py dashboard.html ./
+RUN mkdir -p pretrained_models
+
+# Expose port
+EXPOSE 8080
+
+# Environment variables for PyTorch VRAM optimization
+ENV PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True"
+ENV PYTHONUNBUFFERED=1
+
+# Pre-warm models on container spinup then launch server
+CMD ["python3", "inference_server.py", "--host", "0.0.0.0", "--port", "8080", "--simulation"]

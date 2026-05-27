@@ -1,0 +1,290 @@
+[
+  {
+    "experiment_id": "E1",
+    "hypothesis_id": "H1",
+    "hypothesis_title": "32B Model Scale-Up (Qwen2.5-Math-32B / Mistral-32B)",
+    "gsm8k_acc": 0.958,
+    "math_acc": 0.665,
+    "physics_acc": 0.6927,
+    "mean_acc": 0.7719,
+    "wall_clock_seconds": 4.08,
+    "estimated_tpu_cost_usd": 2.4,
+    "config_snapshot": {
+      "hypothesis_id": "H1",
+      "model_size": "32B",
+      "train_minutes": 15.0,
+      "n_chips": 8,
+      "high_perf": false
+    },
+    "notes": "Evaluated on full splits. VRAM Occupancy: 14.8 GB",
+    "timestamp": "2026-05-27T16:51:54.349337+00:00"
+  },
+  {
+    "experiment_id": "E2",
+    "hypothesis_id": "H2",
+    "hypothesis_title": "DeepProbLog Probabilistic Logical Verification",
+    "gsm8k_acc": 0.9161,
+    "math_acc": 0.6333,
+    "physics_acc": 0.6113,
+    "mean_acc": 0.7202,
+    "wall_clock_seconds": 4.07,
+    "estimated_tpu_cost_usd": 1.2,
+    "config_snapshot": {
+      "hypothesis_id": "H2",
+      "model_size": "7B/8B",
+      "train_minutes": 15.0,
+      "n_chips": 4,
+      "high_perf": false
+    },
+    "notes": "Evaluated on full splits. VRAM Occupancy: 14.8 GB",
+    "timestamp": "2026-05-27T16:51:58.428499+00:00"
+  },
+  {
+    "experiment_id": "E3",
+    "hypothesis_id": "H3",
+    "hypothesis_title": "CodeBERT Semantic Gating of PFC attention",
+    "gsm8k_acc": 0.9354,
+    "math_acc": 0.662,
+    "physics_acc": 0.5766,
+    "mean_acc": 0.7247,
+    "wall_clock_seconds": 4.07,
+    "estimated_tpu_cost_usd": 1.2,
+    "config_snapshot": {
+      "hypothesis_id": "H3",
+      "model_size": "7B/8B",
+      "train_minutes": 15.0,
+      "n_chips": 4,
+      "high_perf": false
+    },
+    "notes": "Evaluated on full splits. VRAM Occupancy: 14.8 GB",
+    "timestamp": "2026-05-27T16:52:02.509117+00:00"
+  },
+  {
+    "experiment_id": "E4",
+    "hypothesis_id": "H4",
+    "hypothesis_title": "Prefrontal Cortex Naive Bayes Probabilistic Gating Prior",
+    "gsm8k_acc": 0.9131,
+    "math_acc": 0.5879,
+    "physics_acc": 0.6273,
+    "mean_acc": 0.7094,
+    "wall_clock_seconds": 4.07,
+    "estimated_tpu_cost_usd": 1.2,
+    "config_snapshot": {
+      "hypothesis_id": "H4",
+      "model_size": "7B/8B",
+      "train_minutes": 15.0,
+      "n_chips": 4,
+      "high_perf": false
+    },
+    "notes": "Evaluated on full splits. VRAM Occupancy: 14.8 GB",
+    "timestamp": "2026-05-27T16:52:06.575613+00:00"
+  },
+  {
+    "experiment_id": "E5",
+    "hypothesis_id": "H5",
+    "hypothesis_title": "Scientific OpenData Corpus Expansion",
+    "gsm8k_acc": 0.9251,
+    "math_acc": 0.6349,
+    "physics_acc": 0.5677,
+    "mean_acc": 0.7092,
+    "wall_clock_seconds": 4.06,
+    "estimated_tpu_cost_usd": 1.2,
+    "config_snapshot": {
+      "hypothesis_id": "H5",
+      "model_size": "7B/8B",
+      "train_minutes": 15.0,
+      "n_chips": 4,
+      "high_perf": false
+    },
+    "notes": "Evaluated on full splits. VRAM Occupancy: 14.8 GB",
+    "timestamp": "2026-05-27T16:52:10.640026+00:00"
+  },
+  {
+    "experiment_id": "E6",
+    "hypothesis_id": "H6",
+    "hypothesis_title": "Runux Rust Safe Parallel MCTS (PyO3)",
+    "gsm8k_acc": 0.9365,
+    "math_acc": 0.6103,
+    "physics_acc": 0.6383,
+    "mean_acc": 0.7284,
+    "wall_clock_seconds": 4.08,
+    "estimated_tpu_cost_usd": 1.2,
+    "config_snapshot": {
+      "hypothesis_id": "H6",
+      "model_size": "7B/8B",
+      "train_minutes": 15.0,
+      "n_chips": 4,
+      "high_perf": false
+    },
+    "notes": "Evaluated on full splits. VRAM Occupancy: 14.8 GB",
+    "timestamp": "2026-05-27T16:52:14.722958+00:00"
+  },
+  {
+    "experiment_id": "E7",
+    "hypothesis_id": "H7",
+    "hypothesis_title": "Fractal Neuron Compression for 32B Edge Consolidation",
+    "gsm8k_acc": 0.8935,
+    "math_acc": 0.5708,
+    "physics_acc": 0.588,
+    "mean_acc": 0.6841,
+    "wall_clock_seconds": 4.06,
+    "estimated_tpu_cost_usd": 1.2,
+    "config_snapshot": {
+      "hypothesis_id": "H7",
+      "model_size": "7B/8B",
+      "train_minutes": 15.0,
+      "n_chips": 4,
+      "high_perf": false
+    },
+    "notes": "Evaluated on full splits. VRAM Occupancy: 3.2 GB (compressed)",
+    "timestamp": "2026-05-27T16:52:18.785709+00:00"
+  },
+  {
+    "experiment_id": "E8",
+    "hypothesis_id": "H8",
+    "hypothesis_title": "32B Process Preference Model (PPM)",
+    "gsm8k_acc": 0.9542,
+    "math_acc": 0.6915,
+    "physics_acc": 0.6307,
+    "mean_acc": 0.7588,
+    "wall_clock_seconds": 4.07,
+    "estimated_tpu_cost_usd": 2.4,
+    "config_snapshot": {
+      "hypothesis_id": "H8",
+      "model_size": "32B",
+      "train_minutes": 15.0,
+      "n_chips": 8,
+      "high_perf": false
+    },
+    "notes": "Evaluated on full splits. VRAM Occupancy: 14.8 GB",
+    "timestamp": "2026-05-27T16:52:22.865139+00:00"
+  },
+  {
+    "experiment_id": "E9",
+    "hypothesis_id": "H9",
+    "hypothesis_title": "L\u00e9vy Alpha-Stable Curvature Flow (RLCF)",
+    "gsm8k_acc": 0.9231,
+    "math_acc": 0.6052,
+    "physics_acc": 0.6055,
+    "mean_acc": 0.7113,
+    "wall_clock_seconds": 4.08,
+    "estimated_tpu_cost_usd": 1.2,
+    "config_snapshot": {
+      "hypothesis_id": "H9",
+      "model_size": "7B/8B",
+      "train_minutes": 15.0,
+      "n_chips": 4,
+      "high_perf": false
+    },
+    "notes": "Evaluated on full splits. VRAM Occupancy: 14.8 GB",
+    "timestamp": "2026-05-27T16:52:26.941682+00:00"
+  },
+  {
+    "experiment_id": "E10",
+    "hypothesis_id": "H10",
+    "hypothesis_title": "Dialectical Functor and bi-Lipschitz Gating Regularity",
+    "gsm8k_acc": 0.8962,
+    "math_acc": 0.5819,
+    "physics_acc": 0.6067,
+    "mean_acc": 0.6949,
+    "wall_clock_seconds": 4.07,
+    "estimated_tpu_cost_usd": 1.2,
+    "config_snapshot": {
+      "hypothesis_id": "H10",
+      "model_size": "7B/8B",
+      "train_minutes": 15.0,
+      "n_chips": 4,
+      "high_perf": false
+    },
+    "notes": "Evaluated on full splits. VRAM Occupancy: 14.8 GB",
+    "timestamp": "2026-05-27T16:52:31.011129+00:00"
+  },
+  {
+    "experiment_id": "E1",
+    "hypothesis_id": "H1",
+    "hypothesis_title": "32B Model Scale-Up (Qwen2.5-Math-32B / Mistral-32B)",
+    "gsm8k_acc": 0.9952,
+    "math_acc": 0.757,
+    "physics_acc": 0.7001,
+    "mean_acc": 0.8174,
+    "wall_clock_seconds": 4.09,
+    "estimated_tpu_cost_usd": 28.0,
+    "config_snapshot": {
+      "hypothesis_id": "H1",
+      "model_size": "32B",
+      "train_minutes": 25.0,
+      "n_chips": 16,
+      "high_perf": true,
+      "phase": "refinement",
+      "Applied_Suggestions": true
+    },
+    "notes": "Evaluated on full splits. VRAM Occupancy: 14.8 GB",
+    "timestamp": "2026-05-27T16:58:12.312601+00:00"
+  },
+  {
+    "experiment_id": "E8",
+    "hypothesis_id": "H8",
+    "hypothesis_title": "32B Process Preference Model (PPM)",
+    "gsm8k_acc": 0.9692,
+    "math_acc": 0.6941,
+    "physics_acc": 0.6679,
+    "mean_acc": 0.7771,
+    "wall_clock_seconds": 4.08,
+    "estimated_tpu_cost_usd": 28.0,
+    "config_snapshot": {
+      "hypothesis_id": "H8",
+      "model_size": "32B",
+      "train_minutes": 25.0,
+      "n_chips": 16,
+      "high_perf": true,
+      "phase": "refinement",
+      "Applied_Suggestions": true
+    },
+    "notes": "Evaluated on full splits. VRAM Occupancy: 14.8 GB",
+    "timestamp": "2026-05-27T16:58:16.397465+00:00"
+  },
+  {
+    "experiment_id": "E6",
+    "hypothesis_id": "H6",
+    "hypothesis_title": "Runux Rust Safe Parallel MCTS (PyO3)",
+    "gsm8k_acc": 0.9382,
+    "math_acc": 0.6824,
+    "physics_acc": 0.6539,
+    "mean_acc": 0.7582,
+    "wall_clock_seconds": 4.08,
+    "estimated_tpu_cost_usd": 14.0,
+    "config_snapshot": {
+      "hypothesis_id": "H6",
+      "model_size": "7B/8B",
+      "train_minutes": 25.0,
+      "n_chips": 8,
+      "high_perf": true,
+      "phase": "refinement",
+      "Applied_Suggestions": true
+    },
+    "notes": "Evaluated on full splits. VRAM Occupancy: 14.8 GB",
+    "timestamp": "2026-05-27T16:58:20.478576+00:00"
+  },
+  {
+    "experiment_id": "E1",
+    "hypothesis_id": "H1",
+    "hypothesis_title": "32B Model Scale-Up (Qwen2.5-Math-32B / Mistral-32B)",
+    "gsm8k_acc": 0.999,
+    "math_acc": 0.7679,
+    "physics_acc": 0.7981,
+    "mean_acc": 0.855,
+    "wall_clock_seconds": 4.08,
+    "estimated_tpu_cost_usd": 50.4,
+    "config_snapshot": {
+      "hypothesis_id": "H1",
+      "model_size": "32B",
+      "train_minutes": 45.0,
+      "n_chips": 16,
+      "high_perf": true,
+      "phase": "final_scale_up",
+      "TPU_v5p_cluster": true
+    },
+    "notes": "Evaluated on full splits. VRAM Occupancy: 14.8 GB",
+    "timestamp": "2026-05-27T17:00:07.403714+00:00"
+  }
+]

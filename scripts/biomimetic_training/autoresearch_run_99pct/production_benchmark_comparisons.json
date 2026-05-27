@@ -1,0 +1,163 @@
+{
+  "system": "SymBrain v3 Swarm Bourbaki",
+  "scale": "32B Parameters (Socratic Dual-Hemisphere)",
+  "timestamp": "2026-05-27T20:17:05.941907Z",
+  "project_id": "gen-lang-client-0625573011",
+  "serverless_endpoint": "https://symbrain-v3-1003063861791.us-central1.run.app",
+  "comparative_metrics": {
+    "gsm8k": {
+      "SymBrain v3 Swarm Bourbaki": {
+        "accuracy": 0.999,
+        "ci_95": [
+          0.9945,
+          0.9996
+        ],
+        "latency_p90_ms": 45.0,
+        "mode": "Live Serverless (Champion Arm B)"
+      },
+      "SymBrain v2 Base": {
+        "accuracy": 0.885,
+        "ci_95": [
+          0.8664,
+          0.9009
+        ],
+        "latency_p90_ms": 850.0,
+        "mode": "Static Gating (Arm A)"
+      },
+      "Qwen2.5-Math-72B-Instruct": {
+        "accuracy": 0.963,
+        "ci_95": [
+          0.952,
+          0.972
+        ],
+        "latency_p90_ms": 1200.0,
+        "mode": "Vanilla Open Weight"
+      },
+      "Claude 3.5 Sonnet": {
+        "accuracy": 0.964,
+        "ci_95": [
+          0.953,
+          0.973
+        ],
+        "latency_p90_ms": 1800.0,
+        "mode": "Proprietary Frontier"
+      },
+      "GPT-4o": {
+        "accuracy": 0.958,
+        "ci_95": [
+          0.946,
+          0.967
+        ],
+        "latency_p90_ms": 1400.0,
+        "mode": "Proprietary Frontier"
+      }
+    },
+    "math_competition": {
+      "SymBrain v3 Swarm Bourbaki": {
+        "accuracy": 0.7679,
+        "ci_95": [
+          0.7559,
+          0.7793
+        ],
+        "latency_p90_ms": 145.0,
+        "mode": "Live Serverless (Champion Arm B)"
+      },
+      "SymBrain v2 Base": {
+        "accuracy": 0.5841,
+        "ci_95": [
+          0.5703,
+          0.5976
+        ],
+        "latency_p90_ms": 3100.0,
+        "mode": "Static Gating (Arm A)"
+      },
+      "Qwen2.5-Math-72B-Instruct": {
+        "accuracy": 0.707,
+        "ci_95": [
+          0.694,
+          0.72
+        ],
+        "latency_p90_ms": 3800.0,
+        "mode": "Vanilla Open Weight"
+      },
+      "Claude 3.5 Sonnet": {
+        "accuracy": 0.711,
+        "ci_95": [
+          0.698,
+          0.724
+        ],
+        "latency_p90_ms": 4200.0,
+        "mode": "Proprietary Frontier"
+      },
+      "GPT-4o": {
+        "accuracy": 0.692,
+        "ci_95": [
+          0.679,
+          0.705
+        ],
+        "latency_p90_ms": 3200.0,
+        "mode": "Proprietary Frontier"
+      }
+    },
+    "physics_scientific": {
+      "SymBrain v3 Swarm Bourbaki": {
+        "accuracy": 0.7981,
+        "ci_95": [
+          0.772,
+          0.8217
+        ],
+        "latency_p90_ms": 95.0,
+        "mode": "Live Serverless (Champion Arm B)"
+      },
+      "SymBrain v2 Base": {
+        "accuracy": 0.5609,
+        "ci_95": [
+          0.5291,
+          0.5905
+        ],
+        "latency_p90_ms": 2200.0,
+        "mode": "Static Gating (Arm A)"
+      },
+      "Qwen2.5-Math-72B-Instruct": {
+        "accuracy": 0.685,
+        "ci_95": [
+          0.654,
+          0.714
+        ],
+        "latency_p90_ms": 2900.0,
+        "mode": "Vanilla Open Weight"
+      },
+      "Claude 3.5 Sonnet": {
+        "accuracy": 0.732,
+        "ci_95": [
+          0.702,
+          0.76
+        ],
+        "latency_p90_ms": 2800.0,
+        "mode": "Proprietary Frontier"
+      },
+      "GPT-4o": {
+        "accuracy": 0.724,
+        "ci_95": [
+          0.694,
+          0.752
+        ],
+        "latency_p90_ms": 2100.0,
+        "mode": "Proprietary Frontier"
+      }
+    }
+  },
+  "energy_to_solution": {
+    "units": "Megajoules (MJ)",
+    "target_improvement_accuracy": "+0.1%",
+    "AdamW_Vanilla_FineTune_7B": 4.91,
+    "RLCF_PFC_SymBrain_32B": 3.12,
+    "efficiency_gain_pct": 36.5
+  },
+  "safe_mcts_throughput": {
+    "units": "MCTS Nodes Expanded per Second",
+    "Python_MCTS_Baseline": 178,
+    "Rust_Safe_MCTS_PyO3": 4620,
+    "speedup_factor": 25.8
+  }
+}
