@@ -1,0 +1,6 @@
+{
+  "model": "Qwen/Qwen2.5-Math-7B-Instruct",
+  "lora_r": 128,
+  "saved_at": "2026-05-27T06:25:32.920541+00:00",
+  "simulation": true
+}

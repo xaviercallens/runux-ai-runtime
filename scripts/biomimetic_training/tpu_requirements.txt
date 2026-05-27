@@ -1,0 +1,34 @@
+# SymBrain v2 — TPU Training Requirements
+# ==========================================
+# pip install -r tpu_requirements.txt
+
+# Core ML
+torch>=2.4.0
+torch_xla>=2.4.0
+transformers>=4.45.0
+peft>=0.13.0
+datasets>=3.0.0
+accelerate>=0.34.0
+trl>=0.12.0
+
+# Math verification (H5)
+sympy>=1.13
+z3-solver>=4.13
+
+# API clients
+google-genai>=1.0.0
+requests>=2.31.0
+
+# Scientific computing
+numpy>=1.26.0
+scipy>=1.12.0
+scikit-learn>=1.4.0
+
+# HuggingFace Hub
+huggingface-hub>=0.25.0
+
+# Utilities
+safetensors>=0.4.0
+sentencepiece>=0.2.0
+protobuf>=4.25.0
+tqdm>=4.66.0

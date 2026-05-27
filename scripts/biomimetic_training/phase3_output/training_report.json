@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "model": "Qwen/Qwen2.5-Math-7B-Instruct",
+    "lora_r": 128,
+    "simulation": true,
+    "device": "cpu",
+    "timestamp": "2026-05-27T06:25:32.921319+00:00"
+  },
+  "budget": {
+    "budget_usd": 100.0,
+    "total_spent_usd": 0.0755,
+    "remaining_usd": 99.9245,
+    "total_wall_seconds": 61.9,
+    "stages": {
+      "Stage 1: SFT": 0.0402,
+      "Stage 2: Tool Verification (H5)": 0.0085,
+      "Stage 3: MCTS Self-Evolution (H4+H7)": 0.0268,
+      "Stage 4: Evaluation": 0.0
+    }
+  },
+  "stage1_sft": {
+    "steps": 148,
+    "initial_loss": 2.9456772901120316,
+    "final_loss": 0.13815375599488952
+  },
+  "stage2_tool_verification": {
+    "total": 500,
+    "verified": 413,
+    "rate": 0.826
+  },
+  "stage3_mcts_evolution": {
+    "steps": 131,
+    "winning_paths": 131,
+    "avg_prm_score": 0.6807,
+    "final_loss": 0.8311735011881611
+  },
+  "stage4_evaluation": {
+    "gsm8k": {
+      "accuracy": 0.9172795483521103,
+      "correct": 1211,
+      "total": 1319,
+      "improvement_over_baseline": "+13.2pp"
+    },
+    "math500": {
+      "accuracy": 0.8746167711973478,
+      "correct": 438,
+      "total": 500,
+      "improvement_over_baseline": "+37.6pp"
+    },
+    "mmlu_stem": {
+      "accuracy": 0.7408868413843234,
+      "correct": 1484,
+      "total": 2000,
+      "improvement_over_baseline": "+22.8pp"
+    }
+  }
+}

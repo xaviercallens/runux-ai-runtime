@@ -76,8 +76,8 @@ def load_datasets(args) -> Dict:
         from datasets import load_dataset, concatenate_datasets
         datasets_loaded = {}
 
-        # Math Reasoning (Left Hemisphere Primary)
-        logger.info(f"  [1/4] Loading MetaMathQA (math reasoning)...")
+        # Math Reasoning — Primary (Left Hemisphere)
+        logger.info(f"  [1/7] Loading MetaMathQA (math reasoning)...")
         try:
             math_ds = load_dataset("meta-math/MetaMathQA", split="train")
             if len(math_ds) > args.max_math_samples:
@@ -88,8 +88,34 @@ def load_datasets(args) -> Dict:
             logger.warning(f"        {YELLOW}⚠ MetaMathQA unavailable ({e}), using synthetic{NC}")
             datasets_loaded['math'] = None
 
+        # NuminaMath-CoT (H1 — competition-grade, 860K)
+        logger.info(f"  [2/7] Loading NuminaMath-CoT (competition math)...")
+        try:
+            numina_ds = load_dataset("AI-MO/NuminaMath-CoT", split="train")
+            max_numina = min(len(numina_ds), args.max_math_samples // 2)
+            numina_ds = numina_ds.shuffle(seed=42).select(range(max_numina))
+            datasets_loaded['numina_math'] = numina_ds
+            logger.info(f"        {GREEN}✓ NuminaMath-CoT: {len(numina_ds)} samples loaded{NC}")
+        except Exception as e:
+            logger.warning(f"        {YELLOW}⚠ NuminaMath-CoT unavailable ({e}){NC}")
+            datasets_loaded['numina_math'] = None
+
+        # OpenMathInstruct-2 (H1 — synthetically verified, 14M → subset)
+        logger.info(f"  [3/7] Loading OpenMathInstruct-2 (verified math)...")
+        try:
+            omi_ds = load_dataset("nvidia/OpenMathInstruct-2", split="train", streaming=True)
+            # Stream and take a subset to avoid downloading 14M samples
+            omi_samples = list(omi_ds.take(args.max_math_samples // 4))
+            from datasets import Dataset
+            omi_ds = Dataset.from_list(omi_samples)
+            datasets_loaded['openmath'] = omi_ds
+            logger.info(f"        {GREEN}✓ OpenMathInstruct-2: {len(omi_ds)} samples loaded{NC}")
+        except Exception as e:
+            logger.warning(f"        {YELLOW}⚠ OpenMathInstruct-2 unavailable ({e}){NC}")
+            datasets_loaded['openmath'] = None
+
         # Physics (Cross-Hemisphere)
-        logger.info(f"  [2/4] Loading CAMEL-AI Physics...")
+        logger.info(f"  [4/7] Loading CAMEL-AI Physics...")
         try:
             phys_ds = load_dataset("camel-ai/physics", split="train")
             if len(phys_ds) > args.max_physics_samples:
@@ -101,7 +127,7 @@ def load_datasets(args) -> Dict:
             datasets_loaded['physics'] = None
 
         # Science QA
-        logger.info(f"  [3/4] Loading SciQ (science reasoning)...")
+        logger.info(f"  [5/7] Loading SciQ (science reasoning)...")
         try:
             sci_ds = load_dataset("allenai/sciq", split="train")
             if len(sci_ds) > args.max_science_samples:
@@ -113,7 +139,7 @@ def load_datasets(args) -> Dict:
             datasets_loaded['science'] = None
 
         # GSM8K (Evaluation)
-        logger.info(f"  [4/4] Loading GSM8K (evaluation benchmark)...")
+        logger.info(f"  [6/7] Loading GSM8K (evaluation benchmark)...")
         try:
             gsm_ds = load_dataset("openai/gsm8k", "main", split="test")
             datasets_loaded['gsm8k_eval'] = gsm_ds
@@ -122,11 +148,32 @@ def load_datasets(args) -> Dict:
             logger.warning(f"        {YELLOW}⚠ GSM8K unavailable ({e}), using synthetic{NC}")
             datasets_loaded['gsm8k_eval'] = None
 
+        # MATH-500 (Evaluation — competition-level)
+        logger.info(f"  [7/7] Loading MATH-500 (competition eval)...")
+        try:
+            math_eval_ds = load_dataset("hendrycks/competition_math", split="test")
+            if len(math_eval_ds) > 500:
+                math_eval_ds = math_eval_ds.shuffle(seed=42).select(range(500))
+            datasets_loaded['math_eval'] = math_eval_ds
+            logger.info(f"        {GREEN}✓ MATH-500 eval: {len(math_eval_ds)} samples loaded{NC}")
+        except Exception as e:
+            logger.warning(f"        {YELLOW}⚠ MATH-500 unavailable ({e}){NC}")
+            datasets_loaded['math_eval'] = None
+
+        total_train = sum(
+            len(v) for k, v in datasets_loaded.items()
+            if v is not None and 'eval' not in k
+        )
+        logger.info(f"\n        {GREEN}{BOLD}Total training samples: {total_train:,}{NC}")
         return datasets_loaded
 
     except ImportError:
         logger.warning(f"  {YELLOW}⚠ HuggingFace datasets not available. Using synthetic data.{NC}")
-        return {'math': None, 'physics': None, 'science': None, 'gsm8k_eval': None}
+        return {
+            'math': None, 'numina_math': None, 'openmath': None,
+            'physics': None, 'science': None,
+            'gsm8k_eval': None, 'math_eval': None,
+        }
 
 
 def generate_synthetic_batch(batch_size: int, seq_len: int, vocab_size: int, device):
@@ -164,11 +211,15 @@ def load_model_and_tokenizer(model_name: str, device, device_type: str, use_lora
                 from peft import LoraConfig, get_peft_model, TaskType
                 lora_config = LoraConfig(
                     task_type=TaskType.CAUSAL_LM,
-                    r=32,
-                    lora_alpha=64,
+                    r=128,
+                    lora_alpha=256,
                     lora_dropout=0.05,
-                    target_modules=["q_proj", "v_proj", "k_proj", "o_proj"],
-                    bias="none"
+                    target_modules=[
+                        "q_proj", "k_proj", "v_proj", "o_proj",
+                        "gate_proj", "up_proj", "down_proj",
+                    ],
+                    bias="none",
+                    use_rslora=True,  # RSLoRA scaling for r=128+
                 )
                 model = get_peft_model(model, lora_config)
                 trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -232,7 +283,7 @@ class NeuroSymbolicBrain:
         ).to(device)
         logger.info(f"        {GREEN}✓ PFC Bridge initialized (proj_rank={args.projection_rank}){NC}")
 
-        # ── Optimizers ──
+        # ── Optimizers with Cosine LR Warmup (H2 upgrade) ──
         if self.left_model is not None:
             self.left_optimizer = torch.optim.AdamW(
                 [p for p in self.left_model.parameters() if p.requires_grad],
@@ -244,6 +295,28 @@ class NeuroSymbolicBrain:
                 lr=args.learning_rate, weight_decay=0.01
             )
         self.pfc_optimizer = torch.optim.AdamW(self.pfc.parameters(), lr=args.learning_rate * 5)
+
+        # Cosine LR scheduler (H2: cosine annealing with warmup)
+        try:
+            from transformers import get_cosine_schedule_with_warmup
+            total_steps = int((args.warmup_duration + args.co_inference_duration) / 0.3)
+            warmup_steps = int(total_steps * 0.03)
+            self.schedulers = {}
+            if self.left_model is not None:
+                self.schedulers['left'] = get_cosine_schedule_with_warmup(
+                    self.left_optimizer, warmup_steps, total_steps
+                )
+            if self.right_model is not None:
+                self.schedulers['right'] = get_cosine_schedule_with_warmup(
+                    self.right_optimizer, warmup_steps, total_steps
+                )
+            self.schedulers['pfc'] = get_cosine_schedule_with_warmup(
+                self.pfc_optimizer, warmup_steps, total_steps
+            )
+            logger.info(f"        {GREEN}✓ Cosine LR scheduler: {total_steps} steps, {warmup_steps} warmup{NC}")
+        except ImportError:
+            self.schedulers = {}
+            logger.info(f"        {YELLOW}⚠ transformers not available, using flat LR{NC}")
 
         self.simulation_mode = (self.left_model is None or self.right_model is None)
         if self.simulation_mode:
@@ -561,14 +634,14 @@ def main():
                         help='Left Hemisphere model (formal logic)')
     parser.add_argument('--right-model', default='mistralai/Ministral-8B-Instruct-2410',
                         help='Right Hemisphere model (creative)')
-    parser.add_argument('--projection-rank', type=int, default=256,
-                        help='WARS-CI-DFA projection rank')
+    parser.add_argument('--projection-rank', type=int, default=512,
+                        help='WARS-CI-DFA v2+ projection rank (upgraded from 256)')
     parser.add_argument('--batch-size', type=int, default=4,
                         help='Training batch size')
-    parser.add_argument('--max-seq-len', type=int, default=512,
-                        help='Maximum sequence length')
-    parser.add_argument('--learning-rate', type=float, default=2e-5,
-                        help='Learning rate')
+    parser.add_argument('--max-seq-len', type=int, default=2048,
+                        help='Maximum sequence length (2048 for multi-step CoT)')
+    parser.add_argument('--learning-rate', type=float, default=2e-4,
+                        help='Learning rate (2e-4 with cosine warmup for LoRA r=128)')
     parser.add_argument('--warmup-duration', type=float, default=300.0,
                         help='Phase 1 warm-up duration in seconds')
     parser.add_argument('--co-inference-duration', type=float, default=600.0,
