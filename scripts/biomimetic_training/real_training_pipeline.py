@@ -497,10 +497,30 @@ def real_training_loop(args, cost: CostTracker, ckpt: CheckpointManager, simulat
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
 
+        # Memory optimization for L4/T4 GPUs
+        os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+        torch.cuda.empty_cache()
+
+        # Detect GPU VRAM and auto-adjust LoRA rank
+        if torch.cuda.is_available():
+            vram_gb = torch.cuda.get_device_properties(0).total_mem / 1e9
+            gpu_name = torch.cuda.get_device_name(0)
+            logger.info(f"  GPU: {gpu_name} ({vram_gb:.1f} GB VRAM)")
+            if vram_gb < 25 and args.lora_r > 32:  # L4 = 24GB, T4 = 16GB
+                logger.info(f"  {YELLOW}⚠ Auto-reducing LoRA r={args.lora_r}→32 for {vram_gb:.0f}GB GPU{NC}")
+                args.lora_r = 32
+            if vram_gb < 17:  # T4
+                args.lora_r = min(args.lora_r, 16)
+                args.max_seq_len = min(args.max_seq_len, 512)
+
         dtype = torch.bfloat16 if device_type in ("tpu", "cuda") else torch.float32
         model = AutoModelForCausalLM.from_pretrained(
             args.model, torch_dtype=dtype, low_cpu_mem_usage=True, **load_kwargs,
         )
+
+        # Enable gradient checkpointing to save VRAM (~40% reduction)
+        model.gradient_checkpointing_enable()
+        logger.info(f"  {GREEN}✓ Gradient checkpointing enabled{NC}")
 
         lora_targets = model_config.get("lora_targets",
             ["q_proj", "k_proj", "v_proj", "o_proj",
@@ -614,10 +634,13 @@ def main():
     parser = argparse.ArgumentParser(description="Real Training + Serialization Pipeline")
     parser.add_argument("--model", default="Qwen/Qwen2.5-Math-7B-Instruct",
                         help=f"Model to fine-tune. Supported: {', '.join(MODEL_CONFIGS.keys())}")
-    parser.add_argument("--lora-r", type=int, default=128)
+    parser.add_argument("--lora-r", type=int, default=32,
+                        help="LoRA rank (auto-reduced on <25GB GPUs)")
     parser.add_argument("--lr", type=float, default=2e-4)
-    parser.add_argument("--max-seq-len", type=int, default=2048)
-    parser.add_argument("--batch-size", type=int, default=4)
+    parser.add_argument("--max-seq-len", type=int, default=1024,
+                        help="Max sequence length (reduced for L4/T4)")
+    parser.add_argument("--batch-size", type=int, default=1,
+                        help="Batch size (1 for L4, increase for A100)")
     parser.add_argument("--grad-accum", type=int, default=8)
     parser.add_argument("--sft-duration", type=float, default=36000, help="SFT in seconds (10h)")
     parser.add_argument("--budget", type=float, default=150.0)
