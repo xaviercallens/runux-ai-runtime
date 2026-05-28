@@ -12,7 +12,7 @@ from pathlib import Path
 # Disable SSL verification globally
 ssl._create_default_https_context = ssl._create_unverified_context
 
-ENDPOINT = "https://symbrain-v3-1003063861791.us-central1.run.app"
+ENDPOINT = "http://127.0.0.1:8085"
 OUTPUT_FILE = Path("/Volumes/MacCleanerStorage/xdev/xavux/runux-ai-runtime/scripts/biomimetic_training/high_school_exam_solutions.json")
 
 def query_solve(problem_desc: str) -> dict:

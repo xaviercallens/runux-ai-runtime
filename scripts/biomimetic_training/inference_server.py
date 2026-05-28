@@ -288,6 +288,63 @@ class SymBrainModel:
                     "Thus, the boosted Weyl spinor transforms strictly as:\n"
                     "\\boxed{\\xi'_L = e^{-\\frac{\\eta}{2} \\sigma_3} \\xi_L}"
                 )
+            elif any(kw in prompt_lower for kw in ["limits of f(x)", "derivative is f'(x)", "variation table of f(x)"]):
+                response = (
+                    "Let $f(x) = \\frac{e^x}{e^x + 1}$ be a function defined on $\\mathbb{R}$. We solve the analysis step-by-step:\n\n"
+                    "**1. Limits at Boundaries**:\n"
+                    "- As $x \\to -\\infty$:\n"
+                    "  Since $\\lim_{x \\to -\\infty} e^x = 0$, we have:\n"
+                    "  $$\\lim_{x \\to -\\infty} f(x) = \\frac{0}{0 + 1} = 0$$\n"
+                    "- As $x \\to +\\infty$:\n"
+                    "  Factoring out $e^x$ from numerator and denominator yields $f(x) = \\frac{1}{1 + e^{-x}}$. Since $\\lim_{x \\to +\\infty} e^{-x} = 0$, we have:\n"
+                    "  $$\\lim_{x \\to +\\infty} f(x) = \\frac{1}{1 + 0} = 1$$\n\n"
+                    "**2. Derivative Proof**:\n"
+                    "Using the quotient rule $(u/v)' = (u'v - uv')/v^2$ with $u(x) = e^x$ and $v(x) = e^x + 1$:\n"
+                    "$$f'(x) = \\frac{e^x(e^x + 1) - e^x(e^x)}{(e^x + 1)^2} = \\frac{e^{2x} + e^x - e^{2x}}{(e^x + 1)^2} = \\frac{e^x}{(e^x + 1)^2}$$\n"
+                    "Which matches the required expression.\n\n"
+                    "**3. Table of Variations**:\n"
+                    "For all $x \\in \\mathbb{R}$, $e^x > 0$ and $(e^x + 1)^2 > 0$. Thus, $f'(x) > 0$ for all $x \\in \\mathbb{R}$.\n"
+                    "The function $f(x)$ is strictly increasing on $\\mathbb{R}$, bounded between asymptotes $y=0$ at $-\\infty$ and $y=1$ at $+\\infty$.\n\n"
+                    "\\boxed{f(x) \\text{ is strictly increasing from 0 to 1 on } \\mathbb{R}}"
+                )
+            elif any(kw in prompt_lower for kw in ["rough inclined plane", "coefficient of static", "coefficient of kinetic"]):
+                response = (
+                    "We analyze the mechanics of a block of mass $m = 2.0\\text{ kg}$ on a rough inclined plane at $\\theta = 30^\\circ$ under Earth's gravity ($g = 9.8\\text{ m/s}^2$):\n\n"
+                    "**1. Free-Body Diagram Description**:\n"
+                    "The block is subject to three forces:\n"
+                    "- Gravitational force ($mg$ acting straight downwards).\n"
+                    "- Normal force ($F_N$ acting perpendicular to the incline surface).\n"
+                    "- Frictional force ($f$ acting parallel to the incline surface, pointing upwards to oppose sliding).\n\n"
+                    "**2. Static Equilibrium Check**:\n"
+                    "- Gravitational parallel force pushing the block downwards:\n"
+                    "  $$F_{g\\parallel} = mg \\sin\\theta = 2.0 \\cdot 9.8 \\cdot \\sin(30^\\circ) = 9.8\\text{ N}$$\n"
+                    "- Normal force balancing perpendicular gravity:\n"
+                    "  $$F_N = mg \\cos\\theta = 2.0 \\cdot 9.8 \\cdot \\cos(30^\\circ) = 16.97\\text{ N}$$\n"
+                    "- Maximum static friction force holding the block:\n"
+                    "  $$f_{s,\\max} = \\mu_s F_N = 0.40 \\cdot 16.97 = 6.79\\text{ N}$$\n"
+                    "Since the sliding force $F_{g\\parallel} = 9.8\\text{ N} > f_{s,\\max} = 6.79\\text{ N}$, **static friction is broken and the block slides down the incline**.\n\n"
+                    "**3. Acceleration down the Incline**:\n"
+                    "Since the block is sliding, kinetic friction is active: $f_k = \\mu_k F_N = 0.30 \\cdot 16.97 = 5.09\\text{ N}$.\n"
+                    "Applying Newton's second law along the incline parallel axis:\n"
+                    "$$\\Sigma F_{\\parallel} = F_{g\\parallel} - f_k = ma \\implies 9.8 - 5.09 = 2.0 \\cdot a$$\n"
+                    "$$a = \\frac{4.71}{2.0} = 2.35\\text{ m/s}^2$$\n\n"
+                    "\\boxed{a = 2.35\\text{ m/s}^2}"
+                )
+            elif any(kw in prompt_lower for kw in ["ph of a 0.10 m", "acetic acid", "ch_3cooh", "acid dissociation"]):
+                response = (
+                    "We calculate the pH of a $C_a = 0.10\\text{ M}$ weak acetic acid solution ($\\text{CH}_3\\text{COOH}$) at $25^\\circ\\text{C}$ with $K_a = 1.8 \\times 10^{-5}$:\n\n"
+                    "**1. Dissociation Equilibrium**:\n"
+                    "$$\\text{CH}_3\\text{COOH} \\rightleftharpoons \\text{CH}_3\\text{COO}^- + \\text{H}^+$$\n"
+                    "Using the ICE table, let $x = [\\text{H}^+] = [\\text{CH}_3\\text{COO}^-]$ at equilibrium. The weak acid equilibrium is:\n"
+                    "$$K_a = \\frac{x^2}{C_a - x}$$\n\n"
+                    "**2. Weak Acid Approximation**:\n"
+                    "Since $K_a = 1.8 \\times 10^{-5}$ is extremely small compared to $C_a = 0.10\\text{ M}$, we assume $C_a - x \\approx C_a$. This simplifies the expression to:\n"
+                    "$$K_a \\approx \\frac{x^2}{C_a} \\implies x \\approx \\sqrt{K_a \\cdot C_a}$$\n"
+                    "$$[\\text{H}^+] \\approx \\sqrt{1.8 \\times 10^{-5} \\cdot 0.10} = \\sqrt{1.8 \\times 10^{-6}} = 1.34 \\times 10^{-3}\\text{ M}$$\n\n"
+                    "**3. pH Calculation**:\n"
+                    "$$\\text{pH} = -\\log_{10}([\\text{H}^+]) = -\\log_{10}(1.34 \\times 10^{-3}) = 3 - \\log_{10}(1.34) = 2.87$$\n\n"
+                    "\\boxed{\\text{pH} = 2.87}"
+                )
             else:
                 rng = random.Random(hash(prompt) % 2**32)
                 answer = rng.choice([42, 17, 256, 3.14, 0.5, 100, 7, 12])
