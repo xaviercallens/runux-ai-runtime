@@ -3,6 +3,9 @@ Copyright (c) 2026 Xavier Callens / Socrate AI Lab. All Rights Reserved.
 *Document Version: 1.0.0 (v0.3.0 Release Alignment)*  
 *Target Venues: MLSys, EACL Industry Track*
 
+> [!NOTE]
+> **Component Specifications Index**: For the complete, versioned component-by-component specification documents (RunuX, AI Engine, SymBrain, SciML) with Lean 4 formal verification status, see the **[Master Specification Index](docs/SPECS.md)**.
+
 ---
 
 ## 1. Executive Summary & Design Philosophy
