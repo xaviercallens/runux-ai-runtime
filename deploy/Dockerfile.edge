@@ -1,0 +1,50 @@
+# ═══════════════════════════════════════════════════════════════════════
+# SymBrain v4 — Lightweight Dockerfile for Edge/Simulation (CPU-only)
+# ═══════════════════════════════════════════════════════════════════════
+# This Dockerfile builds a slim image WITHOUT PyTorch or GPU deps.
+# Use for Edge-7B (simulation mode) deployments on Cloud Run CPU.
+# ═══════════════════════════════════════════════════════════════════════
+
+FROM python:3.11-slim
+
+ARG MODEL_TIER=7B
+ENV MODEL_TIER=${MODEL_TIER}
+
+LABEL maintainer="symbrain-team@amadeus.dev" \
+      version="4.0.0" \
+      description="SymBrain v4 inference server — Edge/Simulation (CPU-only)"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r symbrain && useradd -r -g symbrain symbrain
+
+# Install only lightweight dependencies (no torch)
+RUN pip install --no-cache-dir \
+        fastapi>=0.111.0 \
+        'uvicorn[standard]>=0.29.0' \
+        pydantic>=2.7.0 \
+        httpx>=0.27.0 \
+        numpy>=1.26.0
+
+WORKDIR /app
+
+# Copy only the application source
+COPY symbrain_v4/ /app/symbrain_v4/
+COPY eval/ /app/eval/
+COPY requirements.txt /app/
+
+# Create cache dirs
+RUN mkdir -p /app/model_cache /app/logs \
+    && chown -R symbrain:symbrain /app
+
+USER symbrain
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8080/v4/health || exit 1
+
+CMD ["python", "-m", "uvicorn", "symbrain_v4.inference_server_v4:app", \
+     "--host", "0.0.0.0", "--port", "8080", \
+     "--workers", "1", "--timeout-keep-alive", "120"]

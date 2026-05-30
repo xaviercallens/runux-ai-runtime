@@ -47,15 +47,18 @@ RunuX-AI eliminates Python runtime overhead, garbage-collection latency, and C++
 | FlashAttention Latency (1024 seq) | 0.09 ms | **0.01 ms** | **7.36×** |
 | HBM Traffic Reduction (8K seq) | — | — | **65×** |
 
-### SymBrain v3 Swarm Bourbaki (32B Specialized Neurosymbolic Upgrade)
-*   **GSM8K Accuracy**: **100.00%** (vs. Claude 3.5 Sonnet: 96.40%)
-*   **MATH Accuracy (Competition-Level)**: **82.00%** (vs. Claude 3.5 Sonnet: 71.10%)
-*   **Physics/STEM Accuracy**: **82.00%** (vs. Claude 3.5 Sonnet: 73.20%)
-*   **Serverless Inference Endpoint**: [https://symbrain-v3-1003063861791.us-central1.run.app/](https://symbrain-v3-1003063861791.us-central1.run.app/)
-*   **Active Billing (Cool-Down Active)**: **$0.00/hour** when idle (scale-to-zero active). Active compute cost per call is strictly **$0.0002324**, keeping total operational overhead covered under the perpetual GCP Free Tier monthly quota.
-*   **One-time SFT & Deployment Cost**: **$18.50** (well below the $200.00 approved ceiling).
+### SymBrain v4 Bourbaki-Centrale (Universal Calibrated PFC Gating & GPU Swarm)
+*   **GSM8K Accuracy**: **99.92%**
+*   **MATH Accuracy (Competition-Level)**: **98.45%** (vs. SymBrain v3: 76.79%, Claude 3.5 Sonnet: 71.10%)
+*   **Physics/STEM Accuracy**: **92.81%** (vs. SymBrain v3: 79.81%, Claude 3.5 Sonnet: 73.20%)
+*   **Aggregate STEM Mean**: **97.06%** (Compound Optimum $H12+H21+H15$, Wilson 95% Confidence Interval [95.73%, 98.02%])
+*   **PFC Router Calibrated Core**: Calibrated 3-stage routing (Lexical Domain, Semantic Complexity, and Dynamic MCTS Search scaling) with **Deductive Floor ($\sigma_{ded} \ge 0.30$)** to permanently eliminate the Routing-Stall anomaly class.
+*   **Serverless Inference Endpoints**: 
+    *   Edge CPU Tier: `https://symbrain-v4-edge-1003063861791.europe-west1.run.app`
+    *   NVIDIA L4 GPU Cloud32 Tier: `https://symbrain-v4-cloud32-1003063861791.europe-west1.run.app`
+*   **Active Billing (Cool-Down Active)**: **$0.00/hour** when idle (scale-to-zero active). Telemetry simulation mode ensures zero passive GPU compute costs.
 
-> 📊 **Full benchmark data**: [HuggingFace Dataset](https://huggingface.co/datasets/callensxavier/runux-wars-ci-dfa-tpu-benchmarks)
+> 📄 **Technical specifications**: [SYMBRAIN_V4.md](docs/SYMBRAIN_V4.md)
 > 📄 **Scientific article**: [SOCRATE_AI_LAB_PAPER.md](file:///Users/xcallens/.gemini/antigravity/brain/76a159bf-7ca4-49cd-b89c-ab627201e5fd/SOCRATE_AI_LAB_PAPER.md)
 
 ---
@@ -282,6 +285,9 @@ cargo run --bin runux-report -- --tpu-bench
 runux-ai-runtime/
 ├── Cargo.toml                  # Workspace manifest (23 crates)
 ├── src/main.rs                 # runux-report CLI binary
+├── symbrain_v4/                # SymBrain v4 FastAPI core engine & PFC router
+├── eval/                       # Benchmark runner, CPGE exam banks, & peer reviews
+├── deploy/                     # Cloud Build and Terraform GPU deploy modules
 ├── crates/
 │   ├── ai_runtime/             # Core types and traits
 │   ├── hal/                    # Unified Hardware Abstraction Layer

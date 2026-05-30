@@ -35,3 +35,8 @@ vertex_job_config.yaml
 secrets/
 **/api_key*
 **/secret*key*
+
+# Terraform ignores
+.terraform/
+*.tfstate
+*.tfstate.backup

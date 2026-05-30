@@ -1,0 +1,703 @@
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T04:55:29Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z WORKING    running   
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z WORKING    running   
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+563793ab-2e9d-4c0a-b132-9e002424bdf3   2026-05-22T06:53:17.400906529Z FAILURE    139s      
+b0248b3a-cd74-4fe3-8523-64b5381006d6   2026-05-22T05:06:08.830557768Z SUCCESS    68s       
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T04:56:07Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z WORKING    running   
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z CANCELLED  439s      
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+563793ab-2e9d-4c0a-b132-9e002424bdf3   2026-05-22T06:53:17.400906529Z FAILURE    139s      
+b0248b3a-cd74-4fe3-8523-64b5381006d6   2026-05-22T05:06:08.830557768Z SUCCESS    68s       
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T05:00:07Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z WORKING    running   
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z CANCELLED  439s      
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+563793ab-2e9d-4c0a-b132-9e002424bdf3   2026-05-22T06:53:17.400906529Z FAILURE    139s      
+b0248b3a-cd74-4fe3-8523-64b5381006d6   2026-05-22T05:06:08.830557768Z SUCCESS    68s       
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T05:04:32Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z SUCCESS    545s      
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z CANCELLED  439s      
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+563793ab-2e9d-4c0a-b132-9e002424bdf3   2026-05-22T06:53:17.400906529Z FAILURE    139s      
+b0248b3a-cd74-4fe3-8523-64b5381006d6   2026-05-22T05:06:08.830557768Z SUCCESS    68s       
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T05:05:07Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z SUCCESS    545s      
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z CANCELLED  439s      
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+563793ab-2e9d-4c0a-b132-9e002424bdf3   2026-05-22T06:53:17.400906529Z FAILURE    139s      
+b0248b3a-cd74-4fe3-8523-64b5381006d6   2026-05-22T05:06:08.830557768Z SUCCESS    68s       
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T05:10:02Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z SUCCESS    545s      
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z CANCELLED  439s      
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+563793ab-2e9d-4c0a-b132-9e002424bdf3   2026-05-22T06:53:17.400906529Z FAILURE    139s      
+b0248b3a-cd74-4fe3-8523-64b5381006d6   2026-05-22T05:06:08.830557768Z SUCCESS    68s       
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T05:15:03Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z SUCCESS    545s      
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z CANCELLED  439s      
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+563793ab-2e9d-4c0a-b132-9e002424bdf3   2026-05-22T06:53:17.400906529Z FAILURE    139s      
+b0248b3a-cd74-4fe3-8523-64b5381006d6   2026-05-22T05:06:08.830557768Z SUCCESS    68s       
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T05:22:10Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z SUCCESS    545s      
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z CANCELLED  439s      
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+563793ab-2e9d-4c0a-b132-9e002424bdf3   2026-05-22T06:53:17.400906529Z FAILURE    139s      
+b0248b3a-cd74-4fe3-8523-64b5381006d6   2026-05-22T05:06:08.830557768Z SUCCESS    68s       
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T07:00:59Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z SUCCESS    545s      
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z CANCELLED  439s      
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+563793ab-2e9d-4c0a-b132-9e002424bdf3   2026-05-22T06:53:17.400906529Z FAILURE    139s      
+b0248b3a-cd74-4fe3-8523-64b5381006d6   2026-05-22T05:06:08.830557768Z SUCCESS    68s       
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T07:35:13Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z SUCCESS    545s      
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z CANCELLED  439s      
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+563793ab-2e9d-4c0a-b132-9e002424bdf3   2026-05-22T06:53:17.400906529Z FAILURE    139s      
+b0248b3a-cd74-4fe3-8523-64b5381006d6   2026-05-22T05:06:08.830557768Z SUCCESS    68s       
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T07:47:07Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z SUCCESS    545s      
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z CANCELLED  439s      
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+563793ab-2e9d-4c0a-b132-9e002424bdf3   2026-05-22T06:53:17.400906529Z FAILURE    139s      
+b0248b3a-cd74-4fe3-8523-64b5381006d6   2026-05-22T05:06:08.830557768Z SUCCESS    68s       
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T07:55:06Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z SUCCESS    545s      
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z CANCELLED  439s      
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+563793ab-2e9d-4c0a-b132-9e002424bdf3   2026-05-22T06:53:17.400906529Z FAILURE    139s      
+b0248b3a-cd74-4fe3-8523-64b5381006d6   2026-05-22T05:06:08.830557768Z SUCCESS    68s       
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T08:02:41Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z SUCCESS    545s      
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z CANCELLED  439s      
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+563793ab-2e9d-4c0a-b132-9e002424bdf3   2026-05-22T06:53:17.400906529Z FAILURE    139s      
+b0248b3a-cd74-4fe3-8523-64b5381006d6   2026-05-22T05:06:08.830557768Z SUCCESS    68s       
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T08:06:06Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+c4c82396-27cc-4716-8726-ac596e00d6dd   2026-05-29T08:05:59.316980636Z QUEUED     N/A       
+afc11bb8-d158-47bd-b490-d9cf037ae3cd   2026-05-29T08:05:56.067589483Z WORKING    running   
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z SUCCESS    545s      
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z CANCELLED  439s      
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T08:12:03Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+c4c82396-27cc-4716-8726-ac596e00d6dd   2026-05-29T08:05:59.316980636Z WORKING    running   
+afc11bb8-d158-47bd-b490-d9cf037ae3cd   2026-05-29T08:05:56.067589483Z SUCCESS    64s       
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z SUCCESS    545s      
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z CANCELLED  439s      
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T08:15:04Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+c4c82396-27cc-4716-8726-ac596e00d6dd   2026-05-29T08:05:59.316980636Z WORKING    running   
+afc11bb8-d158-47bd-b490-d9cf037ae3cd   2026-05-29T08:05:56.067589483Z SUCCESS    64s       
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z SUCCESS    545s      
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z CANCELLED  439s      
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T08:20:07Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+c4c82396-27cc-4716-8726-ac596e00d6dd   2026-05-29T08:05:59.316980636Z SUCCESS    604s      
+afc11bb8-d158-47bd-b490-d9cf037ae3cd   2026-05-29T08:05:56.067589483Z SUCCESS    64s       
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z SUCCESS    545s      
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z CANCELLED  439s      
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T08:25:10Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+c4c82396-27cc-4716-8726-ac596e00d6dd   2026-05-29T08:05:59.316980636Z SUCCESS    604s      
+afc11bb8-d158-47bd-b490-d9cf037ae3cd   2026-05-29T08:05:56.067589483Z SUCCESS    64s       
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z SUCCESS    545s      
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z CANCELLED  439s      
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
+======================================================================
+▸ MONITORING TRIGGERED AT: 2026-05-29T08:30:03Z
+======================================================================
+=== CLOUD RUN SERVICES ===
+[1mSERVICE                      REGION       CPU      MEMORY   MIN   MAX        GPU     [0m
+-------------------------------------------------------------------------------------
+micro-kernel-demo            us-central1  1000m    512Mi    0     N/A        none    
+rusty-sundials-autoresearch  europe-west1 2        2Gi      0     2          none    
+socrate-ai                   europe-west9 1        128Mi    0     20         none    
+symbrain-v3                  us-central1  4        8Gi      0     5          none    
+symbrain-v4-cloud32          europe-west1 8        32Gi     0     2          none    
+symbrain-v4-edge             europe-west1 2        4Gi      0     4          none    
+
+=== COMPUTE ENGINE INSTANCES ===
+[1mNAME                      ZONE            MACHINE_TYPE    STATUS       COST ESTIMATE[0m
+--------------------------------------------------------------------------------
+mvk-demo-v8-1-0           us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+mvk-jumpbox               us-central1-a   e2-micro        TERMINATED   $0.00 (Terminated)
+rust-kernel-v7-demo-vm    us-central1-a   e2-medium       TERMINATED   $0.00 (Terminated)
+
+=== CLOUD BUILD ACTIVE PIPELINES ===
+[1mBUILD_ID                               CREATE_TIME               STATUS     DURATION  [0m
+------------------------------------------------------------------------------------------
+c4c82396-27cc-4716-8726-ac596e00d6dd   2026-05-29T08:05:59.316980636Z SUCCESS    604s      
+afc11bb8-d158-47bd-b490-d9cf037ae3cd   2026-05-29T08:05:56.067589483Z SUCCESS    64s       
+23a6ffd3-e9e5-479a-9558-243ebefe7e36   2026-05-29T04:52:38.098541839Z SUCCESS    545s      
+654e63b1-2c06-4031-b5ad-f06cc7e2d14c   2026-05-29T04:47:43.583715964Z CANCELLED  439s      
+202e7139-317c-4f40-8ac3-addd13244531   2026-05-22T07:01:48.210081799Z FAILURE    226s      
+
+=== COST & BUDGET AUDIT ===
+  Active Running VMs: 0
+  Cloud Run Services with min-instances > 0: 0
+  ✅ scale-to-zero (min-instances=0) fully compliant across all services.
+  Estimated Total Project Cost: $41.25 (Strictly below $100.00 budget ceiling)
+  Status: NOMINAL — Cost and resource utilization are safe.
+======================================================================
+
