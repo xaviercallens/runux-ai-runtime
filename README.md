@@ -52,14 +52,21 @@ RunuX-AI eliminates Python runtime overhead, garbage-collection latency, and C++
 *   **MATH Accuracy (Competition-Level)**: **98.45%** (vs. SymBrain v3: 76.79%, Claude 3.5 Sonnet: 71.10%)
 *   **Physics/STEM Accuracy**: **92.81%** (vs. SymBrain v3: 79.81%, Claude 3.5 Sonnet: 73.20%)
 *   **Aggregate STEM Mean**: **97.06%** (Compound Optimum $H12+H21+H15$, Wilson 95% Confidence Interval [95.73%, 98.02%])
-*   **PFC Router Calibrated Core**: Calibrated 3-stage routing (Lexical Domain, Semantic Complexity, and Dynamic MCTS Search scaling) with **Deductive Floor ($\sigma_{ded} \ge 0.30$)** to permanently eliminate the Routing-Stall anomaly class.
+*   **Beyond Backpropagation (DFA & DIT)**: Implements **Direct Feedback Alignment (DFA)** (decoupling the feedback pathway from forward weights via random projection matrices to solve the biological weight transport and backward lock problems) and **Direct Inference Transfer (DIT)** (dynamic error/state steering during inference passes).
+*   **Cortical Dual-Hemisphere Model**: Mimics the human brain by executing dense deductive search in a **Left Hemisphere (Logical Reasoning)**, contextual synthesis in a **Right Hemisphere (Creative Formulation)**, and central coordination in the **Prefrontal Cortex (PFC) Router** (featuring a **Deductive Floor of $\sigma_{ded} \ge 0.30$** to eliminate the Routing-Stall anomaly class, and dynamic Sigmoid MCTS budget scaling).
+*   **Beyond Backpropagation (DFA & DIT)**: Implements **Direct Feedback Alignment (DFA)** to decouple forward weights from backward feedback paths using fixed random projection matrices, effectively bypassing the biological weight transport problem. **Direct Inference Transfer (DIT)** steers hidden activations dynamically during inference based on cross-hemisphere consensus.
+*   **Cortical Dual-Hemisphere Model**: Synchronizes a **Left Hemisphere** (Logical Deduction/Search) and a **Right Hemisphere** (Synthetical Formulation) via a **Prefrontal Cortex (PFC) Router**. The architecture employs a **Deductive Floor of $\sigma_{ded} \ge 0.30$** to guarantee consistency, preventing the "Routing-Stall" anomaly common in large-scale inference.
 *   **Serverless Inference Endpoints**: 
     *   Edge CPU Tier: `https://symbrain-v4-edge-1003063861791.europe-west1.run.app`
     *   NVIDIA L4 GPU Cloud32 Tier: `https://symbrain-v4-cloud32-1003063861791.europe-west1.run.app`
 *   **Active Billing (Cool-Down Active)**: **$0.00/hour** when idle (scale-to-zero active). Telemetry simulation mode ensures zero passive GPU compute costs.
 
-> 📄 **Technical specifications**: [SYMBRAIN_V4.md](docs/SYMBRAIN_V4.md)
-> 📄 **Scientific article**: [SOCRATE_AI_LAB_PAPER.md](file:///Users/xcallens/.gemini/antigravity/brain/76a159bf-7ca4-49cd-b89c-ab627201e5fd/SOCRATE_AI_LAB_PAPER.md)
+## Documentation
+
+| Document | Description |
+|---|---|
+| [docs/NEURO_SYMBOLIC_INFERENCE.md](docs/NEURO_SYMBOLIC_INFERENCE.md) | **DFA & Dual-Hemisphere Cortical Co-Inference Scientific Whitepaper** |
+| [docs/SYMBRAIN_V4.md](docs/SYMBRAIN_V4.md) | **SymBrain v4 Specifications & Architecture Design Document** |
 
 ---
 
