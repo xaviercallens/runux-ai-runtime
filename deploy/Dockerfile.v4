@@ -1,0 +1,68 @@
+# ═══════════════════════════════════════════════════════════════════════
+# SymBrain v4 — Multi-stage Docker build for Cloud Run inference server
+# ═══════════════════════════════════════════════════════════════════════
+
+# ── Stage 1: Builder ─────────────────────────────────────────────────
+FROM python:3.11-slim AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install \
+        --extra-index-url https://download.pytorch.org/whl/cu121 \
+        --trusted-host download.pytorch.org \
+        --trusted-host download-r2.pytorch.org \
+        --trusted-host files.pythonhosted.org \
+        --trusted-host pypi.org \
+        -r requirements.txt \
+        torch \
+        httpx
+
+# ── Stage 2: Runtime ─────────────────────────────────────────────────
+FROM python:3.11-slim AS runtime
+
+# Build argument: selects weight profile (7b | 14b | 32b | 72b)
+ARG MODEL_TIER=14b
+ENV MODEL_TIER=${MODEL_TIER}
+
+# Metadata labels
+LABEL maintainer="symbrain-team@amadeus.dev" \
+      version="4.0.0" \
+      description="SymBrain v4 inference server — tier ${MODEL_TIER}"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libgomp1 \
+        curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r symbrain && useradd -r -g symbrain symbrain
+
+# Copy installed Python packages from builder
+COPY --from=builder /install /usr/local
+
+WORKDIR /app
+
+# Copy application source
+COPY . /app
+
+# Create cache / model dirs
+RUN mkdir -p /app/model_cache /app/logs \
+    && chown -R symbrain:symbrain /app
+
+USER symbrain
+
+# Cloud Run default port
+EXPOSE 8080
+
+# Health-check (Cloud Run uses HTTP probes, but useful for local dev)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Launch the inference server
+CMD ["python", "-m", "uvicorn", "symbrain_v4.inference_server_v4:app", \
+     "--host", "0.0.0.0", "--port", "8080", \
+     "--workers", "1", "--timeout-keep-alive", "120"]

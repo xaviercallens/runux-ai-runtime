@@ -1,0 +1,28 @@
+steps:
+  - id: build-image
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file=deploy/Dockerfile.v4
+      - --build-arg=MODEL_TIER=7B
+      - --tag=europe-west1-docker.pkg.dev/$PROJECT_ID/symbrain-v4/inference:v4.0.0
+      - --tag=europe-west1-docker.pkg.dev/$PROJECT_ID/symbrain-v4/inference:latest
+      - .
+
+  - id: push-image
+    name: gcr.io/cloud-builders/docker
+    waitFor: [build-image]
+    args:
+      - push
+      - --all-tags
+      - europe-west1-docker.pkg.dev/$PROJECT_ID/symbrain-v4/inference
+
+images:
+  - europe-west1-docker.pkg.dev/$PROJECT_ID/symbrain-v4/inference:v4.0.0
+  - europe-west1-docker.pkg.dev/$PROJECT_ID/symbrain-v4/inference:latest
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+
+timeout: 1200s
