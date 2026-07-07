@@ -1,0 +1,10 @@
+{
+  "timestamp": "2026-07-07 18:52:31",
+  "problem": "batch=2 heads=4 seq=256 head_dim=32",
+  "poc1_float_ms": 3.695058822631836,
+  "poc2_lut_ms": 3.7351131439208984,
+  "poc1_power_w": 44.088,
+  "poc2_power_w": 44.088,
+  "poc2_deterministic": true,
+  "speedup": 0.9892762763146137
+}

@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-07-07 15:30:58",
+  "benchmark": "PoC 1 Reference (no Triton)",
+  "problem_size": "batch=4 heads=8 seq=512 head_dim=64",
+  "fp16_latency_ms": 0.5256056785583496,
+  "poc1_latency_ms": 73.31254482269287,
+  "speedup_vs_fp16": 139.48202581025603,
+  "deterministic": true
+}
