@@ -677,4 +677,124 @@ mod tests {
             .expect("Read should succeed");
         assert_eq!(cleared_back, &[0u8; 8]);
     }
+
+    #[test]
+    fn test_bump_allocator_slices_and_utilization() {
+        let mut arena = BumpAllocator::new(1024);
+        assert_eq!(arena.remaining_bytes(), 1024);
+        assert_eq!(arena.utilization_percent(), 0.0);
+
+        let offset = arena.alloc_f32(4, 4).expect("Allocation should succeed");
+        assert!(arena.utilization_percent() > 0.0);
+        assert_eq!(arena.remaining_bytes(), 1024 - 16);
+
+        unsafe {
+            let slice_mut = arena.get_slice_mut(offset, 4);
+            slice_mut[0] = 42.0;
+            slice_mut[1] = 84.0;
+        }
+
+        let slice = arena.get_slice(offset, 4);
+        assert_eq!(slice[0], 42.0);
+        assert_eq!(slice[1], 84.0);
+
+        let empty_arena = BumpAllocator::new(0);
+        assert_eq!(empty_arena.utilization_percent(), 0.0);
+    }
+
+    #[test]
+    fn test_paged_kv_edge_cases_and_errors() {
+        let mut cache = PagedKvCache::new(512, 256); // 2 pages
+        assert_eq!(cache.active_bytes(), 0);
+        assert_eq!(cache.utilization_percent(), 0.0);
+
+        // Evict LRU when empty
+        assert_eq!(cache.evict_lru(), None);
+
+        // Inactive / invalid page read/write
+        let payload = [1u8; 4];
+        assert!(cache.write_page_data(0, 0, &payload).is_err());
+        assert!(cache.read_page_data(0, 0, 4).is_err());
+        assert!(cache.read_page_data_mut(0, 0, 4).is_err());
+        assert!(cache.write_page_data(99, 0, &payload).is_err());
+
+        // Allocate p0
+        let p0 = cache.allocate_page(0, 8).unwrap();
+        assert_eq!(cache.active_bytes(), 256);
+        assert_eq!(cache.utilization_percent(), 50.0);
+
+        // Out of bounds read/write
+        assert!(cache.read_page_data(p0, 250, 10).is_err());
+        assert!(cache.read_page_data_mut(p0, 250, 10).is_err());
+
+        // Read mutable
+        {
+            let mut_slice = cache.read_page_data_mut(p0, 0, 4).unwrap();
+            mut_slice.copy_from_slice(&[9, 8, 7, 6]);
+        }
+        let read_slice = cache.read_page_data(p0, 0, 4).unwrap();
+        assert_eq!(read_slice, &[9, 8, 7, 6]);
+
+        let zero_cache = PagedKvCache::new(0, 0);
+        assert_eq!(zero_cache.utilization_percent(), 0.0);
+    }
+
+    #[test]
+    fn test_arena_config_aibox_k3_and_memory_zones() {
+        let config = ArenaConfig::for_aibox_k3();
+        assert!(config.weight_bytes() > 0);
+        assert!(config.kv_bytes() > 0);
+        assert!(config.scratch_bytes() > 0);
+
+        assert_eq!(MemoryZone::Weights, MemoryZone::Weights);
+        assert_ne!(MemoryZone::KvCache, MemoryZone::Scratch);
+    }
+
+    #[test]
+    fn test_memory_plan_recommendations() {
+        // Model fits Q4_K_M
+        let plan_q4 = plan_memory(
+            4_000_000_000, // 4B params
+            16,            // FP16 doesn't fit
+            64,
+            16,
+            4,
+            24,
+            2048,
+            4_000_000_000, // 4GB RAM
+        );
+        assert!(!plan_q4.fits);
+        assert_eq!(plan_q4.recommended_quant, Some("Q4_K_M (4-bit)"));
+
+        // Model fits IQ2_XS
+        let plan_q2 = plan_memory(
+            8_000_000_000, // 8B params
+            16,
+            64,
+            16,
+            4,
+            24,
+            2048,
+            4_000_000_000, // 4GB RAM
+        );
+        assert!(!plan_q2.fits);
+        assert_eq!(plan_q2.recommended_quant, Some("IQ2_XS (2-bit)"));
+
+        // Model too large
+        let plan_huge = plan_memory(
+            70_000_000_000, // 70B params
+            16,
+            128,
+            64,
+            8,
+            80,
+            2048,
+            4_000_000_000, // 4GB RAM
+        );
+        assert!(!plan_huge.fits);
+        assert_eq!(
+            plan_huge.recommended_quant,
+            Some("Model too large for this hardware")
+        );
+    }
 }

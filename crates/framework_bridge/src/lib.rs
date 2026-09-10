@@ -551,4 +551,250 @@ mod tests {
             assert_eq!(result, RUNUX_ERR_NOT_AVAILABLE);
         }
     }
+
+    #[test]
+    fn test_matmul_invalid_backend() {
+        let a = vec![1.0f32; 4];
+        let mut c = vec![0.0f32; 4];
+        let result = unsafe { runux_matmul(a.as_ptr(), a.as_ptr(), c.as_mut_ptr(), 2, 2, 2, 99) };
+        assert_eq!(result, RUNUX_ERR_BACKEND);
+    }
+
+    #[test]
+    fn test_flash_attention_ffi_cpu_and_tpu() {
+        let total = 1 * 2 * 4 * 8; // batch=1, heads=2, seq_len=4, head_dim=8
+        let q = vec![0.1f32; total];
+        let k = vec![0.1f32; total];
+        let v = vec![0.2f32; total];
+        let mut out = vec![0.0f32; total];
+
+        // Test CPU backend (0)
+        let res_cpu = unsafe {
+            runux_flash_attention(
+                q.as_ptr(),
+                k.as_ptr(),
+                v.as_ptr(),
+                out.as_mut_ptr(),
+                1,
+                2,
+                4,
+                8,
+                1, // causal
+                0, // CPU
+            )
+        };
+        assert_eq!(res_cpu, RUNUX_OK);
+        assert!(out.iter().any(|&x| x > 0.0));
+
+        // Test TPU simulation backend (2)
+        out.fill(0.0);
+        let res_tpu = unsafe {
+            runux_flash_attention(
+                q.as_ptr(),
+                k.as_ptr(),
+                v.as_ptr(),
+                out.as_mut_ptr(),
+                1,
+                2,
+                4,
+                8,
+                0, // non-causal
+                2, // TPU
+            )
+        };
+        assert_eq!(res_tpu, RUNUX_OK);
+        assert!(out.iter().any(|&x| x > 0.0));
+
+        // Test GPU backend (3)
+        out.fill(0.0);
+        let res_gpu = unsafe {
+            runux_flash_attention(
+                q.as_ptr(),
+                k.as_ptr(),
+                v.as_ptr(),
+                out.as_mut_ptr(),
+                1,
+                2,
+                4,
+                8,
+                1,
+                3, // GPU
+            )
+        };
+        assert_eq!(res_gpu, RUNUX_OK);
+
+        // Test RISC-V backend (1) on non-riscv64
+        #[cfg(not(target_arch = "riscv64"))]
+        {
+            let res_riscv = unsafe {
+                runux_flash_attention(
+                    q.as_ptr(),
+                    k.as_ptr(),
+                    v.as_ptr(),
+                    out.as_mut_ptr(),
+                    1,
+                    2,
+                    4,
+                    8,
+                    1,
+                    1, // RISC-V
+                )
+            };
+            assert_eq!(res_riscv, RUNUX_ERR_NOT_AVAILABLE);
+        }
+
+        // Test invalid backend (99)
+        let res_inv = unsafe {
+            runux_flash_attention(
+                q.as_ptr(),
+                k.as_ptr(),
+                v.as_ptr(),
+                out.as_mut_ptr(),
+                1,
+                2,
+                4,
+                8,
+                1,
+                99,
+            )
+        };
+        assert_eq!(res_inv, RUNUX_ERR_BACKEND);
+    }
+
+    #[test]
+    fn test_flash_attention_null_and_invalid_dims() {
+        let mut out = vec![0.0f32; 16];
+        let valid = vec![0.1f32; 16];
+
+        // Null pointer tests
+        let res_null_q = unsafe {
+            runux_flash_attention(
+                core::ptr::null(),
+                valid.as_ptr(),
+                valid.as_ptr(),
+                out.as_mut_ptr(),
+                1,
+                1,
+                4,
+                4,
+                0,
+                0,
+            )
+        };
+        assert_eq!(res_null_q, RUNUX_ERR_NULL_PTR);
+
+        let res_null_k = unsafe {
+            runux_flash_attention(
+                valid.as_ptr(),
+                core::ptr::null(),
+                valid.as_ptr(),
+                out.as_mut_ptr(),
+                1,
+                1,
+                4,
+                4,
+                0,
+                0,
+            )
+        };
+        assert_eq!(res_null_k, RUNUX_ERR_NULL_PTR);
+
+        let res_null_v = unsafe {
+            runux_flash_attention(
+                valid.as_ptr(),
+                valid.as_ptr(),
+                core::ptr::null(),
+                out.as_mut_ptr(),
+                1,
+                1,
+                4,
+                4,
+                0,
+                0,
+            )
+        };
+        assert_eq!(res_null_v, RUNUX_ERR_NULL_PTR);
+
+        let res_null_out = unsafe {
+            runux_flash_attention(
+                valid.as_ptr(),
+                valid.as_ptr(),
+                valid.as_ptr(),
+                core::ptr::null_mut(),
+                1,
+                1,
+                4,
+                4,
+                0,
+                0,
+            )
+        };
+        assert_eq!(res_null_out, RUNUX_ERR_NULL_PTR);
+
+        // Invalid dims
+        let res_dim0 = unsafe {
+            runux_flash_attention(
+                valid.as_ptr(),
+                valid.as_ptr(),
+                valid.as_ptr(),
+                out.as_mut_ptr(),
+                0,
+                1,
+                4,
+                4,
+                0,
+                0,
+            )
+        };
+        assert_eq!(res_dim0, RUNUX_ERR_INVALID_DIMS);
+
+        let res_dim_neg = unsafe {
+            runux_flash_attention(
+                valid.as_ptr(),
+                valid.as_ptr(),
+                valid.as_ptr(),
+                out.as_mut_ptr(),
+                1,
+                -1,
+                4,
+                4,
+                0,
+                0,
+            )
+        };
+        assert_eq!(res_dim_neg, RUNUX_ERR_INVALID_DIMS);
+    }
+
+    #[test]
+    fn test_rms_norm_null_and_dims() {
+        let mut x = vec![1.0f32; 4];
+        let w = vec![1.0f32; 4];
+
+        let res1 = unsafe { runux_rms_norm(core::ptr::null_mut(), w.as_ptr(), 4, 1e-5) };
+        assert_eq!(res1, RUNUX_ERR_NULL_PTR);
+
+        let res2 = unsafe { runux_rms_norm(x.as_mut_ptr(), core::ptr::null(), 4, 1e-5) };
+        assert_eq!(res2, RUNUX_ERR_NULL_PTR);
+
+        let res3 = unsafe { runux_rms_norm(x.as_mut_ptr(), w.as_ptr(), 0, 1e-5) };
+        assert_eq!(res3, RUNUX_ERR_INVALID_DIMS);
+    }
+
+    #[test]
+    fn test_silu_and_softmax_null_and_dims() {
+        let mut x = vec![1.0f32; 4];
+
+        assert_eq!(unsafe { runux_silu(core::ptr::null_mut(), 4) }, RUNUX_ERR_NULL_PTR);
+        assert_eq!(unsafe { runux_silu(x.as_mut_ptr(), 0) }, RUNUX_ERR_INVALID_DIMS);
+
+        assert_eq!(unsafe { runux_softmax(core::ptr::null_mut(), 4) }, RUNUX_ERR_NULL_PTR);
+        assert_eq!(unsafe { runux_softmax(x.as_mut_ptr(), -1) }, RUNUX_ERR_INVALID_DIMS);
+    }
+
+    #[test]
+    fn test_fast_sqrt_helpers() {
+        assert_eq!(fast_sqrt(0.0), 0.0);
+        assert_eq!(fast_sqrt(-5.0), 0.0);
+        assert!((fast_sqrt(4.0) - 2.0).abs() < 1e-3);
+    }
 }

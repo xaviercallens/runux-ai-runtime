@@ -635,4 +635,24 @@ mod tests {
         let result = flash_attention_forward(&q, &k, &v, &config);
         assert!(result.flops > 0, "Should count FLOPs");
     }
+
+    #[test]
+    fn test_validate_against_standard_attention() {
+        let d = 8;
+        let n = 16;
+        let q: Vec<f32> = (0..n * d).map(|i| (i as f32 * 0.05).sin()).collect();
+        let k: Vec<f32> = (0..n * d).map(|i| (i as f32 * 0.05).cos()).collect();
+        let v: Vec<f32> = (0..n * d).map(|i| (i as f32 * 0.02).sin()).collect();
+
+        let (std_out, flash_out, max_diff) = validate_against_standard(&q, &k, &v, d);
+        assert_eq!(std_out.len(), flash_out.len());
+        assert!(max_diff < 0.25, "Max diff was {}", max_diff);
+
+        // Fast math edge cases
+        assert_eq!(fast_exp(-90.0), 0.0);
+        assert_eq!(fast_exp(90.0), f32::MAX);
+        assert_eq!(fast_sqrt(-1.0), 0.0);
+        assert_eq!(fast_ln(-1.0), f32::NEG_INFINITY);
+        assert_eq!(fast_ln(0.0), f32::NEG_INFINITY);
+    }
 }

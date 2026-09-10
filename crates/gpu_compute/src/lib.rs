@@ -253,4 +253,39 @@ mod tests {
         ctx.matmul(&a, &b, &mut c, 2, 2, 3).unwrap();
         assert_eq!(c, [31.0, 19.0, 85.0, 55.0]);
     }
+
+    #[test]
+    fn test_gpu_compute_edge_cases_and_errors() {
+        let ctx = GpuContext::new().unwrap();
+
+        // Empty tokens
+        let mut empty_out = [0.0f32; 0];
+        assert!(ctx.embedding_lookup(&[], &[1.0, 2.0], &mut empty_out).is_ok());
+
+        // Length mismatch
+        let mut misaligned = [0.0f32; 3];
+        assert!(ctx.embedding_lookup(&[0, 1], &[1.0, 2.0, 3.0, 4.0], &mut misaligned).is_err());
+
+        // hidden_dim == 0
+        let mut zero_out = [0.0f32; 0];
+        assert!(ctx.embedding_lookup(&[0], &[1.0], &mut zero_out).is_err());
+
+        // vector_add length mismatch
+        let a = [1.0f32; 2];
+        let b = [1.0f32; 3];
+        let mut out = [0.0f32; 2];
+        assert!(ctx.vector_add(&a, &b, &mut out).is_err());
+        assert!(ctx.vector_add(&a, &a, &mut [0.0f32; 3]).is_err());
+
+        // vector_scale length mismatch
+        assert!(ctx.vector_scale(&a, 2.0, &mut [0.0f32; 3]).is_err());
+
+        // matmul length mismatch
+        let mut a_mat = [1.0f32; 2];
+        let b_mat = [1.0f32; 4];
+        let mut c_mat = [0.0f32; 4];
+        assert!(ctx.matmul(&a_mat, &b_mat, &mut c_mat, 2, 2, 2).is_err());
+        assert!(ctx.matmul(&b_mat, &a_mat, &mut c_mat, 2, 2, 2).is_err());
+        assert!(ctx.matmul(&b_mat, &b_mat, &mut a_mat, 2, 2, 2).is_err());
+    }
 }

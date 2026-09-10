@@ -1164,4 +1164,100 @@ mod tests {
         let err = compare_outputs(&c_cpu, &c_m2);
         assert!(err < 1e-5, "M2 simulated matmul matches CPU reference");
     }
+
+    #[test]
+    fn test_cpu_and_tpu_ops_complete() {
+        let cpu = CpuBackend::new();
+        let mut x_cpu = vec![1.0f32, 2.0, 3.0, 4.0];
+        cpu.rope(&mut x_cpu, 1, 4, 10000.0);
+        assert!(x_cpu.iter().all(|v| v.is_finite()));
+
+        let tpu = TpuSimulatorBackend::v5e();
+        let desc = tpu.alloc_tensor(&Shape::matrix(4, 4), DType::BF16);
+        assert_eq!(desc.handle, 32);
+
+        let mut x_tpu = vec![1.0f32, 2.0, 3.0, 4.0];
+        tpu.softmax(&mut x_tpu);
+        assert!((x_tpu.iter().sum::<f32>() - 1.0).abs() < 1e-3);
+
+        let mut norm_x = vec![1.0f32; 4];
+        tpu.rms_norm(&mut norm_x, &[1.0; 4], 1e-5);
+        assert!((norm_x[0] - 1.0).abs() < 0.1);
+
+        let mut silu_x = vec![0.0f32, 1.0];
+        tpu.silu(&mut silu_x);
+        assert_eq!(silu_x[0], 0.0);
+
+        let mut rope_x = vec![1.0f32, 2.0, 3.0, 4.0];
+        tpu.rope(&mut rope_x, 1, 4, 10000.0);
+        assert!(rope_x.iter().all(|v| v.is_finite()));
+    }
+
+    #[test]
+    fn test_apple_silicon_backend_complete() {
+        let m2 = AppleSiliconBackend::m2(16);
+        let desc = m2.alloc_tensor(&Shape::vector(64), DType::F32);
+        assert_eq!(desc.handle, 256);
+        assert_eq!(desc.total_bytes(), 256);
+
+        let d = 4;
+        let n = 4;
+        let q = vec![0.5f32; n * d];
+        let k = vec![0.5f32; n * d];
+        let v = vec![0.5f32; n * d];
+        let mut out = vec![0.0f32; n * d];
+        let config = FlashConfig::for_hardware(m2.caps(), 1, d);
+        m2.flash_attention(&q, &k, &v, &mut out, &config);
+        assert!(out.iter().all(|val| val.is_finite()));
+
+        let mut x = vec![1.0f32, 2.0];
+        m2.softmax(&mut x);
+        m2.silu(&mut x);
+        m2.rms_norm(&mut x, &[1.0; 2], 1e-5);
+        m2.rope(&mut x, 1, 2, 10000.0);
+        assert!(x.iter().all(|v| v.is_finite()));
+    }
+
+    #[test]
+    fn test_hardware_caps_k3_bxm4_and_helpers() {
+        let k3 = HardwareCaps::spacemit_k3();
+        assert_eq!(k3.optimal_tile_size, 32);
+        assert_eq!(k3.memory_gb(), 32.0);
+
+        let bxm4 = HardwareCaps::powervr_bxm4();
+        assert_eq!(bxm4.optimal_tile_size, 64);
+        assert_eq!(bxm4.peak_tflops, 0.5);
+
+        let mut zero_tdp = bxm4.clone();
+        zero_tdp.tdp_watts = 0.0;
+        assert_eq!(zero_tdp.tflops_per_watt(), 0.0);
+
+        assert!(!k3.is_memory_bound(100, 0));
+    }
+
+    #[test]
+    fn test_shapes_and_tensor_desc() {
+        let scalar = Shape::scalar();
+        assert_eq!(scalar.num_elements(), 1);
+        assert_eq!(scalar.rank(), 0);
+
+        let vec_shape = Shape::vector(10);
+        assert_eq!(vec_shape.num_elements(), 10);
+        assert_eq!(vec_shape.rank(), 1);
+
+        let desc = TensorDesc::new("test_t", vec_shape, DType::INT8);
+        assert_eq!(desc.total_bytes(), 10);
+    }
+
+    #[test]
+    fn test_hal_fast_math_edge_cases() {
+        assert_eq!(fast_exp(-100.0), 0.0);
+        assert_eq!(fast_exp(100.0), f32::MAX);
+        assert_eq!(fast_sqrt(0.0), 0.0);
+        assert_eq!(fast_sqrt(-1.0), 0.0);
+        assert_eq!(fast_pow(2.0, 0.0), 1.0);
+        assert_eq!(fast_pow(2.0, 4.0), 16.0);
+        assert!((fast_sin(0.0) - 0.0).abs() < 1e-3);
+        assert!((fast_cos(0.0) - 1.0).abs() < 1e-3);
+    }
 }
