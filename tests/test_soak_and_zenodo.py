@@ -111,3 +111,42 @@ def test_zenodo_bundle_sanitation(tmp_path):
     # Clean up test tar
     if tar_path.exists():
         tar_path.unlink()
+
+
+def test_t4_soak_monitor_short_run(tmp_path):
+    """Test T4SoakMonitor initialization, live status updating, and dataset flushing."""
+    from monitor_t4_1hour_benchmark import T4SoakMonitor
+
+    monitor = T4SoakMonitor(
+        duration_seconds=2,
+        window_seconds=1,
+        output_dir=str(tmp_path),
+    )
+    assert monitor.duration_seconds == 2
+    assert monitor.window_seconds == 1
+    assert monitor.total_windows == 2
+
+    monitor.run()
+
+    # Verify output datasets
+    status_file = tmp_path / "datasets" / "t4_soak_live_status.json"
+    json_file = tmp_path / "datasets" / "t4_long_duration_soak_1hour.json"
+    csv_file = tmp_path / "datasets" / "t4_long_duration_soak_1hour.csv"
+
+    assert status_file.exists()
+    assert json_file.exists()
+    assert csv_file.exists()
+
+    with open(status_file, "r") as f:
+        status_data = json.load(f)
+    assert status_data["status"] == "COMPLETED"
+    assert status_data["progress_percent"] == 100.0
+    assert status_data["int64_deterministic_drift"] == 0.0
+
+    with open(json_file, "r") as f:
+        soak_data = json.load(f)
+    assert "summary" in soak_data
+    assert "time_series" in soak_data
+    assert len(soak_data["time_series"]) == 2
+    assert soak_data["summary"]["memory_leak_detected"] is False
+    assert soak_data["summary"]["int64_bit_exact_zero_drift"] is True

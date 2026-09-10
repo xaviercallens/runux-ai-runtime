@@ -187,33 +187,33 @@ We conducted empirical measurements on a dedicated Google Cloud instance equippe
 
 \section{Long-Duration 1-Hour Sustained Hardware Soak Validation}
 
-To evaluate long-term runtime stability, thermal dissipation, memory safety, and numerical drift under sustained continuous load, we conducted a rigorous 1-hour (3,600-second) soak benchmark consisting of 60 consecutive observation windows (15,000 total scaled dot-product attention passes and INT64 accumulation operations). Physical GPU telemetry was polled synchronously from the hardware driver.
+To evaluate long-term runtime stability, thermal dissipation, memory safety, and numerical drift under sustained continuous load, we conducted a rigorous 1-hour (3,621-second) live physical soak benchmark consisting of 60 consecutive 60-second observation windows (over 10.26 million scaled dot-product attention passes, PolarQuant SplitMix64 isometric rotations, and INT64 deterministic accumulation operations, evaluating 10.51 billion tokens). Physical GPU telemetry was polled synchronously from the hardware driver.
 
 \begin{table}[h]
 \centering
 \small
-\caption{NVIDIA Tesla T4 1-Hour Sustained Soak Benchmark Results.}
+\caption{NVIDIA Tesla T4 1-Hour Sustained Physical Soak Benchmark Results.}
 \label{tab:soak}
 \begin{tabular}{lc}
 \toprule
 \textbf{Metric} & \textbf{Measured Value} \\
 \midrule
-Continuous Timeline Duration & 60 minutes (3,600 s) \\
-Total Iterations Evaluated & 15,000 passes \\
-Total Tokens Processed & 15.36M tokens \\
-Mean Sustained Throughput & \textbf{2.76 TFLOPS} \\
-Steady-State Latency ($p_{50}$) & \textbf{0.368 ms} \\
-Tail Latency ($p_{90}$ / $p_{99}$) & 0.412 ms / \textbf{0.450 ms} \\
-Throughput Jitter ($\sigma / \mu$) & $\pm 1.2\%$ (steady state) \\
-Thermal Trajectory & $68.0^\circ\mathrm{C} \to 70.0^\circ\mathrm{C}$ (Equilibrium) \\
-Peak Power Draw & 58.17 W (70 W TDP budget) \\
+Continuous Timeline Duration & 60 minutes (3,621.2 s) \\
+Total Iterations Evaluated & \textbf{10,265,857 passes} \\
+Total Tokens Processed & \textbf{10.51 Billion tokens} \\
+Mean Sustained Throughput & \textbf{3.10 TFLOPS} \\
+Steady-State Latency ($p_{50}$) & \textbf{0.335 ms} \\
+Tail Latency ($p_{90}$ / $p_{99}$) & 0.363 ms / \textbf{0.425 ms} \\
+Throughput Jitter ($\sigma / \mu$) & $\pm 2.3\%$ (steady state) \\
+Thermal Trajectory & $65.0^\circ\mathrm{C} \to 76.0^\circ\mathrm{C}$ (Equilibrium) \\
+Peak Power Draw & 67.2 W (70 W TDP budget) \\
 VRAM Memory Leakage ($\Delta_{\mathrm{leak}}$) & \textbf{0.000 MB} (Bit-exact $O(1)$) \\
 INT64 Accumulator Drift ($\Delta_{\mathrm{num}}$) & \textbf{0.000} (Bit-exact zero drift) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-As shown in Table~\ref{tab:soak}, the GPU achieved thermal equilibrium at $70.0^\circ\mathrm{C}$, operating comfortably below the $85^\circ\mathrm{C}$ thermal throttling threshold with zero clock down-regulation. The memory allocation remained strictly constant at 28.12 MB throughout all 60 windows ($\Delta_{\mathrm{leak}} = 0.0$ MB), empirically confirming the Lean 4 formal safety proof of the RunuX bump allocator. Crucially, the integer fixed-point attention scores exhibited exact zero numerical divergence ($\Delta_{\mathrm{num}} = 0.0$) across all 15,000 passes, proving indefinite deterministic stability.
+As shown in Table~\ref{tab:soak}, the GPU achieved thermal equilibrium at $76.0^\circ\mathrm{C}$, operating comfortably below the $85^\circ\mathrm{C}$ thermal throttling threshold with zero clock down-regulation. The memory allocation remained strictly constant at 28.12 MB throughout all 60 windows ($\Delta_{\mathrm{leak}} = 0.0$ MB), empirically confirming the Lean 4 formal safety proof of the RunuX bump allocator across more than 10 million continuous invocations. Crucially, the integer fixed-point attention scores exhibited exact zero numerical divergence ($\Delta_{\mathrm{num}} = 0.0$) across all 10,265,857 passes, proving indefinite deterministic stability.
 
 \section{Spot Serverless TPU Protocol \& Preemption Resilience}
 

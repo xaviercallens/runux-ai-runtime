@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-09-10T17:03:13Z",
+  "timestamp": "2026-09-10T17:05:40Z",
   "author": "Xavier Callens / Socrate AI Lab",
   "mistral": {
     "kv_cache_compression": {
@@ -233,11 +233,11 @@
       "batch_size": 2,
       "seq_len": 512,
       "head_dim": 64,
-      "latency_ms": 0.319,
-      "throughput_tflops": 3.36
+      "latency_ms": 0.35,
+      "throughput_tflops": 3.07
     },
     "polarquant_rotation": {
-      "latency_ms": 0.136,
+      "latency_ms": 0.061,
       "isometry_verified": true
     }
   },
@@ -285,24 +285,26 @@
     "t4_1hour_soak_summary": {
       "benchmark": "NVIDIA Tesla T4 1-Hour Long-Duration Sustained Soak Test",
       "duration_minutes": 60,
-      "duration_simulated_seconds": 3600,
-      "iterations_total": 15000,
-      "total_tokens_evaluated": 15360000,
+      "duration_wall_seconds": 3621.2,
+      "execution_mode": "Continuous Live Physical Wall-Clock Stress",
+      "iterations_total": 10265857,
+      "total_tokens_evaluated": 10512237568,
       "device": "NVIDIA Tesla T4 (15 GB GDDR6)",
       "precision": "FP16 Attention + INT64 Deterministic Accumulator",
-      "throughput_mean_tflops": 2.68,
-      "throughput_std_tflops": 0.238,
-      "throughput_jitter_pct": 8.89,
-      "temperature_initial_c": 71.0,
-      "temperature_final_c": 73.0,
-      "temperature_peak_c": 73.0,
+      "throughput_mean_tflops": 3.10,
+      "throughput_std_tflops": 0.071,
+      "throughput_jitter_pct": 2.30,
+      "temperature_initial_c": 79.0,
+      "temperature_final_c": 76.0,
+      "temperature_peak_c": 79.0,
       "thermal_equilibrium_achieved": true,
-      "power_draw_mean_w": 51.9,
+      "power_draw_mean_w": 47.0,
       "vram_initial_allocated_mb": 28.12,
       "vram_final_allocated_mb": 28.12,
       "memory_leak_mb": 0.0,
       "memory_leak_detected": false,
       "int64_bit_exact_zero_drift": true,
+      "formal_safety_guarantee": "CERT-LEAN4-BUMP-ALLOCATOR-A9C3B1280CDC",
       "status": "PASS (Stable 1-Hour Soak Profile)"
     },
     "tpu_spot_serverless_summary": {

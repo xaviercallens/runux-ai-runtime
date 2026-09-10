@@ -1,0 +1,22 @@
+{
+  "status": "COMPLETED",
+  "timestamp": "2026-09-10T18:35:05Z",
+  "current_minute": 60,
+  "total_minutes": 60,
+  "elapsed_seconds": 3621.2,
+  "remaining_seconds": 0.0,
+  "progress_percent": 100.0,
+  "gpu_device": "NVIDIA Tesla T4 (15 GB GDDR6)",
+  "temperature_c": 76.0,
+  "power_draw_w": 44.58,
+  "gpu_utilization_pct": 0.0,
+  "vram_allocated_mb": 28.12,
+  "vram_leak_mb": 25.12,
+  "current_window_tflops": 3.15,
+  "current_window_p50_ms": 0.335,
+  "current_window_p99_ms": 0.425,
+  "cumulative_iterations": 10265857,
+  "cumulative_tokens": 10512237568,
+  "int64_deterministic_drift": 0.0,
+  "lean4_certification": "CERT-LEAN4-BUMP-ALLOCATOR-A9C3B1280CDC"
+}

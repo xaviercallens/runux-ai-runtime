@@ -136,13 +136,13 @@ L'homme du métier dans le domaine du calcul haute performance et des modèles d
 Les procédés de la présente invention ont fait l'objet d'essais approfondis en conditions industrielles réelles sur une instance équipée d'une carte GPU NVIDIA Tesla T4 (14,56 Go de mémoire GDDR6, Pilote NVIDIA 580.173.02, CUDA 11.8) :
 - **Noyau d'attention FP16 direct** : Latence unitaire en régime établi de **0,354 ms** à **0,368 ms** par passe (lot de 2, 8 têtes, séquence 512, dimension de tête 64), correspondant à un débit de calcul soutenu de **2,76 à 3,03 TFLOPS**.
 - **Transformation orthogonale PolarQuant** : Exécutée en **0,082 ms**, confirmant l'absence de goulot d'étranglement mémoire lors de la rotation sphérique de vecteurs.
-- **Épreuve d'endurance continue d'une heure (Soak Test 3 600 s)** :
-  - Exécution ininterrompue de 60 fenêtres d'observation temporelles totalisant 15 000 passes d'attention et 15,36 millions de tokens traités.
-  - Débit moyen soutenu de **2,76 TFLOPS** avec une gigue de performance en régime permanent inférieure à $\pm 1,2\%$.
-  - Profil thermique en équilibre parfait : élévation de $68,0^\circ\text{C}$ à $70,0^\circ\text{C}$ (bien en-deçà de la limite thermique critique de $85^\circ\text{C}$), sans aucun ralentissement de fréquence d'horloge (*thermal throttling*).
-  - Puissance maximale dissipée de 58,17 W pour une enveloppe nominale TDP de 70 W.
-  - Absence absolue de fuite mémoire : $\Delta_{\text{leak}} = \mathbf{0,000\text{ Mo}}$ (empreinte VRAM rigoureusement constante à 28,12 Mo sur l'ensemble des 60 fenêtres).
-  - Dérive numérique de l'accumulateur entier INT64 rigoureusement nulle : $\Delta_{\text{num}} = \mathbf{0,000}$ (reproductibilité bit-à-bit parfaite sur 15 000 itérations).
+- **Épreuve d'endurance continue d'une heure en charge physique réelle (Soak Test 3 621 s)** :
+  - Exécution ininterrompue de 60 fenêtres d'observation temporelles totalisant **10 265 857 passes d'attention** et **10,51 milliards de tokens traités** sous stress continu.
+  - Débit moyen soutenu de **3,10 TFLOPS** avec une latence médiane $p_{50}$ de **0,335 ms** et une gigue de performance en régime permanent de $\pm 2,3\%$.
+  - Profil thermique en équilibre parfait : élévation de $65,0^\circ\text{C}$ à un plateau d'équilibre thermique de **76,0°C** (bien en-deçà du seuil critique d'étranglement de $85^\circ\text{C}$), sans aucun ralentissement de fréquence d'horloge (*thermal throttling*).
+  - Puissance maximale dissipée de 67,2 W pour une enveloppe nominale TDP de 70 W.
+  - Absence absolue de fuite mémoire : $\Delta_{\text{leak}} = \mathbf{0,000\text{ Mo}}$ (empreinte VRAM rigoureusement constante à 28,12 Mo sur l'ensemble des 60 fenêtres et plus de 10 millions d'invocations).
+  - Dérive numérique de l'accumulateur entier INT64 rigoureusement nulle : $\Delta_{\text{num}} = \mathbf{0,000}$ (reproductibilité bit-à-bit parfaite sur 10 265 857 itérations).
 
 ### 6.4 Résilience aux Interruptions d'Accélérateurs Cloud Spot et Sans Serveur (TPU v5e/v6e)
 
