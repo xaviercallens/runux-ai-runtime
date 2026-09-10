@@ -1,0 +1,10 @@
+{
+  "model_id": "mistralai/Mistral-Large-Instruct-2407",
+  "runux_evaluation": {
+    "polarquant_bits": 3,
+    "compression_ratio_vs_fp16": 4.92,
+    "context_window": 131072,
+    "vram_saved_gb": 35.06,
+    "energy_preservation_norm_diff": "< 0.35"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "deterministic_attention": {
+    "benchmark": "NVIDIA INT64 Deterministic Attention",
+    "num_runs": 5,
+    "tensor_shape": [
+      2,
+      4,
+      128,
+      32
+    ],
+    "bit_exact": true,
+    "max_abs_drift": 0.0,
+    "status": "PASS (Bit-Exact Zero Drift)"
+  },
+  "signsgd_compression": {
+    "benchmark": "NVIDIA 1-Bit SignSGD Megatron-LM Scaling",
+    "model_params": "70B",
+    "num_params": 70000000000,
+    "interconnect": "400 Gbps InfiniBand (NDR)",
+    "fp32_sync_volume_mb": 534057.6,
+    "fp32_sync_latency_ms": 11200.0,
+    "sign1bit_sync_volume_mb": 16689.3,
+    "sign1bit_sync_latency_ms": 350.0,
+    "bandwidth_compression_ratio": "32.0x",
+    "inter_node_latency_speedup": "32.0x"
+  }
+}

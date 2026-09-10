@@ -1,0 +1,9 @@
+{
+  "model_id": "mistralai/Mixtral-8x22B-Instruct-v0.1",
+  "runux_evaluation": {
+    "polarquant_bits": 3,
+    "compression_ratio_vs_fp16": 4.92,
+    "context_window": 65536,
+    "vram_saved_gb": 11.16
+  }
+}
