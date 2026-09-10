@@ -1,0 +1,45 @@
+{
+  "timestamp": "2026-09-10T11:28:51.229203Z",
+  "device": "Tesla T4",
+  "vram_gb": 14.56,
+  "benchmarks": {
+    "transformer_forward": {
+      "latency_ms": 27.626,
+      "throughput_tps": 37067.0,
+      "power_watts": 67.6,
+      "joules_per_token": 0.001825
+    },
+    "gqa_memory": {
+      "mha_mb": 8.0,
+      "gqa_mb": 2.0,
+      "savings_ratio": "4.0x"
+    },
+    "paged_cache": {
+      "num_blocks": 512,
+      "block_size": 16,
+      "used_blocks": 64,
+      "free_blocks": 448,
+      "total_tokens_stored": 1024,
+      "pool_vram_mb": 16.0,
+      "internal_fragmentation_pct": 0.0,
+      "external_fragmentation_pct": 0.0
+    },
+    "polarquant_gqa": {
+      "kl_divergence": 0.01861,
+      "norm_diff": 0.0247,
+      "cosine_sim": 0.9823,
+      "compression_ratio": 4.92
+    },
+    "deterministic_int64": {
+      "passes_tested": 10,
+      "bit_exact": true,
+      "max_drift": 0
+    },
+    "signsgd_training": {
+      "initial_loss": 125.7865,
+      "final_loss": 0.4689,
+      "loss_reduction_pct": 99.6,
+      "duration_ms": 211.5
+    }
+  }
+}

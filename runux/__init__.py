@@ -3,23 +3,26 @@
 #
 # Copyright (c) 2026 Xavier Callens / Socrate AI Lab. All Rights Reserved.
 # Licensed under LicenseRef-RunuX-Commercial.
+#
+# Patent Pending: INPI Demande Provisoire de Brevet RunuX (2026).
 # ==============================================================================
 
-from .deterministic_attn import Int64DeterministicAttention, build_int64_softmax_lut
+from .deterministic_attn import Int64DeterministicAttention
 from .polarquant import PolarQuantKVCache, PolarQuantConfig
 from .signsgd import SignSGDOptimizer
 from .carbon_scheduler import CarbonAwareSpeculativeScheduler, GridCarbonProfile
-from .systolic_advisor import SystolicTilingAdvisor, TpuProfile
+from .systolic_advisor import SystolicTilingAdvisor
+from .gqa_kernel import GroupedQueryAttention
+from .paged_cache import PagedKVCache
 
-__version__ = "1.0.0-phase1"
 __all__ = [
     "Int64DeterministicAttention",
-    "build_int64_softmax_lut",
     "PolarQuantKVCache",
     "PolarQuantConfig",
     "SignSGDOptimizer",
     "CarbonAwareSpeculativeScheduler",
     "GridCarbonProfile",
     "SystolicTilingAdvisor",
-    "TpuProfile",
+    "GroupedQueryAttention",
+    "PagedKVCache",
 ]
