@@ -32,6 +32,7 @@
 //! - Buffer states tracked to prevent use-after-free and data races
 
 extern crate alloc;
+pub mod ffi;
 use alloc::vec;
 use alloc::vec::Vec;
 use alloc::string::String;
