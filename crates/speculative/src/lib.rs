@@ -231,8 +231,8 @@ impl SpeculativeEngine {
             }
         }
 
-        // If all K tokens accepted, sample one more from the target
-        if accepted_count == k && !has_bonus {
+        // If all K tokens accepted (and k > 0), sample one more from the target
+        if k > 0 && accepted_count == k && !has_bonus {
             if let Some(last_logits) = target_logits_batch.get(k - 1) {
                 let target_probs = softmax_simple(last_logits, self.config.target_temperature);
                 let bonus = self.sample_from_probs(&target_probs);

@@ -133,12 +133,6 @@ fn main() {
     println!("  Est. J/token:      {:.4}", result.estimated_joules_per_tok);
     println!();
 
-    // -- Autoresearch metric (Early output to avoid sandbox OOM) --
-    println!("AUTORESEARCH_METRIC: {{\"estimated_tps_k1\": {:.1}, \"tpu_opt_tflops\": {:.1}}}", 
-        result.estimated_tps, 
-        150.0 // Mock TPU FLOPS since we bypass tpu_bench
-    );
-    std::process::exit(0);
 
     // ── Section 4: LoRA Training (analytical) ────────────────────────────
     println!("  4. LoRA TRAINING ANALYSIS");

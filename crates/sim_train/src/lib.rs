@@ -958,8 +958,8 @@ mod tests {
         let config = LoraConfig::qwen_0_5b_edge();
         let mem = config.training_memory_bytes();
 
-        // Params + grads + optimizer (4× params × 4 bytes)
-        let expected = config.total_trainable_params() * 4 * 4;
+        // BF16 params (2 bytes) + BF16 grads (2 bytes) + FP32 AdamW optimizer (8 bytes) = 12 bytes/param
+        let expected = config.total_trainable_params() * (2 + 2 + 8);
         assert_eq!(mem, expected);
 
         // Should fit in BPI-F3 (8GB) with room for the base model
@@ -1021,7 +1021,7 @@ mod tests {
 
     #[test]
     fn test_dp_adds_noise() {
-        let mut config = FederatedConfig {
+        let config = FederatedConfig {
             n_clients: 2,
             n_rounds: 2,
             samples_per_client: 20,

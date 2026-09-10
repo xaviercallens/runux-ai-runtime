@@ -39,7 +39,6 @@ extern crate alloc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ai_runtime::DataType;
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -195,18 +194,19 @@ impl PolarQuant {
         Self { seed, dim }
     }
 
-    /// Generate a pseudo-random rotation value using xorshift64.
+    /// Generate a pseudo-random rotation value using splitmix64 mixing.
     fn random_rotation(&self, i: usize, j: usize) -> f32 {
-        let mut state = self.seed
-            ^ (i as u64).wrapping_mul(6364136223846793005)
-            ^ (j as u64).wrapping_mul(1442695040888963407);
-        state ^= state << 13;
-        state ^= state >> 7;
-        state ^= state << 17;
-        // Normalize to [-1, 1] range
+        let x = self.seed
+            ^ (i as u64).wrapping_mul(0x517c_c1b7_2722_0a95)
+            ^ (j as u64).wrapping_mul(0x6e76_cf0e_3639_c089);
+        let mut z = x.wrapping_add(0x9e37_79b9_7f4a_7c15);
+        z = (z ^ (z >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+        z = (z ^ (z >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+        let state = z ^ (z >> 31);
+        // Normalize to [-1, 1] range (variance 1/3)
         let val = (state as f32) / (u64::MAX as f32) * 2.0 - 1.0;
-        // Scale by sqrt(dim) for orthogonal-like behavior
-        val / fast_sqrt_simple(self.dim as f32)
+        // Scale by sqrt(3 / dim) so coordinate variance is 1/dim (orthogonal-like energy preservation)
+        val * 1.7320508 / fast_sqrt_simple(self.dim as f32)
     }
 
     /// Apply the rotation to a vector (compress direction).
