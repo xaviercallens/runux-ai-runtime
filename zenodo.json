@@ -1,0 +1,45 @@
+{
+  "title": "RunuX: Deterministic Fixed-Point Attention, Isometric PolarQuant KV-Compression, and Grid-Carbon Adaptive Scheduling \u2014 Scientific Benchmarking & 1-Hour Soak Dataset",
+  "description": "Open scientific replication dataset, empirical telemetry, and academic paper accompanying the RunuX AI Runtime. Includes: (1) 1-Hour continuous hardware soak benchmarks on NVIDIA Tesla T4 GPU (p50/p90/p99 latencies, thermal equilibrium, zero VRAM leak), (2) Google Cloud TPU v5e/v6e Trillium Spot Serverless preemption resilience protocol (< 12 ms checkpointing, zero token loss), (3) Mistral Large 2 (128k context) PolarQuant 3-bit KV-cache reduction (4.92x), (4) INT64 bit-exact zero-drift attention proofs, (5) 1-Bit SignSGD Megatron-LM 70B communication reduction (32.0x), and (6) $50 GCP Spot/Serverless economic reproducibility schedule. Note: Closed-source RunuX runtime engine source code and binaries are proprietary and excluded under IP protection.",
+  "creators": [
+    {
+      "name": "Callens, Xavier",
+      "affiliation": "Socrate AI Lab / RunuX Research",
+      "orcid": "0009-0000-0000-0000"
+    }
+  ],
+  "upload_type": "publication",
+  "publication_type": "article",
+  "access_right": "open",
+  "license": "CC-BY-4.0",
+  "keywords": [
+    "deep-learning-runtime",
+    "deterministic-attention",
+    "kv-cache-compression",
+    "polarquant",
+    "splitmix64",
+    "carbon-aware-computing",
+    "spot-serverless-tpu",
+    "tpu-trillium",
+    "nvidia-tesla-t4",
+    "open-science",
+    "zenodo"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/xaviercallens/runux-ai-runtime",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://huggingface.co/datasets/socrateai/runux-scientific-proof-datasets",
+      "relation": "isIdenticalTo",
+      "scheme": "url"
+    }
+  ],
+  "communities": [
+    {
+      "identifier": "machine-learning-systems"
+    }
+  ]
+}

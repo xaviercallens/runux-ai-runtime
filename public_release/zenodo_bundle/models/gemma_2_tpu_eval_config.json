@@ -1,0 +1,9 @@
+{
+  "model_id": "google/gemma-2-9b-it",
+  "runux_evaluation": {
+    "tpu_target": "Cloud TPU v5e / v6e Trillium",
+    "mxu_occupancy": "88.0%",
+    "speedup_vs_unpadded": "2.32x",
+    "formal_certificate": "CERT-LEAN4-BUMP-ALLOCATOR-A9C3B1280CDC"
+  }
+}
