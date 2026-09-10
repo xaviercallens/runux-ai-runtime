@@ -1,6 +1,6 @@
 {
-  "title": "RunuX: Deterministic Fixed-Point Attention, Isometric PolarQuant KV-Compression, and Grid-Carbon Adaptive Scheduling \u2014 Scientific Benchmarking & 1-Hour Soak Dataset",
-  "description": "Open scientific replication dataset, empirical telemetry, and academic paper accompanying the RunuX AI Runtime. Includes: (1) 1-Hour continuous hardware soak benchmarks on NVIDIA Tesla T4 GPU (p50/p90/p99 latencies, thermal equilibrium, zero VRAM leak), (2) Google Cloud TPU v5e/v6e Trillium Spot Serverless preemption resilience protocol (< 12 ms checkpointing, zero token loss), (3) Mistral Large 2 (128k context) PolarQuant 3-bit KV-cache reduction (4.92x), (4) INT64 bit-exact zero-drift attention proofs, (5) 1-Bit SignSGD Megatron-LM 70B communication reduction (32.0x), and (6) $50 GCP Spot/Serverless economic reproducibility schedule. Note: Closed-source RunuX runtime engine source code and binaries are proprietary and excluded under IP protection.",
+  "title": "RunuX: Deterministic Fixed-Point Attention, Isometric PolarQuant KV-Compression, and Grid-Carbon Adaptive Scheduling \u2014 Scientific Benchmarking & Soak Dataset",
+  "description": "Open scientific replication dataset, empirical telemetry, and academic paper accompanying the RunuX AI Runtime. Includes: (1) Local physical open-weights Mistral 7B Instruct v0.2 benchmarks on NVIDIA Tesla T4 GPU, eliminating the 8k+ token CUDA Out-Of-Memory (OOM) failure cliff and enabling full 32k context in only 4.88 GB VRAM (preserving 9.68 GB headroom), (2) 1-Hour continuous hardware soak telemetry on Tesla T4 (3.10 TFLOPS sustained, 76.0°C thermal equilibrium, 0.000 MB VRAM leakage across 10.26M passes and 10.51B tokens), (3) Google Cloud TPU v5e/v6e Trillium Spot Serverless preemption resilience protocol (< 12 ms checkpointing, zero token loss, 2.32x throughput speedup via MLGO systolic tiling), (4) Mistral Large 2 (128k context) PolarQuant 3-bit KV-cache reduction (4.92x), (5) INT64 bit-exact zero-drift attention proofs (Delta_num = 0.000), (6) 1-Bit SignSGD Megatron-LM 70B communication reduction (32.0x), (7) $50 GCP Spot/Serverless economic reproducibility schedule, and (8) Open-science collaboration and partnership framework for Mistral AI, NVIDIA, and Google Cloud. Note: Closed-source RunuX runtime engine source code, compiled micro-kernel binaries, and private cryptographic salts remain proprietary under pending patent protection at INPI.",
   "creators": [
     {
       "name": "Callens, Xavier",
@@ -14,6 +14,8 @@
   "license": "CC-BY-4.0",
   "keywords": [
     "deep-learning-runtime",
+    "mistral-7b",
+    "mistral-ai",
     "deterministic-attention",
     "kv-cache-compression",
     "polarquant",
@@ -23,7 +25,8 @@
     "tpu-trillium",
     "nvidia-tesla-t4",
     "open-science",
-    "zenodo"
+    "zenodo",
+    "huggingface"
   ],
   "related_identifiers": [
     {
