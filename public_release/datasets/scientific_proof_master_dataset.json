@@ -30,6 +30,19 @@
           "compression_ratio_vs_fp16": 4.92,
           "compression_ratio_vs_fp8": 2.46,
           "vram_saved_gb": 11.16
+        },
+        {
+          "model": "Mistral 7B Instruct v0.2",
+          "params_b": 7.24,
+          "context_window": 32768,
+          "context_k": 32,
+          "total_elements": 2147483648,
+          "fp16_vram_gb": 4.0,
+          "fp8_vram_gb": 2.0,
+          "polarquant_3bit_vram_gb": 0.81,
+          "compression_ratio_vs_fp16": 4.92,
+          "compression_ratio_vs_fp8": 2.46,
+          "vram_saved_gb": 3.19
         }
       ]
     },

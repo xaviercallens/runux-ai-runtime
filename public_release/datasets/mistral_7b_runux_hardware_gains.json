@@ -1,0 +1,192 @@
+{
+  "timestamp": "2026-09-10T20:03:39Z",
+  "model_metadata": {
+    "name": "mistralai_mistral-7b-instruct-v0.2",
+    "architecture": "llama",
+    "file_size_gb": 4.07,
+    "layers": 32,
+    "hidden_dim": 4096,
+    "ff_dim": 14336,
+    "heads": 32,
+    "kv_heads": 8,
+    "head_dim": 128,
+    "context_window": 32768
+  },
+  "hardware_environment": {
+    "gpu": "Tesla T4",
+    "gpu_vram_gb": 14.56,
+    "cuda_available": true
+  },
+  "physical_t4_benchmark": {
+    "cuda_available": true,
+    "device_name": "Tesla T4",
+    "vram_total_gb": 14.56,
+    "mistral_gqa_latency_ms": 1.743,
+    "mistral_gqa_tflops": 9.86,
+    "int64_lut_max_abs_drift": 0.0,
+    "int64_lut_bit_exact": true,
+    "polarquant_energy_rel_diff": 0.0852,
+    "polarquant_isometry_preserved": true
+  },
+  "vram_scaling_and_oom": [
+    {
+      "context_length": 512,
+      "baseline_weights_gb": 14.0,
+      "baseline_kv_gb": 0.062,
+      "baseline_total_vram_gb": 14.062,
+      "baseline_status": "OK",
+      "runux_weights_gb": 4.07,
+      "runux_kv_gb": 0.013,
+      "runux_total_vram_gb": 4.083,
+      "runux_headroom_gb": 10.477,
+      "runux_vram_utilization_pct": 28.0,
+      "runux_status": "OK (Headroom)",
+      "kv_compression_ratio": 4.92
+    },
+    {
+      "context_length": 1024,
+      "baseline_weights_gb": 14.0,
+      "baseline_kv_gb": 0.125,
+      "baseline_total_vram_gb": 14.125,
+      "baseline_status": "OK",
+      "runux_weights_gb": 4.07,
+      "runux_kv_gb": 0.025,
+      "runux_total_vram_gb": 4.095,
+      "runux_headroom_gb": 10.465,
+      "runux_vram_utilization_pct": 28.1,
+      "runux_status": "OK (Headroom)",
+      "kv_compression_ratio": 4.92
+    },
+    {
+      "context_length": 2048,
+      "baseline_weights_gb": 14.0,
+      "baseline_kv_gb": 0.25,
+      "baseline_total_vram_gb": 14.25,
+      "baseline_status": "OK",
+      "runux_weights_gb": 4.07,
+      "runux_kv_gb": 0.051,
+      "runux_total_vram_gb": 4.121,
+      "runux_headroom_gb": 10.439,
+      "runux_vram_utilization_pct": 28.3,
+      "runux_status": "OK (Headroom)",
+      "kv_compression_ratio": 4.92
+    },
+    {
+      "context_length": 4096,
+      "baseline_weights_gb": 14.0,
+      "baseline_kv_gb": 0.5,
+      "baseline_total_vram_gb": 14.5,
+      "baseline_status": "OK",
+      "runux_weights_gb": 4.07,
+      "runux_kv_gb": 0.102,
+      "runux_total_vram_gb": 4.172,
+      "runux_headroom_gb": 10.388,
+      "runux_vram_utilization_pct": 28.7,
+      "runux_status": "OK (Headroom)",
+      "kv_compression_ratio": 4.92
+    },
+    {
+      "context_length": 8192,
+      "baseline_weights_gb": 14.0,
+      "baseline_kv_gb": 1.0,
+      "baseline_total_vram_gb": 15.0,
+      "baseline_status": "CUDA OOM (FAIL)",
+      "runux_weights_gb": 4.07,
+      "runux_kv_gb": 0.203,
+      "runux_total_vram_gb": 4.273,
+      "runux_headroom_gb": 10.287,
+      "runux_vram_utilization_pct": 29.3,
+      "runux_status": "OK (Headroom)",
+      "kv_compression_ratio": 4.92
+    },
+    {
+      "context_length": 16384,
+      "baseline_weights_gb": 14.0,
+      "baseline_kv_gb": 2.0,
+      "baseline_total_vram_gb": 16.0,
+      "baseline_status": "CUDA OOM (FAIL)",
+      "runux_weights_gb": 4.07,
+      "runux_kv_gb": 0.406,
+      "runux_total_vram_gb": 4.476,
+      "runux_headroom_gb": 10.084,
+      "runux_vram_utilization_pct": 30.7,
+      "runux_status": "OK (Headroom)",
+      "kv_compression_ratio": 4.92
+    },
+    {
+      "context_length": 32768,
+      "baseline_weights_gb": 14.0,
+      "baseline_kv_gb": 4.0,
+      "baseline_total_vram_gb": 18.0,
+      "baseline_status": "CUDA OOM (FAIL)",
+      "runux_weights_gb": 4.07,
+      "runux_kv_gb": 0.812,
+      "runux_total_vram_gb": 4.883,
+      "runux_headroom_gb": 9.678,
+      "runux_vram_utilization_pct": 33.5,
+      "runux_status": "OK (Headroom)",
+      "kv_compression_ratio": 4.92
+    }
+  ],
+  "tpu_architectural_gains": {
+    "TPU v5e": {
+      "peak_tflops": 197.0,
+      "mxu_dimension": "128x128",
+      "baseline_occupancy_pct": 38.0,
+      "baseline_effective_tflops": 74.9,
+      "runux_mlgo_occupancy_pct": 88.0,
+      "runux_effective_tflops": 173.4,
+      "throughput_speedup": "2.32x",
+      "spot_serverless_cost_savings_pct": "65.2%",
+      "preemption_snapshot_latency_ms": 9.5,
+      "preemption_recovery_latency_ms": 11.2,
+      "tokens_lost_on_preemption": 0
+    },
+    "TPU v6e Trillium": {
+      "peak_tflops": 918.0,
+      "mxu_dimension": "256x256",
+      "baseline_occupancy_pct": 38.0,
+      "baseline_effective_tflops": 348.8,
+      "runux_mlgo_occupancy_pct": 88.0,
+      "runux_effective_tflops": 807.8,
+      "throughput_speedup": "2.32x",
+      "spot_serverless_cost_savings_pct": "65.2%",
+      "preemption_snapshot_latency_ms": 9.5,
+      "preemption_recovery_latency_ms": 11.2,
+      "tokens_lost_on_preemption": 0
+    }
+  },
+  "carbon_shifting": {
+    "regions": {
+      "France (RTE Nuclear & Hydro)": {
+        "grid_intensity_gco2_kwh": 28.7,
+        "adaptive_draft_k": 5,
+        "effective_throughput_tps": 171.0,
+        "joules_per_token": 0.3918,
+        "emissions_gco2_per_1k_tokens": 0.00312
+      },
+      "USA (Avg Electric Grid)": {
+        "grid_intensity_gco2_kwh": 386.0,
+        "adaptive_draft_k": 3,
+        "effective_throughput_tps": 108.0,
+        "joules_per_token": 0.6204,
+        "emissions_gco2_per_1k_tokens": 0.06652
+      },
+      "Germany (Coal & Gas Mix)": {
+        "grid_intensity_gco2_kwh": 435.0,
+        "adaptive_draft_k": 2,
+        "effective_throughput_tps": 76.5,
+        "joules_per_token": 0.8758,
+        "emissions_gco2_per_1k_tokens": 0.10583
+      },
+      "China (Coal Dominant)": {
+        "grid_intensity_gco2_kwh": 770.8,
+        "adaptive_draft_k": 2,
+        "effective_throughput_tps": 76.5,
+        "joules_per_token": 0.8758,
+        "emissions_gco2_per_1k_tokens": 0.18752
+      }
+    },
+    "max_carbon_reduction_factor": "60.1x"
+  }
+}
