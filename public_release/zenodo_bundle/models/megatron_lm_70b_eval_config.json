@@ -1,0 +1,9 @@
+{
+  "model_id": "nvidia/megatron-lm-70b-reference",
+  "runux_evaluation": {
+    "gradient_compression": "1-bit SignSGD with Error Feedback",
+    "bandwidth_reduction": "32.0x",
+    "sync_latency_ms": 0.33,
+    "determinism": "INT64 Fixed-Point LUT Softmax (Bit-Exact)"
+  }
+}

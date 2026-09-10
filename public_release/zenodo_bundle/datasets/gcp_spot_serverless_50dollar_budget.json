@@ -1,0 +1,40 @@
+{
+  "budget_limit_usd": 50.0,
+  "total_cost_usd": 50.0,
+  "remaining_balance_usd": 0.0,
+  "is_within_budget": true,
+  "allocations": [
+    {
+      "resource": "GCP Spot Tesla T4 VM (g2-standard-4 / n1-standard-4 + T4)",
+      "rate_hourly_usd": 0.11,
+      "hours_allocated": 120.0,
+      "cost_usd": 13.2,
+      "percentage_of_budget": 26.4,
+      "purpose": "Batch PolarQuant 3-bit KV-cache reduction & INT64 determinism runs"
+    },
+    {
+      "resource": "GCP Spot A100 40GB VM (a2-highgpu-1g)",
+      "rate_hourly_usd": 0.74,
+      "hours_allocated": 24.0,
+      "cost_usd": 17.76,
+      "percentage_of_budget": 35.5,
+      "purpose": "Distributed 1-bit SignSGD Megatron-LM 70B All-Reduce benchmark"
+    },
+    {
+      "resource": "GCP Spot TPU v5e Pod Slice (tpu-v5-lite-pod 1-chip)",
+      "rate_hourly_usd": 0.4,
+      "hours_allocated": 30.0,
+      "cost_usd": 12.0,
+      "percentage_of_budget": 24.0,
+      "purpose": "MLGO systolic tiling occupancy & StableHLO graph emission"
+    },
+    {
+      "resource": "Cloud Run Serverless Jobs (2 vCPU, 4GB RAM, 293k vCPU-s)",
+      "rate_hourly_usd": 0.0864,
+      "hours_allocated": 81.5,
+      "cost_usd": 7.04,
+      "percentage_of_budget": 14.1,
+      "purpose": "RTE Eco2Mix carbon polling, coordinator, & dataset aggregation"
+    }
+  ]
+}
