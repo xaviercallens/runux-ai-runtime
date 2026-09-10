@@ -263,20 +263,20 @@
 ### 3.6 Hardware Drivers
 
 #### `k3_a100` — SpacemiT K3 Driver
-**File**: [lib.rs](file:///home/xavkal/xdev/runux-ai-runtime/crates/k3_a100/src/lib.rs) (85 lines, 3 functions, **0 tests**)
+**File**: [lib.rs](file:///home/callensxavier_gmail_com/runux-ai-runtime/crates/k3_a100/src/lib.rs)
 
-| Finding | Severity |
-|---------|:--------:|
-| `A100Context::new` hardcodes `vlen_1024_active: true` — no CPU feature detection | 🔴 CRITICAL |
-| `matmul_fp8` falls back to `emulate_fp8_matmul` which **fills output with zeros** | 🔴 CRITICAL |
+| Finding | Severity | Resolution Status |
+|---------|:--------:|:-----------------:|
+| `A100Context::new` feature flag detection & fallback | 🔴 CRITICAL | ✅ Resolved (PR #3) |
+| `matmul_fp8` zero-filling output | 🔴 CRITICAL | ✅ Resolved — Exact FP8 E4M3 arithmetic & dot products (PR #3) |
 
 #### `gpu_compute` — PowerVR GPU
-**File**: [lib.rs](file:///home/xavkal/xdev/runux-ai-runtime/crates/gpu_compute/src/lib.rs) (54 lines, 2 functions, **0 tests**)
+**File**: [lib.rs](file:///home/callensxavier_gmail_com/runux-ai-runtime/crates/gpu_compute/src/lib.rs) (268 lines, 5 tests)
 
-| Finding | Severity |
-|---------|:--------:|
-| `GpuContext::new` mocks initialization (`ready: true`) | 🔴 CRITICAL |
-| `embedding_lookup` returns `Ok(())` without any computation | 🔴 CRITICAL |
+| Finding | Severity | Resolution Status |
+|---------|:--------:|:-----------------:|
+| `GpuContext::new` mocked initialization | 🔴 CRITICAL | ✅ Resolved — Validated context initialization (PR #4) |
+| `embedding_lookup` empty stub | 🔴 CRITICAL | ✅ Resolved — Real bounds-checked embedding lookups, vector ops, & matmul (PR #4) |
 
 ---
 

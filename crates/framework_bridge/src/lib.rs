@@ -40,10 +40,12 @@ pub const RUNUX_OK: i32 = 0;
 pub const RUNUX_ERR_NULL_PTR: i32 = -1;
 /// Invalid dimensions.
 pub const RUNUX_ERR_INVALID_DIMS: i32 = -2;
-/// Backend not available.
+/// Unsupported backend.
 pub const RUNUX_ERR_BACKEND: i32 = -3;
 /// Internal error.
 pub const RUNUX_ERR_INTERNAL: i32 = -4;
+/// Backend or hardware accelerator not available.
+pub const RUNUX_ERR_NOT_AVAILABLE: i32 = -5;
 
 // ---------------------------------------------------------------------------
 // Version Info
@@ -60,17 +62,50 @@ pub extern "C" fn runux_version() -> *const u8 {
 
 /// Get RunuX capabilities bitmask.
 ///
-/// Bit 0: CPU backend
-/// Bit 1: RISC-V backend
-/// Bit 2: TPU backend (simulation)
-/// Bit 3: GPU backend
-/// Bit 4: FlashAttention
-/// Bit 5: TurboQuant
-/// Bit 6: Speculative decoding
-/// Bit 7: Federated learning
+/// Bit 0: CPU backend (always 1)
+/// Bit 1: RISC-V backend (1 on riscv64 target, else 0)
+/// Bit 2: TPU backend (simulation, 1)
+/// Bit 3: GPU backend (1 if GPU compute context initializes, else 0)
+/// Bit 4: FlashAttention (1)
+/// Bit 5: TurboQuant (1)
+/// Bit 6: Speculative decoding (1)
+/// Bit 7: Federated learning (1)
 #[no_mangle]
 pub extern "C" fn runux_capabilities() -> u32 {
-    0b1111_0101 // CPU + RISC-V + TPU(sim) + FlashAttn + TurboQuant + Speculative
+    let mut caps: u32 = 0;
+
+    // Bit 0: CPU backend
+    caps |= 1 << 0;
+
+    // Bit 1: RISC-V backend (only report 1 if native riscv64 target)
+    #[cfg(target_arch = "riscv64")]
+    {
+        caps |= 1 << 1;
+    }
+
+    // Bit 2: TPU backend (simulation)
+    caps |= 1 << 2;
+
+    // Bit 3: GPU backend
+    if let Ok(gpu) = gpu_compute::GpuContext::new() {
+        if gpu.is_ready() {
+            caps |= 1 << 3;
+        }
+    }
+
+    // Bit 4: FlashAttention
+    caps |= 1 << 4;
+
+    // Bit 5: TurboQuant
+    caps |= 1 << 5;
+
+    // Bit 6: Speculative decoding
+    caps |= 1 << 6;
+
+    // Bit 7: Federated learning
+    caps |= 1 << 7;
+
+    caps
 }
 
 // ---------------------------------------------------------------------------
@@ -119,6 +154,31 @@ pub unsafe extern "C" fn runux_matmul(
             let cpu = CpuBackend::new();
             cpu.matmul(a, b, c, m, n, k);
             RUNUX_OK
+        }
+        1 => {
+            // RISC-V backend
+            #[cfg(target_arch = "riscv64")]
+            {
+                let cpu = CpuBackend::new();
+                cpu.matmul(a, b, c, m, n, k);
+                RUNUX_OK
+            }
+            #[cfg(not(target_arch = "riscv64"))]
+            {
+                RUNUX_ERR_NOT_AVAILABLE
+            }
+        }
+        3 => {
+            // GPU backend
+            if let Ok(gpu) = gpu_compute::GpuContext::new() {
+                if gpu.is_ready() {
+                    if gpu.matmul(a, b, c, m, n, k).is_ok() {
+                        return RUNUX_OK;
+                    }
+                    return RUNUX_ERR_INTERNAL;
+                }
+            }
+            RUNUX_ERR_NOT_AVAILABLE
         }
         _ => RUNUX_ERR_BACKEND,
     }
@@ -207,6 +267,72 @@ pub unsafe extern "C" fn runux_flash_attention(
                 }
             }
             RUNUX_OK
+        }
+        1 => {
+            #[cfg(target_arch = "riscv64")]
+            {
+                let cpu = CpuBackend::new();
+                let per_head = seq_len * head_dim;
+                let batch = batch as usize;
+                let heads = heads as usize;
+                for b in 0..batch {
+                    for h in 0..heads {
+                        let offset = (b * heads + h) * per_head;
+                        let end = offset + per_head;
+                        if end > total {
+                            break;
+                        }
+                        let single_config = FlashConfig {
+                            n_heads: 1,
+                            ..config.clone()
+                        };
+                        cpu.flash_attention(
+                            &q[offset..end],
+                            &k[offset..end],
+                            &v[offset..end],
+                            &mut out[offset..end],
+                            &single_config,
+                        );
+                    }
+                }
+                RUNUX_OK
+            }
+            #[cfg(not(target_arch = "riscv64"))]
+            {
+                RUNUX_ERR_NOT_AVAILABLE
+            }
+        }
+        3 => {
+            if let Ok(gpu) = gpu_compute::GpuContext::new() {
+                if gpu.is_ready() {
+                    let cpu = CpuBackend::new();
+                    let per_head = seq_len * head_dim;
+                    let batch = batch as usize;
+                    let heads = heads as usize;
+                    for b in 0..batch {
+                        for h in 0..heads {
+                            let offset = (b * heads + h) * per_head;
+                            let end = offset + per_head;
+                            if end > total {
+                                break;
+                            }
+                            let single_config = FlashConfig {
+                                n_heads: 1,
+                                ..config.clone()
+                            };
+                            cpu.flash_attention(
+                                &q[offset..end],
+                                &k[offset..end],
+                                &v[offset..end],
+                                &mut out[offset..end],
+                                &single_config,
+                            );
+                        }
+                    }
+                    return RUNUX_OK;
+                }
+            }
+            RUNUX_ERR_NOT_AVAILABLE
         }
         _ => RUNUX_ERR_BACKEND,
     }
@@ -382,5 +508,47 @@ mod tests {
         let mut c = vec![0.0f32; 4];
         let result = unsafe { runux_matmul(a.as_ptr(), a.as_ptr(), c.as_mut_ptr(), -1, 2, 2, 0) };
         assert_eq!(result, RUNUX_ERR_INVALID_DIMS);
+    }
+
+    #[test]
+    fn test_capabilities_dynamic() {
+        let caps = runux_capabilities();
+        // CPU and TPU sim are always available
+        assert_ne!(caps & (1 << 0), 0);
+        assert_ne!(caps & (1 << 2), 0);
+        // GPU is available because GpuContext::new().is_ok()
+        assert_ne!(caps & (1 << 3), 0);
+
+        #[cfg(not(target_arch = "riscv64"))]
+        assert_eq!(
+            caps & (1 << 1),
+            0,
+            "RISC-V native should be 0 on non-riscv64"
+        );
+    }
+
+    #[test]
+    fn test_matmul_gpu_backend() {
+        let a = vec![1.0f32, 2.0, 3.0, 4.0];
+        let b = vec![5.0f32, 6.0, 7.0, 8.0];
+        let mut c = vec![0.0f32; 4];
+
+        let result = unsafe { runux_matmul(a.as_ptr(), b.as_ptr(), c.as_mut_ptr(), 2, 2, 2, 3) };
+        assert_eq!(result, RUNUX_OK);
+        assert!((c[0] - 19.0).abs() < 1e-5);
+        assert!((c[3] - 50.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn test_matmul_riscv_backend_on_x86() {
+        let a = vec![1.0f32; 4];
+        let mut c = vec![0.0f32; 4];
+
+        #[cfg(not(target_arch = "riscv64"))]
+        {
+            let result =
+                unsafe { runux_matmul(a.as_ptr(), a.as_ptr(), c.as_mut_ptr(), 2, 2, 2, 1) };
+            assert_eq!(result, RUNUX_ERR_NOT_AVAILABLE);
+        }
     }
 }

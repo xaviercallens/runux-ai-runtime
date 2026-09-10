@@ -122,6 +122,71 @@ pub struct FlashAttentionOutput {
     pub flops: u64,
 }
 
+#[inline(always)]
+fn dot_product_vec(a: &[f32], b: &[f32]) -> f32 {
+    let mut sum0 = 0.0f32;
+    let mut sum1 = 0.0f32;
+    let mut sum2 = 0.0f32;
+    let mut sum3 = 0.0f32;
+
+    let chunks = a.len() / 4;
+    let rem = a.len() % 4;
+
+    for c in 0..chunks {
+        let i = c * 4;
+        sum0 += a[i] * b[i];
+        sum1 += a[i + 1] * b[i + 1];
+        sum2 += a[i + 2] * b[i + 2];
+        sum3 += a[i + 3] * b[i + 3];
+    }
+
+    let tail_start = chunks * 4;
+    let mut tail = 0.0f32;
+    for i in 0..rem {
+        tail += a[tail_start + i] * b[tail_start + i];
+    }
+
+    (sum0 + sum1) + (sum2 + sum3) + tail
+}
+
+#[inline(always)]
+fn fma_vector(out: &mut [f32], factor: f32, v: &[f32]) {
+    let chunks = out.len() / 4;
+    let rem = out.len() % 4;
+
+    for c in 0..chunks {
+        let i = c * 4;
+        out[i] += factor * v[i];
+        out[i + 1] += factor * v[i + 1];
+        out[i + 2] += factor * v[i + 2];
+        out[i + 3] += factor * v[i + 3];
+    }
+
+    let tail_start = chunks * 4;
+    for i in 0..rem {
+        out[tail_start + i] += factor * v[tail_start + i];
+    }
+}
+
+#[inline(always)]
+fn scale_vector(out: &mut [f32], factor: f32) {
+    let chunks = out.len() / 4;
+    let rem = out.len() % 4;
+
+    for c in 0..chunks {
+        let i = c * 4;
+        out[i] *= factor;
+        out[i + 1] *= factor;
+        out[i + 2] *= factor;
+        out[i + 3] *= factor;
+    }
+
+    let tail_start = chunks * 4;
+    for i in 0..rem {
+        out[tail_start + i] *= factor;
+    }
+}
+
 /// Execute FlashAttention forward pass for a single attention head.
 ///
 /// This is the core algorithm implementing tiled, fused, IO-aware attention
@@ -197,13 +262,10 @@ pub fn flash_attention_forward(
                         continue;
                     }
 
-                    // Dot product: Q[qi] · K[kj]
-                    let mut dot = 0.0f32;
+                    // Vectorized dot product: Q[qi] · K[kj]
                     let q_off = qi_global * d;
                     let k_off = kj_global * d;
-                    for dd in 0..d {
-                        dot += q[q_off + dd] * k[k_off + dd];
-                    }
+                    let dot = dot_product_vec(&q[q_off..q_off + d], &k[k_off..k_off + d]);
                     s_tile[i * k_rows + j] = dot * scale;
                 }
             }
@@ -252,18 +314,14 @@ pub fn flash_attention_forward(
 
                 // Update output: O = rescale * O + P_tile × V_tile
                 let o_off = qi_global * d;
-                for dd in 0..d {
-                    output[o_off + dd] *= rescale;
-                }
+                scale_vector(&mut output[o_off..o_off + d], rescale);
 
                 for j in 0..k_rows {
                     let kj_global = k_start + j;
                     let p = s_tile[i * k_rows + j];
                     if p > 0.0 {
                         let v_off = kj_global * d;
-                        for dd in 0..d {
-                            output[o_off + dd] += p * v[v_off + dd];
-                        }
+                        fma_vector(&mut output[o_off..o_off + d], p, &v[v_off..v_off + d]);
                     }
                 }
 
@@ -283,10 +341,7 @@ pub fn flash_attention_forward(
     for i in 0..n {
         let norm = fast_exp(lse[i] - row_max[i]);
         if norm > 0.0 {
-            let inv_norm = 1.0 / norm;
-            for dd in 0..d {
-                output[i * d + dd] *= inv_norm;
-            }
+            scale_vector(&mut output[i * d..(i + 1) * d], 1.0 / norm);
         }
     }
 

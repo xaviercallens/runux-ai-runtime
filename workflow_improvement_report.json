@@ -1,13 +1,13 @@
 {
   "version": "1.0.0-PROD",
-  "timestamp": "2026-09-10T11:50:53.197818Z",
+  "timestamp": "2026-09-10T13:06:56.725343Z",
   "overall_status": "SUCCESS",
   "stages": {
     "Codebase Audit & Improvement Reconciliation": {
       "passed": true,
-      "duration_seconds": 28.33,
+      "duration_seconds": 111.82,
       "details": {
-        "tests_passed": 187,
+        "tests_passed": 195,
         "crates_audited": 24,
         "phase0_status": "COMPLETED",
         "phase1_status": "ACTIVE_VERIFIED"
@@ -15,7 +15,7 @@
     },
     "Mistral AI Track: PolarQuant 3-Bit KV & RTE Carbon Protocol": {
       "passed": true,
-      "duration_seconds": 0.06,
+      "duration_seconds": 0.31,
       "details": {
         "kv_compression_ratio": "4.92x",
         "energy_preservation": "rel_diff < 0.35",
@@ -25,7 +25,7 @@
     },
     "NVIDIA Track: Deterministic INT64 Attention & 1-Bit SignSGD": {
       "passed": true,
-      "duration_seconds": 0.22,
+      "duration_seconds": 0.88,
       "details": {
         "deterministic_drift": 0.0,
         "signsgd_compression": "32.0x",
@@ -35,7 +35,7 @@
     },
     "Google Cloud TPU Track: PJRT C API, StableHLO & Systolic Tiling": {
       "passed": true,
-      "duration_seconds": 0.05,
+      "duration_seconds": 0.19,
       "details": {
         "tpu_v5e_tflops": 173.4,
         "mxu_occupancy": "88.0%",
@@ -46,7 +46,7 @@
     },
     "Neuro-Symbolic Gatekeeper & Formal Safety Protocol": {
       "passed": true,
-      "duration_seconds": 0.05,
+      "duration_seconds": 0.3,
       "details": {
         "admitted_nodes": [
           "RTX 4090 Workstation"
@@ -79,5 +79,5 @@
       "verified": true
     }
   },
-  "total_duration_seconds": 28.71
+  "total_duration_seconds": 113.51
 }
