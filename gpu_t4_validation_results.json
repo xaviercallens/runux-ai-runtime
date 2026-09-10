@@ -1,0 +1,80 @@
+{
+  "timestamp": "2026-09-10T11:05:15.936005Z",
+  "device": "cuda:0",
+  "experiments": {
+    "deterministic_attention": {
+      "passed": true,
+      "max_drift": 0,
+      "latency_ms": 3.368,
+      "throughput_tps": 152027.8,
+      "power_watts": 41.9,
+      "problem_shape": [
+        2,
+        4,
+        256,
+        32
+      ]
+    },
+    "polarquant": {
+      "passed": true,
+      "kl_divergence": 0.01855,
+      "relative_norm_diff": 0.0246,
+      "cosine_similarity": 0.9823,
+      "compression_ratio": 4.92,
+      "tested_shape": [
+        4,
+        8,
+        512,
+        64
+      ]
+    },
+    "signsgd": {
+      "passed": true,
+      "initial_loss": 56.1174,
+      "final_loss": 0.3343,
+      "loss_reduction_pct": 99.4,
+      "bandwidth_reduction": "32.0x",
+      "model_params": 64
+    },
+    "carbon_scheduler": {
+      "passed": true,
+      "scenarios": {
+        "France (RTE Nuclear)": {
+          "draft_k": 5,
+          "speedup": 3.88,
+          "effective_tps": 174.6,
+          "gco2_per_1k_tokens": 0.02762
+        },
+        "USA (Average Grid)": {
+          "draft_k": 2,
+          "speedup": 1.72,
+          "effective_tps": 77.4,
+          "gco2_per_1k_tokens": 0.42944
+        },
+        "China (Coal Dominant)": {
+          "draft_k": 2,
+          "speedup": 1.72,
+          "effective_tps": 77.4,
+          "gco2_per_1k_tokens": 0.61746
+        }
+      },
+      "reduction_vs_us_pct": 93.6
+    },
+    "systolic_advisor": {
+      "passed": true,
+      "platform": "Google Cloud TPU v5e",
+      "baseline_tflops": 74.9,
+      "runux_tflops": 173.4,
+      "runux_occupancy": "88.0%",
+      "speedup": "2.32x"
+    }
+  },
+  "hardware": {
+    "gpu_name": "Tesla T4",
+    "vram_gb": 14.56,
+    "cuda_version": "11.8",
+    "idle_power_w": 27.138
+  },
+  "all_passed": true,
+  "overall_status": "CERTIFIED"
+}
