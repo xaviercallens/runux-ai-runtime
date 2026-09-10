@@ -17,6 +17,7 @@ scripts/biomimetic_training/*.log
 scripts/biomimetic_training/__pycache__/
 scripts/biomimetic_training/scikit_runux.egg-info/
 __pycache__/
+*.log
 
 
 

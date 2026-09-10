@@ -71,23 +71,64 @@ pub struct PjrtApi {
 
     // Error APIs
     pub error_destroy: Option<unsafe extern "C" fn(error: *mut PjrtError)>,
-    pub error_message: Option<unsafe extern "C" fn(error: *mut PjrtError, message: *mut *const c_char, length: *mut usize)>,
+    pub error_message: Option<
+        unsafe extern "C" fn(
+            error: *mut PjrtError,
+            message: *mut *const c_char,
+            length: *mut usize,
+        ),
+    >,
     pub error_code: Option<unsafe extern "C" fn(error: *mut PjrtError) -> PjrtErrorCode>,
 
     // Client APIs
-    pub client_create: Option<unsafe extern "C" fn(client: *mut *mut PjrtCClient) -> *mut PjrtError>,
+    pub client_create:
+        Option<unsafe extern "C" fn(client: *mut *mut PjrtCClient) -> *mut PjrtError>,
     pub client_destroy: Option<unsafe extern "C" fn(client: *mut PjrtCClient) -> *mut PjrtError>,
-    pub client_platform_name: Option<unsafe extern "C" fn(client: *mut PjrtCClient, name: *mut *const c_char, length: *mut usize) -> *mut PjrtError>,
-    pub client_devices: Option<unsafe extern "C" fn(client: *mut PjrtCClient, devices: *mut *mut *mut PjrtCDevice, num_devices: *mut usize) -> *mut PjrtError>,
+    pub client_platform_name: Option<
+        unsafe extern "C" fn(
+            client: *mut PjrtCClient,
+            name: *mut *const c_char,
+            length: *mut usize,
+        ) -> *mut PjrtError,
+    >,
+    pub client_devices: Option<
+        unsafe extern "C" fn(
+            client: *mut PjrtCClient,
+            devices: *mut *mut *mut PjrtCDevice,
+            num_devices: *mut usize,
+        ) -> *mut PjrtError,
+    >,
 
     // Buffer APIs
     pub buffer_destroy: Option<unsafe extern "C" fn(buffer: *mut PjrtCBuffer) -> *mut PjrtError>,
-    pub buffer_to_host: Option<unsafe extern "C" fn(buffer: *mut PjrtCBuffer, host_dst: *mut c_void, dst_size: usize) -> *mut PjrtError>,
+    pub buffer_to_host: Option<
+        unsafe extern "C" fn(
+            buffer: *mut PjrtCBuffer,
+            host_dst: *mut c_void,
+            dst_size: usize,
+        ) -> *mut PjrtError,
+    >,
 
     // Execution APIs
-    pub compile: Option<unsafe extern "C" fn(client: *mut PjrtCClient, program_bytecode: *const u8, size: usize, exec: *mut *mut PjrtCExecutable) -> *mut PjrtError>,
-    pub executable_execute: Option<unsafe extern "C" fn(exec: *mut PjrtCExecutable, inputs: *const *mut PjrtCBuffer, num_inputs: usize, outputs: *mut *mut PjrtCBuffer, num_outputs: usize) -> *mut PjrtError>,
-    pub executable_destroy: Option<unsafe extern "C" fn(exec: *mut PjrtCExecutable) -> *mut PjrtError>,
+    pub compile: Option<
+        unsafe extern "C" fn(
+            client: *mut PjrtCClient,
+            program_bytecode: *const u8,
+            size: usize,
+            exec: *mut *mut PjrtCExecutable,
+        ) -> *mut PjrtError,
+    >,
+    pub executable_execute: Option<
+        unsafe extern "C" fn(
+            exec: *mut PjrtCExecutable,
+            inputs: *const *mut PjrtCBuffer,
+            num_inputs: usize,
+            outputs: *mut *mut PjrtCBuffer,
+            num_outputs: usize,
+        ) -> *mut PjrtError,
+    >,
+    pub executable_destroy:
+        Option<unsafe extern "C" fn(exec: *mut PjrtCExecutable) -> *mut PjrtError>,
 }
 
 /// Dynamic Discovery and Loader Interface for Google TPU PJRT plugin.

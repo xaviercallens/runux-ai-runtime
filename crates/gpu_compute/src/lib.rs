@@ -6,6 +6,7 @@
 #![cfg_attr(not(test), no_std)]
 #![deny(clippy::all)]
 #![warn(clippy::pedantic)]
+#![allow(clippy::result_large_err)]
 //! RunuX GPU Compute — OpenCL/Vulkan backend for PowerVR BXM-4-64
 //!
 //! Provides the infrastructure to offload specific compute tasks (e.g.,
@@ -29,7 +30,7 @@ impl GpuContext {
         // Real implementation would scan DRM devices (/dev/dri/cardX),
         // map memory for the PowerVR BXM, and initialize the OpenCL/Vulkan
         // compute queues for RunuX.
-        
+
         Ok(Self {
             device_id: 0,
             ready: true, // Mocked for now
@@ -48,7 +49,7 @@ impl GpuContext {
         }
 
         // Placeholder: Enqueue GPU kernel
-        
+
         Ok(())
     }
 }

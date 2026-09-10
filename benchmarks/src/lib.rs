@@ -8,13 +8,13 @@
 //! Results are publishable; implementation details are proprietary.
 
 extern crate alloc;
+use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
-use alloc::string::String;
 
 use ai_runtime::HardwareCaps;
-use rvv_simd::{matmul_scalar_f32, matmul_rvv_f32};
-use turbo_quant::{TurboQuantConfig, compress_kv, decompress_kv};
+use rvv_simd::{matmul_rvv_f32, matmul_scalar_f32};
+use turbo_quant::{compress_kv, decompress_kv, TurboQuantConfig};
 
 /// Benchmark result for a single operation.
 #[derive(Debug, Clone)]
@@ -39,12 +39,12 @@ pub struct BenchmarkResult {
 pub fn bench_matmul_sizes() -> Vec<(usize, usize, usize)> {
     vec![
         // (M, K, N) — typical transformer dimensions
-        (1, 4096, 4096),      // Single token, hidden_dim=4096
-        (1, 4096, 11008),     // Single token, FFN up-projection
-        (32, 4096, 4096),     // Batch=32 prefill
-        (128, 4096, 4096),    // Batch=128 prefill
-        (1, 2048, 2048),      // Smaller model (Qwen 0.5B)
-        (1, 5120, 5120),      // Larger model (Qwen 14B)
+        (1, 4096, 4096),   // Single token, hidden_dim=4096
+        (1, 4096, 11008),  // Single token, FFN up-projection
+        (32, 4096, 4096),  // Batch=32 prefill
+        (128, 4096, 4096), // Batch=128 prefill
+        (1, 2048, 2048),   // Smaller model (Qwen 0.5B)
+        (1, 5120, 5120),   // Larger model (Qwen 14B)
     ]
 }
 
@@ -116,13 +116,19 @@ pub fn bench_turbo_quant_accuracy(dim: usize, target_bits: u8) -> (f32, f32) {
     let (decompressed_key, decompressed_value) = decompress_kv(&entry, &config);
 
     // Mean Squared Error
-    let key_mse: f32 = key.iter().zip(decompressed_key.iter())
+    let key_mse: f32 = key
+        .iter()
+        .zip(decompressed_key.iter())
         .map(|(a, b)| (a - b) * (a - b))
-        .sum::<f32>() / dim as f32;
+        .sum::<f32>()
+        / dim as f32;
 
-    let value_mse: f32 = value.iter().zip(decompressed_value.iter())
+    let value_mse: f32 = value
+        .iter()
+        .zip(decompressed_value.iter())
         .map(|(a, b)| (a - b) * (a - b))
-        .sum::<f32>() / dim as f32;
+        .sum::<f32>()
+        / dim as f32;
 
     (key_mse, value_mse)
 }
@@ -172,16 +178,24 @@ mod tests {
         run_matmul_benchmark(&a, &b, &mut c_rvv, 4, 4, 4, true);
 
         for i in 0..16 {
-            assert!((c_scalar[i] - c_rvv[i]).abs() < 1e-3,
+            assert!(
+                (c_scalar[i] - c_rvv[i]).abs() < 1e-3,
                 "Mismatch at index {}: scalar={}, rvv={}",
-                i, c_scalar[i], c_rvv[i]);
+                i,
+                c_scalar[i],
+                c_rvv[i]
+            );
         }
     }
 
     #[test]
     fn test_turbo_quant_compression_ratio() {
         let (orig, compressed, ratio) = bench_turbo_quant_compression(4096, 3);
-        assert!(ratio > 1.0, "Compression ratio should be > 1.0, got {}", ratio);
+        assert!(
+            ratio > 1.0,
+            "Compression ratio should be > 1.0, got {}",
+            ratio
+        );
         assert!(compressed < orig, "Compressed should be smaller");
     }
 

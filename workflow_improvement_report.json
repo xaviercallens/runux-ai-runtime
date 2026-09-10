@@ -1,13 +1,13 @@
 {
   "version": "1.0.0-PROD",
-  "timestamp": "2026-09-10T11:29:27.490139Z",
+  "timestamp": "2026-09-10T11:50:53.197818Z",
   "overall_status": "SUCCESS",
   "stages": {
     "Codebase Audit & Improvement Reconciliation": {
       "passed": true,
-      "duration_seconds": 5.08,
+      "duration_seconds": 28.33,
       "details": {
-        "tests_passed": 181,
+        "tests_passed": 187,
         "crates_audited": 24,
         "phase0_status": "COMPLETED",
         "phase1_status": "ACTIVE_VERIFIED"
@@ -35,7 +35,7 @@
     },
     "Google Cloud TPU Track: PJRT C API, StableHLO & Systolic Tiling": {
       "passed": true,
-      "duration_seconds": 0.04,
+      "duration_seconds": 0.05,
       "details": {
         "tpu_v5e_tflops": 173.4,
         "mxu_occupancy": "88.0%",
@@ -79,5 +79,5 @@
       "verified": true
     }
   },
-  "total_duration_seconds": 5.46
+  "total_duration_seconds": 28.71
 }

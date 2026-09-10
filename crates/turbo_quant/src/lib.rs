@@ -6,6 +6,11 @@
 #![cfg_attr(not(test), no_std)]
 #![deny(clippy::all)]
 #![warn(clippy::pedantic)]
+#![allow(
+    clippy::needless_range_loop,
+    clippy::manual_div_ceil,
+    clippy::unnecessary_cast
+)]
 //! RunuX TurboQuant — KV-Cache compression for extended LLM context windows
 //!
 //! Implements the TurboQuant algorithm (Google, ICLR 2026) for compressing
@@ -38,7 +43,6 @@
 extern crate alloc;
 use alloc::vec;
 use alloc::vec::Vec;
-
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -162,8 +166,7 @@ impl CompressedKvCache {
         if self.seq_len == 0 {
             return 0.0;
         }
-        let fp16_size = self.num_layers * self.seq_len * self.num_kv_heads
-            * self.head_dim * 2 * 2; // ×2 for K+V, ×2 bytes for FP16
+        let fp16_size = self.num_layers * self.seq_len * self.num_kv_heads * self.head_dim * 2 * 2; // ×2 for K+V, ×2 bytes for FP16
         let compressed_size = self.memory_bytes();
         if compressed_size == 0 {
             return 0.0;
@@ -186,49 +189,99 @@ pub struct PolarQuant {
     seed: u64,
     /// Dimension of vectors to rotate
     dim: usize,
+    /// Orthonormal rotation matrix of size dim x dim (row-major)
+    matrix: Vec<f32>,
 }
 
 impl PolarQuant {
-    /// Create a new PolarQuant instance.
+    /// Create a new PolarQuant instance with a guaranteed orthonormal rotation matrix.
     pub fn new(seed: u64, dim: usize) -> Self {
-        Self { seed, dim }
+        if dim == 0 {
+            return Self {
+                seed,
+                dim: 0,
+                matrix: Vec::new(),
+            };
+        }
+
+        // Initialize with Identity matrix
+        let mut matrix = vec![0.0f32; dim * dim];
+        for i in 0..dim {
+            matrix[i * dim + i] = 1.0;
+        }
+
+        // Apply Householder reflections H_k = I - 2 v_k v_k^T to construct an exact orthogonal matrix
+        let num_reflections = dim.min(16);
+        for k in 0..num_reflections {
+            let mut v = vec![0.0f32; dim];
+            let mut norm_sq = 0.0f32;
+            for j in 0..dim {
+                let x = seed.wrapping_add((k as u64).wrapping_mul(0x9e37_79b9_7f4a_7c15))
+                    ^ (j as u64).wrapping_mul(0x517c_c1b7_2722_0a95);
+                let mut z = x.wrapping_add(0x9e37_79b9_7f4a_7c15);
+                z = (z ^ (z >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+                z = (z ^ (z >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+                let state = z ^ (z >> 31);
+                let val = (state as f32) / (u64::MAX as f32) * 2.0 - 1.0;
+                v[j] = val;
+                norm_sq += val * val;
+            }
+
+            let norm = fast_sqrt_simple(norm_sq);
+            if norm > 1e-7 {
+                let inv_norm = 1.0 / norm;
+                for j in 0..dim {
+                    v[j] *= inv_norm;
+                }
+
+                // Update matrix: M <- (I - 2 v v^T) M = M - 2 v (v^T M)
+                let mut vt_m = vec![0.0f32; dim];
+                for col in 0..dim {
+                    let mut sum = 0.0f32;
+                    for row in 0..dim {
+                        sum += v[row] * matrix[row * dim + col];
+                    }
+                    vt_m[col] = sum;
+                }
+
+                for row in 0..dim {
+                    let v_r = v[row] * 2.0;
+                    for col in 0..dim {
+                        matrix[row * dim + col] -= v_r * vt_m[col];
+                    }
+                }
+            }
+        }
+
+        Self { seed, dim, matrix }
     }
 
-    /// Generate a pseudo-random rotation value using splitmix64 mixing.
-    fn random_rotation(&self, i: usize, j: usize) -> f32 {
-        let x = self.seed
-            ^ (i as u64).wrapping_mul(0x517c_c1b7_2722_0a95)
-            ^ (j as u64).wrapping_mul(0x6e76_cf0e_3639_c089);
-        let mut z = x.wrapping_add(0x9e37_79b9_7f4a_7c15);
-        z = (z ^ (z >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
-        z = (z ^ (z >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
-        let state = z ^ (z >> 31);
-        // Normalize to [-1, 1] range (variance 1/3)
-        let val = (state as f32) / (u64::MAX as f32) * 2.0 - 1.0;
-        // Scale by sqrt(3 / dim) so coordinate variance is 1/dim (orthogonal-like energy preservation)
-        val * 1.7320508 / fast_sqrt_simple(self.dim as f32)
+    /// Returns the random seed used to generate this orthonormal rotation.
+    pub fn seed(&self) -> u64 {
+        self.seed
     }
 
-    /// Apply the rotation to a vector (compress direction).
+    /// Apply the orthonormal rotation to a vector (compress direction).
     pub fn rotate_forward(&self, input: &[f32], output: &mut [f32]) {
         let n = input.len().min(self.dim);
         for i in 0..n {
+            let row_offset = i * self.dim;
             let mut sum = 0.0f32;
             for j in 0..n {
-                sum += self.random_rotation(i, j) * input[j];
+                sum += self.matrix[row_offset + j] * input[j];
             }
             output[i] = sum;
         }
     }
 
     /// Apply the inverse rotation (decompress direction).
+    /// For an orthonormal matrix, inverse is transpose: Q^{-1} = Q^T.
     pub fn rotate_inverse(&self, input: &[f32], output: &mut [f32]) {
         let n = input.len().min(self.dim);
-        // For random orthogonal matrices, inverse ≈ transpose
         for i in 0..n {
             let mut sum = 0.0f32;
             for j in 0..n {
-                sum += self.random_rotation(j, i) * input[j];
+                sum += self.matrix[j * self.dim + i] * input[j];
             }
             output[i] = sum;
         }
@@ -264,8 +317,12 @@ pub fn scalar_quantize(
         let mut min_val = f32::MAX;
         let mut max_val_f = f32::MIN;
         for &v in block {
-            if v < min_val { min_val = v; }
-            if v > max_val_f { max_val_f = v; }
+            if v < min_val {
+                min_val = v;
+            }
+            if v > max_val_f {
+                max_val_f = v;
+            }
         }
 
         let range = max_val_f - min_val;
@@ -409,13 +466,16 @@ impl QjlProjection {
 
     /// Generate Rademacher random variable: +1.0 or -1.0
     fn rademacher(&self, i: usize, j: usize) -> f32 {
-        let mut state = self.seed
-            ^ (i as u64).wrapping_mul(2654435761)
-            ^ (j as u64).wrapping_mul(40503);
+        let mut state =
+            self.seed ^ (i as u64).wrapping_mul(2654435761) ^ (j as u64).wrapping_mul(40503);
         state ^= state << 13;
         state ^= state >> 17;
         state ^= state << 5;
-        if state & 1 == 0 { 1.0 } else { -1.0 }
+        if state & 1 == 0 {
+            1.0
+        } else {
+            -1.0
+        }
     }
 }
 
@@ -465,7 +525,11 @@ pub fn compress_kv(
     );
 
     // Stage 2: QJL error correction projections
-    let qjl_dim = if config.qjl_dim > 0 { config.qjl_dim } else { dim / 4 };
+    let qjl_dim = if config.qjl_dim > 0 {
+        config.qjl_dim
+    } else {
+        dim / 4
+    };
     let (key_qjl, value_qjl) = if config.use_qjl_correction {
         let qjl = QjlProjection::new(dim, qjl_dim, config.rotation_seed + 1);
         (qjl.project(key), qjl.project(value))
@@ -488,10 +552,7 @@ pub fn compress_kv(
 }
 
 /// Decompress a KV pair from a compressed entry.
-pub fn decompress_kv(
-    entry: &CompressedKvEntry,
-    config: &TurboQuantConfig,
-) -> (Vec<f32>, Vec<f32>) {
+pub fn decompress_kv(entry: &CompressedKvEntry, config: &TurboQuantConfig) -> (Vec<f32>, Vec<f32>) {
     let dim = entry.dim;
     let polar = PolarQuant::new(config.rotation_seed, dim);
 
@@ -533,7 +594,9 @@ pub fn decompress_kv(
 
 /// Simple sqrt for no_std.
 fn fast_sqrt_simple(x: f32) -> f32 {
-    if x <= 0.0 { return 0.0; }
+    if x <= 0.0 {
+        return 0.0;
+    }
     let mut guess = x;
     for _ in 0..5 {
         guess = 0.5 * (guess + x / guess);
@@ -592,10 +655,13 @@ mod tests {
         let est_ip = QjlProjection::estimate_inner_product(&proj_a, &proj_b);
 
         // JL guarantee: relative error bounded (with high probability)
-        // For small dim, we relax this check
-        let _error = (true_ip - est_ip).abs();
-        // Just ensure it produces a finite result
+        let error = (true_ip - est_ip).abs();
         assert!(est_ip.is_finite());
+        assert!(
+            error < 15.0,
+            "JL inner product error bounded by theoretical epsilon, got {}",
+            error
+        );
     }
 
     #[test]
@@ -621,29 +687,61 @@ mod tests {
         let original: Vec<f32> = (0..64).map(|i| (i as f32).sin()).collect();
         let mut rotated = vec![0.0f32; 64];
         polar.rotate_forward(&original, &mut rotated);
-        
+
         let original_norm: f32 = original.iter().map(|x| x * x).sum::<f32>();
         let rotated_norm: f32 = rotated.iter().map(|x| x * x).sum::<f32>();
-        
-        // Rel. difference of norms should be small under Cochran-like scaling
+
+        // Exact isometry: relative difference of norms must be virtually zero (< 1e-4)
         let rel_diff = (original_norm - rotated_norm).abs() / original_norm;
-        assert!(rel_diff < 0.35, "Relative norm diff should be bounded, got {}", rel_diff);
+        assert!(
+            rel_diff < 1e-4,
+            "Relative norm diff should be < 1e-4 under exact orthogonal rotation, got {}",
+            rel_diff
+        );
+    }
+
+    #[test]
+    fn test_polarquant_strict_orthonormality() {
+        let dim = 32;
+        let polar = PolarQuant::new(12345, dim);
+        let x: Vec<f32> = (0..dim).map(|i| (i as f32 * 0.1).sin()).collect();
+        let mut y = vec![0.0f32; dim];
+        let mut x_rec = vec![0.0f32; dim];
+        polar.rotate_forward(&x, &mut y);
+        polar.rotate_inverse(&y, &mut x_rec);
+
+        let norm_x: f32 = x.iter().map(|v| v * v).sum();
+        let norm_y: f32 = y.iter().map(|v| v * v).sum();
+        let rel_diff = (norm_x - norm_y).abs() / norm_x;
+        assert!(
+            rel_diff < 1e-4,
+            "Norm must be strictly preserved by orthogonal matrix, got {}",
+            rel_diff
+        );
+
+        for i in 0..dim {
+            assert!(
+                (x[i] - x_rec[i]).abs() < 1e-4,
+                "Reconstruction error at index {} must be < 1e-4, got {}",
+                i,
+                (x[i] - x_rec[i]).abs()
+            );
+        }
     }
 
     #[test]
     fn test_scalar_quantize_extreme_outliers() {
         let mut input = vec![1.0f32; 128];
         input[127] = 100.0; // outlier
-        
+
         let mut scales = Vec::new();
         let mut zeros = Vec::new();
         let mut output = Vec::new();
-        
+
         scalar_quantize(&input, 3, &mut scales, &mut zeros, &mut output, 128);
-        
+
         // Scale should adapt correctly
         assert!(scales[0] >= (100.0 - 1.0) / 7.0);
         assert!(!output.is_empty());
     }
 }
-

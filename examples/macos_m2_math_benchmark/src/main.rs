@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Xavier Callens / Socrate AI Lab. All Rights Reserved.
 // SPDX-License-Identifier: LicenseRef-RunuX-Commercial
 
-use std::time::Instant;
 use std::f32::consts::PI;
 use std::hint::black_box;
+use std::time::Instant;
 
 // ---------------------------------------------------------------------------
 // 1. Dense General Matrix Multiplication (GEMM) - Highly Optimized Blocked
@@ -23,7 +23,7 @@ fn run_blocked_gemm(n: usize) -> (f32, f64) {
             let k_limit = std::cmp::min(sk + block_size, n);
             for sj in (0..n).step_by(block_size) {
                 let j_limit = std::cmp::min(sj + block_size, n);
-                
+
                 // Micro-kernel with raw pointers to bypass bounds checking
                 for i in si..i_limit {
                     let i_offset = i * n;
@@ -47,7 +47,7 @@ fn run_blocked_gemm(n: usize) -> (f32, f64) {
     let seconds = elapsed.as_secs_f64();
     let total_flops = 2.0 * (n as f64).powi(3);
     let gflops = (total_flops / seconds) / 1e9;
-    
+
     (black_box(c[0] + c[n * n - 1]), gflops)
 }
 
@@ -200,14 +200,22 @@ impl SparseMatrix {
         for i in 0..n {
             unsafe {
                 let mut val = *self.diag.get_unchecked(i) * *x.get_unchecked(i);
-                
+
                 let col = i % grid_sz;
                 let row = i / grid_sz;
 
-                if col > 0 { val += *self.off_left.get_unchecked(i) * *x.get_unchecked(i - 1); }
-                if col < grid_sz - 1 { val += *self.off_right.get_unchecked(i) * *x.get_unchecked(i + 1); }
-                if row > 0 { val += *self.off_up.get_unchecked(i) * *x.get_unchecked(i - grid_sz); }
-                if row < grid_sz - 1 { val += *self.off_down.get_unchecked(i) * *x.get_unchecked(i + grid_sz); }
+                if col > 0 {
+                    val += *self.off_left.get_unchecked(i) * *x.get_unchecked(i - 1);
+                }
+                if col < grid_sz - 1 {
+                    val += *self.off_right.get_unchecked(i) * *x.get_unchecked(i + 1);
+                }
+                if row > 0 {
+                    val += *self.off_up.get_unchecked(i) * *x.get_unchecked(i - grid_sz);
+                }
+                if row < grid_sz - 1 {
+                    val += *self.off_down.get_unchecked(i) * *x.get_unchecked(i + grid_sz);
+                }
 
                 *y.get_unchecked_mut(i) = val;
             }
@@ -224,44 +232,52 @@ fn dot(a: &[f32], b: &[f32]) -> f32 {
 fn run_poisson_solver(grid_sz: usize, iter_limit: usize) -> (f32, f64) {
     let matrix = SparseMatrix::new_laplacian_2d(grid_sz);
     let n = matrix.n;
-    
-    let b: Vec<f32> = (0..n).map(|i| if i == n / 2 { black_box(10.0f32) } else { 0.0f32 }).collect();
+
+    let b: Vec<f32> = (0..n)
+        .map(|i| {
+            if i == n / 2 {
+                black_box(10.0f32)
+            } else {
+                0.0f32
+            }
+        })
+        .collect();
     let mut x = vec![0.0f32; n];
-    
+
     let mut r = b.clone();
     let mut p = r.clone();
     let mut ap = vec![0.0f32; n];
-    
+
     let mut r_dot_old = dot(&r, &r);
 
     let t0 = Instant::now();
 
     for _ in 0..iter_limit {
         matrix.spmv(&p, &mut ap, grid_sz);
-        
+
         let p_dot_ap = dot(&p, &ap);
         let alpha = r_dot_old / (p_dot_ap + 1e-15);
-        
+
         for i in 0..n {
             unsafe {
                 *x.get_unchecked_mut(i) += alpha * *p.get_unchecked(i);
                 *r.get_unchecked_mut(i) -= alpha * *ap.get_unchecked(i);
             }
         }
-        
+
         let r_dot_new = dot(&r, &r);
         if r_dot_new < 1e-6 {
             break;
         }
-        
+
         let beta = r_dot_new / (r_dot_old + 1e-15);
-        
+
         for i in 0..n {
             unsafe {
                 *p.get_unchecked_mut(i) = *r.get_unchecked(i) + beta * *p.get_unchecked(i);
             }
         }
-        
+
         r_dot_old = r_dot_new;
     }
 
@@ -280,7 +296,7 @@ fn run_poisson_solver(grid_sz: usize, iter_limit: usize) -> (f32, f64) {
 fn run_prime_sieve(limit: usize) -> (usize, f64) {
     let segment_size = 65536; // L1/L2 cache boundary
     let mut count = 0;
-    
+
     let t0 = Instant::now();
 
     let sqrt_limit = (limit as f64).sqrt() as usize;
@@ -304,7 +320,7 @@ fn run_prime_sieve(limit: usize) -> (usize, f64) {
         segment.fill(true);
 
         for &p in &base_primes {
-            let mut start = (low + p - 1) / p * p;
+            let mut start = low.div_ceil(p) * p;
             if start < p * p {
                 start = p * p;
             }
@@ -371,7 +387,10 @@ fn main() {
     // -- RUN 5: Segmented Prime Sieve --
     print!("[5/5] segmented_prime_sieve (limit=10^8)... ");
     let (primes, m_ints_sec) = run_prime_sieve(100000000);
-    println!("\x1b[32mPASS\x1b[0m -> Count: {} | {:.2} M-ints/sec", primes, m_ints_sec);
+    println!(
+        "\x1b[32mPASS\x1b[0m -> Count: {} | {:.2} M-ints/sec",
+        primes, m_ints_sec
+    );
 
     println!("\x1b[1m\x1b[36m================================================================================\x1b[0m");
     println!("\x1b[1m\x1b[32m                 BENCHMARK COMPLETED SUCCESSFULLY (100% OK)                      \x1b[0m");

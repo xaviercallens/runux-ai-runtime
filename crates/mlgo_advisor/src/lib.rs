@@ -6,6 +6,11 @@
 #![cfg_attr(not(test), no_std)]
 #![deny(clippy::all)]
 #![warn(clippy::pedantic)]
+#![allow(
+    clippy::manual_div_ceil,
+    clippy::needless_range_loop,
+    clippy::new_without_default
+)]
 //! RunuX MLGO Advisor — ML-guided optimization decisions
 //!
 //! Inspired by Google MLGO (arXiv:2106.12502), this module provides
@@ -87,14 +92,14 @@ impl InliningCostModel {
     pub fn for_kernels() -> Self {
         Self {
             weights: [
-                -0.02,  // callee_size: penalize large functions
-                 0.5,   // loop_nesting: prefer inlining in loops
-                -0.1,   // callee_call_count: penalize widely-called funcs
-                 1.0,   // is_hot_path: strongly prefer hot paths
-                 0.8,   // uses_simd: prefer inlining SIMD functions
-                -0.3,   // register_pressure: penalize high pressure
-                 0.7,   // in_tight_loop: prefer tight loops
-                -0.05,  // n_args: slightly penalize many args
+                -0.02, // callee_size: penalize large functions
+                0.5,   // loop_nesting: prefer inlining in loops
+                -0.1,  // callee_call_count: penalize widely-called funcs
+                1.0,   // is_hot_path: strongly prefer hot paths
+                0.8,   // uses_simd: prefer inlining SIMD functions
+                -0.3,  // register_pressure: penalize high pressure
+                0.7,   // in_tight_loop: prefer tight loops
+                -0.05, // n_args: slightly penalize many args
             ],
             bias: 0.2, // Slight bias toward inlining
             max_callee_size: 200,
@@ -105,14 +110,14 @@ impl InliningCostModel {
     pub fn for_size() -> Self {
         Self {
             weights: [
-                -0.05,  // callee_size: strongly penalize large functions
-                 0.3,   // loop_nesting
-                -0.3,   // callee_call_count: strongly penalize widely-called
-                 0.5,   // is_hot_path
-                 0.4,   // uses_simd
-                -0.5,   // register_pressure
-                 0.5,   // in_tight_loop
-                -0.1,   // n_args
+                -0.05, // callee_size: strongly penalize large functions
+                0.3,   // loop_nesting
+                -0.3,  // callee_call_count: strongly penalize widely-called
+                0.5,   // is_hot_path
+                0.4,   // uses_simd
+                -0.5,  // register_pressure
+                0.5,   // in_tight_loop
+                -0.1,  // n_args
             ],
             bias: -0.3, // Bias against inlining
             max_callee_size: 50,
@@ -148,10 +153,13 @@ impl InliningCostModel {
 
     /// Batch predict: returns Vec of (should_inline, confidence).
     pub fn predict_batch(&self, features: &[InliningFeatures]) -> Vec<(bool, f32)> {
-        features.iter().map(|f| {
-            let score = self.predict(f);
-            (score > 0.0, score.abs())
-        }).collect()
+        features
+            .iter()
+            .map(|f| {
+                let score = self.predict(f);
+                (score > 0.0, score.abs())
+            })
+            .collect()
     }
 
     /// Train the model on labeled examples (simple gradient descent).
@@ -246,9 +254,7 @@ impl TilingAdvisor {
     }
 
     /// Recommend tile sizes for FlashAttention.
-    pub fn recommend_flash_attention(
-        &self, seq_len: usize, head_dim: usize,
-    ) -> TileRecommendation {
+    pub fn recommend_flash_attention(&self, seq_len: usize, head_dim: usize) -> TileRecommendation {
         let tile_dim = self.hw.optimal_tile_size;
 
         // FlashAttention tile sizes: Br (query tile) × Bc (key tile)
@@ -262,7 +268,7 @@ impl TilingAdvisor {
                 let l1_budget = self.hw.optimal_tile_size * 256; // conservative
                 let br = (l1_budget / (head_dim * 4 + 64 * 4)).max(1).min(seq_len);
                 round_up_to_power_of_2(br).min(seq_len)
-            },
+            }
             _ => tile_dim.min(seq_len),
         };
 
@@ -270,8 +276,10 @@ impl TilingAdvisor {
 
         // Q×K^T matmul utilization
         let total_elements = seq_len * seq_len;
-        let tiled_elements = ((seq_len + tile_q - 1) / tile_q) * tile_q *
-                             ((seq_len + tile_kv - 1) / tile_kv) * tile_kv;
+        let tiled_elements = ((seq_len + tile_q - 1) / tile_q)
+            * tile_q
+            * ((seq_len + tile_kv - 1) / tile_kv)
+            * tile_kv;
         let utilization = total_elements as f32 / tiled_elements as f32;
 
         TileRecommendation {
@@ -332,21 +340,35 @@ impl FusionPolicy {
 
     /// Decide whether to fuse a candidate set of operations.
     pub fn should_fuse(&self, candidate: &FusionCandidate) -> bool {
-        if candidate.op_names.len() > self.max_fused_ops { return false; }
-        if candidate.extra_registers > self.max_extra_registers { return false; }
-        if candidate.memory_saved < self.min_memory_savings { return false; }
+        if candidate.op_names.len() > self.max_fused_ops {
+            return false;
+        }
+        if candidate.extra_registers > self.max_extra_registers {
+            return false;
+        }
+        if candidate.memory_saved < self.min_memory_savings {
+            return false;
+        }
         // Producer-consumer chains are always worth fusing
-        if candidate.is_producer_consumer { return true; }
+        if candidate.is_producer_consumer {
+            return true;
+        }
         candidate.memory_saved >= self.min_memory_savings
     }
 
     /// Score a fusion candidate (higher = better).
     pub fn score(&self, candidate: &FusionCandidate) -> f32 {
-        if !self.should_fuse(candidate) { return -1.0; }
+        if !self.should_fuse(candidate) {
+            return -1.0;
+        }
 
         let mem_score = candidate.memory_saved as f32 / self.min_memory_savings as f32;
         let reg_penalty = candidate.extra_registers as f32 / self.max_extra_registers as f32;
-        let chain_bonus = if candidate.is_producer_consumer { 2.0 } else { 0.0 };
+        let chain_bonus = if candidate.is_producer_consumer {
+            2.0
+        } else {
+            0.0
+        };
 
         mem_score - reg_penalty + chain_bonus
     }
@@ -396,7 +418,7 @@ pub fn recommend_quantization(
                     speed_improvement: 2.0,
                 }
             }
-        },
+        }
         BackendType::RiscV => {
             // RISC-V: Q4 for weights, FP32 for activations
             if is_embedding {
@@ -416,16 +438,14 @@ pub fn recommend_quantization(
                     speed_improvement: 2.0,
                 }
             }
-        },
-        _ => {
-            QuantRecommendation {
-                layer_name,
-                recommended_dtype: hal::DType::F32,
-                quality_loss: 0.0,
-                memory_savings: 1.0,
-                speed_improvement: 1.0,
-            }
         }
+        _ => QuantRecommendation {
+            layer_name,
+            recommended_dtype: hal::DType::F32,
+            quality_loss: 0.0,
+            memory_savings: 1.0,
+            speed_improvement: 1.0,
+        },
     }
 }
 
@@ -434,7 +454,9 @@ pub fn recommend_quantization(
 // ---------------------------------------------------------------------------
 
 fn round_up_to_power_of_2(mut n: usize) -> usize {
-    if n == 0 { return 1; }
+    if n == 0 {
+        return 1;
+    }
     n -= 1;
     n |= n >> 1;
     n |= n >> 2;
@@ -480,11 +502,11 @@ impl MatmulPerformancePredictor {
     pub fn new() -> Self {
         Self {
             weights: [
-                1.2e-9,  // compute factor (higher FLOPs = more time)
-                3.5e-7,  // memory transfer factor (more bytes = more time)
-                1.5e-5,  // tiling register pressure overhead
-                -0.05,   // arithmetic intensity boost
-                -0.12,   // hardware utilization boost
+                1.2e-9, // compute factor (higher FLOPs = more time)
+                3.5e-7, // memory transfer factor (more bytes = more time)
+                1.5e-5, // tiling register pressure overhead
+                -0.05,  // arithmetic intensity boost
+                -0.12,  // hardware utilization boost
             ],
             bias: 0.15,
         }
@@ -528,7 +550,6 @@ impl MatmulPerformancePredictor {
     }
 }
 
-
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -551,7 +572,11 @@ mod tests {
             n_args: 3,
         };
         let score = model.predict(&features);
-        assert!(score > 0.0, "Hot path SIMD function should be inlined, score: {}", score);
+        assert!(
+            score > 0.0,
+            "Hot path SIMD function should be inlined, score: {}",
+            score
+        );
     }
 
     #[test]
@@ -568,7 +593,11 @@ mod tests {
             n_args: 8,
         };
         let score = model.predict(&features);
-        assert!(score < 0.0, "Large cold function should NOT be inlined, score: {}", score);
+        assert!(
+            score < 0.0,
+            "Large cold function should NOT be inlined, score: {}",
+            score
+        );
     }
 
     #[test]
@@ -585,7 +614,10 @@ mod tests {
             n_args: 4,
         };
         let score = model.predict(&features);
-        assert!(score < 0.0, "Size model should reject multi-call non-hot function");
+        assert!(
+            score < 0.0,
+            "Size model should reject multi-call non-hot function"
+        );
     }
 
     #[test]
@@ -594,7 +626,10 @@ mod tests {
         let rec = advisor.recommend_matmul(1024, 1024, 1024);
         assert_eq!(rec.tile_m, 128, "TPU v5e should use 128×128 MXU tiles");
         assert_eq!(rec.tile_n, 128);
-        assert!(rec.estimated_utilization > 0.9, "Should have high utilization for 1024×1024");
+        assert!(
+            rec.estimated_utilization > 0.9,
+            "Should have high utilization for 1024×1024"
+        );
     }
 
     #[test]
@@ -628,7 +663,10 @@ mod tests {
             extra_registers: 32,
             is_producer_consumer: true,
         };
-        assert!(policy.should_fuse(&candidate), "FlashAttention-style fusion should pass");
+        assert!(
+            policy.should_fuse(&candidate),
+            "FlashAttention-style fusion should pass"
+        );
     }
 
     #[test]
@@ -640,7 +678,10 @@ mod tests {
             extra_registers: 20, // Too many for RISC-V
             is_producer_consumer: false,
         };
-        assert!(!policy.should_fuse(&candidate), "Too many registers for RISC-V");
+        assert!(
+            !policy.should_fuse(&candidate),
+            "Too many registers for RISC-V"
+        );
     }
 
     #[test]
@@ -664,16 +705,32 @@ mod tests {
         let mut model = InliningCostModel::for_kernels();
 
         let examples = vec![
-            (InliningFeatures {
-                callee_size: 10, loop_nesting_depth: 2, callee_call_count: 1,
-                is_hot_path: true, uses_simd: true, register_pressure: 0.2,
-                in_tight_loop: true, n_args: 2,
-            }, true),
-            (InliningFeatures {
-                callee_size: 150, loop_nesting_depth: 0, callee_call_count: 20,
-                is_hot_path: false, uses_simd: false, register_pressure: 0.9,
-                in_tight_loop: false, n_args: 7,
-            }, false),
+            (
+                InliningFeatures {
+                    callee_size: 10,
+                    loop_nesting_depth: 2,
+                    callee_call_count: 1,
+                    is_hot_path: true,
+                    uses_simd: true,
+                    register_pressure: 0.2,
+                    in_tight_loop: true,
+                    n_args: 2,
+                },
+                true,
+            ),
+            (
+                InliningFeatures {
+                    callee_size: 150,
+                    loop_nesting_depth: 0,
+                    callee_call_count: 20,
+                    is_hot_path: false,
+                    uses_simd: false,
+                    register_pressure: 0.9,
+                    in_tight_loop: false,
+                    n_args: 7,
+                },
+                false,
+            ),
         ];
 
         model.train(&examples, 0.001, 10);
@@ -682,28 +739,41 @@ mod tests {
         let score_inline = model.predict(&examples[0].0);
         let score_noinline = model.predict(&examples[1].0);
         // The initial weights already classify correctly; training should reinforce
-        assert!(score_inline > score_noinline,
-            "Trained model should rank inline ({}) > no-inline ({})", score_inline, score_noinline);
+        assert!(
+            score_inline > score_noinline,
+            "Trained model should rank inline ({}) > no-inline ({})",
+            score_inline,
+            score_noinline
+        );
     }
 
     #[test]
     fn test_matmul_performance_predictor() {
         let mut predictor = MatmulPerformancePredictor::new();
         let features = MatmulFeatures {
-            m: 128, n: 128, k: 128,
-            tile_m: 8, tile_n: 8, tile_k: 8,
+            m: 128,
+            n: 128,
+            k: 128,
+            tile_m: 8,
+            tile_n: 8,
+            tile_k: 8,
             arithmetic_intensity: 4.0,
             hardware_utilization: 0.95,
         };
-        
+
         let t1 = predictor.predict(&features);
         assert!(t1 > 0.0);
-        
+
         // Train to predict a faster execution time (using a tiny learning rate to prevent overshoot)
         let examples = vec![(features.clone(), t1 * 0.9)];
         predictor.train(&examples, 1e-12, 5);
-        
+
         let t2 = predictor.predict(&features);
-        assert!(t2 < t1 + 0.1, "Predictor should stay stable, t1: {}, t2: {}", t1, t2);
+        assert!(
+            t2 < t1 + 0.1,
+            "Predictor should stay stable, t1: {}, t2: {}",
+            t1,
+            t2
+        );
     }
 }

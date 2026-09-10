@@ -6,6 +6,14 @@
 #![cfg_attr(not(test), no_std)]
 #![deny(clippy::all)]
 #![warn(clippy::pedantic)]
+#![allow(
+    clippy::approx_constant,
+    clippy::assign_op_pattern,
+    clippy::excessive_precision,
+    clippy::manual_range_contains,
+    clippy::needless_range_loop,
+    clippy::result_large_err
+)]
 //! RunuX RVV SIMD — RISC-V Vector accelerated kernels for tensor operations
 //!
 //! Provides vectorized implementations of core ML operations using RISC-V
@@ -29,7 +37,7 @@
 
 extern crate alloc;
 
-use ai_runtime::{DataType, DeviceType, TensorDescriptor, AiError};
+use ai_runtime::{AiError, DataType, DeviceType, TensorDescriptor};
 
 // ---------------------------------------------------------------------------
 // Vector Length Detection
@@ -89,10 +97,14 @@ impl VectorLength {
         // match vlenb * 8 { 128 => Vlen128, ... }
 
         #[cfg(feature = "k3_a100")]
-        { return Self::Vlen1024; }
+        {
+            return Self::Vlen1024;
+        }
 
         #[cfg(not(feature = "k3_a100"))]
-        { Self::Vlen256 } // Default: K1
+        {
+            Self::Vlen256
+        } // Default: K1
     }
 }
 
@@ -104,14 +116,7 @@ impl VectorLength {
 ///
 /// A: [M × K], B: [K × N], C: [M × N]
 /// Works on any architecture, used when RVV is not available.
-pub fn matmul_scalar_f32(
-    a: &[f32],
-    b: &[f32],
-    c: &mut [f32],
-    m: usize,
-    k: usize,
-    n: usize,
-) {
+pub fn matmul_scalar_f32(a: &[f32], b: &[f32], c: &mut [f32], m: usize, k: usize, n: usize) {
     for i in 0..m {
         for j in 0..n {
             let mut sum = 0.0f32;
@@ -135,49 +140,42 @@ pub fn matmul_scalar_f32(
 /// - `b`: K × N elements  
 /// - `c`: M × N elements (output)
 #[cfg(target_arch = "riscv64")]
-pub fn matmul_rvv_f32(
-    a: &[f32],
-    b: &[f32],
-    c: &mut [f32],
-    m: usize,
-    k: usize,
-    n: usize,
-) {
+pub fn matmul_rvv_f32(a: &[f32], b: &[f32], c: &mut [f32], m: usize, k: usize, n: usize) {
     for i in 0..m {
         for j in 0..n {
             let mut sum: f32 = 0.0;
             let mut l = 0;
             let mut remaining = k;
-            
+
             // Core RVV dot product
             unsafe {
                 core::arch::asm!(
                     // v8 will hold the accumulator (sum)
-                    "vmv.v.x v8, zero", 
-                    
+                    "vmv.v.x v8, zero",
+
                     "2:", // Loop start
                     "vsetvli t0, {rem}, e32, m1, ta, ma",
-                    
+
                     // Load A row vector and B col vector
                     "vle32.v v16, ({ptr_a})",
                     "vle32.v v24, ({ptr_b})",
-                    
+
                     // Fused multiply-add: v8[i] += v16[i] * v24[i]
                     "vfmacc.vv v8, v16, v24",
-                    
+
                     // Increment pointers and decrement remaining
                     "slli t1, t0, 2", // t1 = elements processed * 4 bytes
                     "add {ptr_a}, {ptr_a}, t1",
                     "add {ptr_b}, {ptr_b}, t1",
                     "sub {rem}, {rem}, t0",
-                    
+
                     "bnez {rem}, 2b", // Loop if remaining > 0
-                    
+
                     // Horizontal reduction sum into v0
                     "vmv.s.x v0, zero",
                     "vfredosum.vs v0, v8, v0",
                     "vfmv.f.s {sum}, v0",
-                    
+
                     ptr_a = inout(reg) a.as_ptr().add(i * k + l) => _,
                     ptr_b = inout(reg) b.as_ptr().add(l * n + j) => _,
                     rem = inout(reg) remaining => _,
@@ -197,14 +195,7 @@ pub fn matmul_rvv_f32(
 
 /// Fallback for non-RISC-V targets (host testing).
 #[cfg(not(target_arch = "riscv64"))]
-pub fn matmul_rvv_f32(
-    a: &[f32],
-    b: &[f32],
-    c: &mut [f32],
-    m: usize,
-    k: usize,
-    n: usize,
-) {
+pub fn matmul_rvv_f32(a: &[f32], b: &[f32], c: &mut [f32], m: usize, k: usize, n: usize) {
     matmul_scalar_f32(a, b, c, m, k, n);
 }
 
@@ -282,11 +273,7 @@ pub fn dequant_matmul_q4(
 /// Returns the dot product of `activations[0..in_features]` with one
 /// row of quantized weights.
 #[inline(always)]
-pub fn fused_dot_q4(
-    blocks: &[QuantBlockQ4],
-    activations: &[f32],
-    in_features: usize,
-) -> f32 {
+pub fn fused_dot_q4(blocks: &[QuantBlockQ4], activations: &[f32], in_features: usize) -> f32 {
     let blocks_per_row = in_features / Q4_BLOCK_SIZE;
     let mut sum = 0.0f32;
 
@@ -340,11 +327,7 @@ impl QuantBlockQ8 {
 
 /// Fused Q8 dot product — single-row decode kernel.
 #[inline(always)]
-pub fn fused_dot_q8(
-    blocks: &[QuantBlockQ8],
-    activations: &[f32],
-    in_features: usize,
-) -> f32 {
+pub fn fused_dot_q8(blocks: &[QuantBlockQ8], activations: &[f32], in_features: usize) -> f32 {
     let blocks_per_row = in_features / Q8_BLOCK_SIZE;
     let mut sum = 0.0f32;
 
@@ -391,7 +374,11 @@ pub fn fp8_e4m3_to_f32(val: u8) -> f32 {
         (1.0 + mantissa as f32 / 8.0) * fast_pow_2(f_exp)
     };
 
-    if sign == 1 { -f_mantissa } else { f_mantissa }
+    if sign == 1 {
+        -f_mantissa
+    } else {
+        f_mantissa
+    }
 }
 
 /// Dequantize a buffer of FP8 E4M3 values to FP32.
@@ -406,7 +393,7 @@ pub fn dequant_fp8_e4m3(input: &[u8], output: &mut [f32]) {
 /// Fused FP8 dot product — K3 native inference kernel.
 #[inline(always)]
 pub fn fused_dot_fp8(
-    weights: &[u8],  // FP8 E4M3
+    weights: &[u8], // FP8 E4M3
     activations: &[f32],
     n: usize,
 ) -> f32 {
@@ -475,12 +462,7 @@ pub fn softmax_f32(x: &mut [f32]) {
 
 /// Layer normalization: y = (x - mean) / sqrt(var + eps) * gamma + beta
 #[inline(always)]
-pub fn layer_norm_f32(
-    x: &mut [f32],
-    gamma: &[f32],
-    beta: &[f32],
-    eps: f32,
-) {
+pub fn layer_norm_f32(x: &mut [f32], gamma: &[f32], beta: &[f32], eps: f32) {
     let n = x.len();
     if n == 0 {
         return;
@@ -490,10 +472,14 @@ pub fn layer_norm_f32(
     let mean = x.iter().copied().sum::<f32>() / (n as f32);
 
     // Compute variance
-    let var = x.iter().map(|&val| {
-        let diff = val - mean;
-        diff * diff
-    }).sum::<f32>() / (n as f32);
+    let var = x
+        .iter()
+        .map(|&val| {
+            let diff = val - mean;
+            diff * diff
+        })
+        .sum::<f32>()
+        / (n as f32);
 
     // Normalize
     let inv_std = 1.0 / fast_sqrt(var + eps);
@@ -556,12 +542,7 @@ pub fn gelu_f32(x: &mut [f32]) {
 /// RoPE encodes position information by rotating pairs of dimensions
 /// by angles proportional to their position in the sequence.
 #[inline(always)]
-pub fn apply_rope_f32(
-    x: &mut [f32],
-    seq_pos: usize,
-    head_dim: usize,
-    rope_theta: f32,
-) {
+pub fn apply_rope_f32(x: &mut [f32], seq_pos: usize, head_dim: usize, rope_theta: f32) {
     let half_dim = head_dim / 2;
     for i in 0..half_dim {
         let freq = 1.0 / fast_pow(rope_theta, (2 * i) as f32 / head_dim as f32);
@@ -762,8 +743,8 @@ mod tests {
         };
         let mut output = [0.0f32; Q4_BLOCK_SIZE];
         block.dequantize(&mut output);
-        assert!((output[0] - (-0.5)).abs() < 1e-5);  // 0 * 0.1 + (-0.5) = -0.5
-        assert!((output[1] - (-0.4)).abs() < 1e-5);  // 1 * 0.1 + (-0.5) = -0.4
+        assert!((output[0] - (-0.5)).abs() < 1e-5); // 0 * 0.1 + (-0.5) = -0.5
+        assert!((output[1] - (-0.4)).abs() < 1e-5); // 1 * 0.1 + (-0.5) = -0.4
     }
 
     #[test]

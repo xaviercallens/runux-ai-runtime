@@ -34,9 +34,9 @@
 //! ```
 
 extern crate alloc;
+use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
-use alloc::string::String;
 use hal::DType;
 
 // ---------------------------------------------------------------------------
@@ -52,7 +52,7 @@ pub enum HloElementType {
     S32,
     S8,
     U8,
-    Pred,  // boolean
+    Pred, // boolean
 }
 
 impl From<DType> for HloElementType {
@@ -76,11 +76,18 @@ pub struct HloShape {
 
 impl HloShape {
     pub fn new(dims: &[usize], element_type: HloElementType) -> Self {
-        Self { dims: dims.to_vec(), element_type }
+        Self {
+            dims: dims.to_vec(),
+            element_type,
+        }
     }
 
     pub fn num_elements(&self) -> usize {
-        if self.dims.is_empty() { 1 } else { self.dims.iter().product() }
+        if self.dims.is_empty() {
+            1
+        } else {
+            self.dims.iter().product()
+        }
     }
 
     pub fn rank(&self) -> usize {
@@ -141,7 +148,10 @@ pub enum HloOpKind {
     /// Transpose.
     Transpose { permutation: Vec<usize> },
     /// Slice.
-    Slice { starts: Vec<usize>, limits: Vec<usize> },
+    Slice {
+        starts: Vec<usize>,
+        limits: Vec<usize>,
+    },
     /// Custom call (for fused FlashAttention, etc.)
     CustomCall { call_name: String },
 }
@@ -178,7 +188,13 @@ impl HloBuilder {
         }
     }
 
-    fn add_op(&mut self, kind: HloOpKind, shape: HloShape, inputs: Vec<HloId>, name: &str) -> HloId {
+    fn add_op(
+        &mut self,
+        kind: HloOpKind,
+        shape: HloShape,
+        inputs: Vec<HloId>,
+        name: &str,
+    ) -> HloId {
         let id = self.next_id;
         self.next_id += 1;
         self.ops.push(HloOp {
@@ -193,7 +209,11 @@ impl HloBuilder {
 
     /// Add a parameter (input tensor).
     pub fn parameter(&mut self, name: &str, dims: &[usize], element_type: HloElementType) -> HloId {
-        let index = self.ops.iter().filter(|op| matches!(op.kind, HloOpKind::Parameter { .. })).count();
+        let index = self
+            .ops
+            .iter()
+            .filter(|op| matches!(op.kind, HloOpKind::Parameter { .. }))
+            .count();
         self.add_op(
             HloOpKind::Parameter { index },
             HloShape::new(dims, element_type),
@@ -263,13 +283,22 @@ impl HloBuilder {
     pub fn reduce_sum(&mut self, input: HloId, axis: i64) -> HloId {
         let in_shape = self.get_shape(input);
         let mut out_dims = in_shape.dims.clone();
-        let axis_idx = if axis >= 0 { axis as usize } else { (in_shape.rank() as i64 + axis) as usize };
+        let axis_idx = if axis >= 0 {
+            axis as usize
+        } else {
+            (in_shape.rank() as i64 + axis) as usize
+        };
         if axis_idx < out_dims.len() {
             out_dims.remove(axis_idx);
         }
-        if out_dims.is_empty() { out_dims.push(1); }
+        if out_dims.is_empty() {
+            out_dims.push(1);
+        }
         self.add_op(
-            HloOpKind::Reduce { axis, reduce_kind: ReduceKind::Sum },
+            HloOpKind::Reduce {
+                axis,
+                reduce_kind: ReduceKind::Sum,
+            },
             HloShape::new(&out_dims, in_shape.element_type),
             vec![input],
             "reduce_sum",
@@ -280,13 +309,22 @@ impl HloBuilder {
     pub fn reduce_max(&mut self, input: HloId, axis: i64) -> HloId {
         let in_shape = self.get_shape(input);
         let mut out_dims = in_shape.dims.clone();
-        let axis_idx = if axis >= 0 { axis as usize } else { (in_shape.rank() as i64 + axis) as usize };
+        let axis_idx = if axis >= 0 {
+            axis as usize
+        } else {
+            (in_shape.rank() as i64 + axis) as usize
+        };
         if axis_idx < out_dims.len() {
             out_dims.remove(axis_idx);
         }
-        if out_dims.is_empty() { out_dims.push(1); }
+        if out_dims.is_empty() {
+            out_dims.push(1);
+        }
         self.add_op(
-            HloOpKind::Reduce { axis, reduce_kind: ReduceKind::Max },
+            HloOpKind::Reduce {
+                axis,
+                reduce_kind: ReduceKind::Max,
+            },
             HloShape::new(&out_dims, in_shape.element_type),
             vec![input],
             "reduce_max",
@@ -298,7 +336,9 @@ impl HloBuilder {
         let in_shape = self.get_shape(input);
         let new_dims: Vec<usize> = permutation.iter().map(|&p| in_shape.dims[p]).collect();
         self.add_op(
-            HloOpKind::Transpose { permutation: permutation.to_vec() },
+            HloOpKind::Transpose {
+                permutation: permutation.to_vec(),
+            },
             HloShape::new(&new_dims, in_shape.element_type),
             vec![input],
             "transpose",
@@ -313,24 +353,36 @@ impl HloBuilder {
         let in_shape = self.get_shape(input);
         // Broadcast max back
         let max_broadcast = self.add_op(
-            HloOpKind::Broadcast { target_dims: in_shape.dims.clone() },
+            HloOpKind::Broadcast {
+                target_dims: in_shape.dims.clone(),
+            },
             in_shape.clone(),
             vec![max_val],
             "broadcast_max",
         );
         // Negate max (separate step to avoid nested &mut self)
         let neg_max_shape = self.get_shape(max_broadcast);
-        let neg_max = self.add_op(HloOpKind::Negate, neg_max_shape,
-            vec![max_broadcast], "neg_max");
+        let neg_max = self.add_op(
+            HloOpKind::Negate,
+            neg_max_shape,
+            vec![max_broadcast],
+            "neg_max",
+        );
         // x - max = x + (-max)
-        let shifted = self.add_op(HloOpKind::Add, in_shape.clone(),
-            vec![input, neg_max], "shifted");
+        let shifted = self.add_op(
+            HloOpKind::Add,
+            in_shape.clone(),
+            vec![input, neg_max],
+            "shifted",
+        );
         // exp(x - max)
         let exp_shifted = self.exp(shifted);
         // sum(exp)
         let sum_exp = self.reduce_sum(exp_shifted, axis);
         let sum_broadcast = self.add_op(
-            HloOpKind::Broadcast { target_dims: in_shape.dims.clone() },
+            HloOpKind::Broadcast {
+                target_dims: in_shape.dims.clone(),
+            },
             in_shape,
             vec![sum_exp],
             "broadcast_sum",
@@ -351,8 +403,11 @@ impl HloBuilder {
     /// - `causal`: Whether to apply causal masking
     pub fn flash_attention_block(
         &mut self,
-        q: HloId, k: HloId, v: HloId,
-        tile_q: usize, tile_kv: usize,
+        q: HloId,
+        k: HloId,
+        v: HloId,
+        tile_q: usize,
+        tile_kv: usize,
         causal: bool,
     ) -> HloId {
         // FlashAttention expressed as HLO:
@@ -377,7 +432,9 @@ impl HloBuilder {
         let scale = self.constant(scale_val, q_shape.element_type);
         let scores_shape = self.get_shape(scores);
         let scale_broadcast = self.add_op(
-            HloOpKind::Broadcast { target_dims: scores_shape.dims.clone() },
+            HloOpKind::Broadcast {
+                target_dims: scores_shape.dims.clone(),
+            },
             scores_shape,
             vec![scale],
             "scale_broadcast",
@@ -395,9 +452,11 @@ impl HloBuilder {
         let hint_name = alloc::format!("flash_attn_tile_q{}_kv{}", tile_q, tile_kv);
         let _ = self.add_op(
             HloOpKind::CustomCall {
-                call_name: String::from(
-                    if causal { "flash_attention_causal" } else { "flash_attention" }
-                ),
+                call_name: String::from(if causal {
+                    "flash_attention_causal"
+                } else {
+                    "flash_attention"
+                }),
             },
             output_shape,
             vec![output],
@@ -418,7 +477,9 @@ impl HloBuilder {
 
         // rsqrt approximation: 1/sqrt(x) via custom call
         let rsqrt = self.add_op(
-            HloOpKind::CustomCall { call_name: String::from("rsqrt") },
+            HloOpKind::CustomCall {
+                call_name: String::from("rsqrt"),
+            },
             self.get_shape(mean_plus_eps),
             vec![mean_plus_eps],
             "rsqrt",
@@ -426,7 +487,9 @@ impl HloBuilder {
 
         let in_shape = self.get_shape(x);
         let rsqrt_broadcast = self.add_op(
-            HloOpKind::Broadcast { target_dims: in_shape.dims.clone() },
+            HloOpKind::Broadcast {
+                target_dims: in_shape.dims.clone(),
+            },
             in_shape,
             vec![rsqrt],
             "rsqrt_broadcast",
@@ -438,7 +501,9 @@ impl HloBuilder {
 
     /// Get the shape of an operation.
     fn get_shape(&self, id: HloId) -> HloShape {
-        self.ops.iter().find(|op| op.id == id)
+        self.ops
+            .iter()
+            .find(|op| op.id == id)
             .map(|op| op.shape.clone())
             .unwrap_or(HloShape::new(&[1], HloElementType::F32))
     }
@@ -460,7 +525,10 @@ impl HloBuilder {
 
     /// Count parameters (inputs).
     pub fn num_parameters(&self) -> usize {
-        self.ops.iter().filter(|op| matches!(op.kind, HloOpKind::Parameter { .. })).count()
+        self.ops
+            .iter()
+            .filter(|op| matches!(op.kind, HloOpKind::Parameter { .. }))
+            .count()
     }
 
     /// Estimate total FLOPs for the computation.
@@ -472,17 +540,17 @@ impl HloBuilder {
                     // 2 * M * N * K
                     let elements = op.shape.num_elements() as u64;
                     total += 2 * elements;
-                },
+                }
                 HloOpKind::Exp | HloOpKind::Log => {
                     total += op.shape.num_elements() as u64 * 10; // exp ≈ 10 FLOPs
-                },
+                }
                 HloOpKind::Add | HloOpKind::Multiply | HloOpKind::Divide => {
                     total += op.shape.num_elements() as u64;
-                },
+                }
                 HloOpKind::Reduce { .. } => {
                     total += op.shape.num_elements() as u64;
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
         total
@@ -495,36 +563,68 @@ impl HloBuilder {
     pub fn serialize_text(&self) -> String {
         let mut out = String::new();
         out.push_str(&alloc::format!("// StableHLO computation: {}\n", self.name));
-        out.push_str(&alloc::format!("// {} ops, ~{} estimated FLOPs\n\n",
-            self.num_ops(), self.estimate_flops()));
+        out.push_str(&alloc::format!(
+            "// {} ops, ~{} estimated FLOPs\n\n",
+            self.num_ops(),
+            self.estimate_flops()
+        ));
 
         out.push_str(&alloc::format!("func @{}(\n", self.name));
 
         for op in &self.ops {
-            let dims: Vec<String> = op.shape.dims.iter().map(|d| alloc::format!("{}", d)).collect();
-            let shape_str = alloc::format!("tensor<{}x{:?}>", dims.join("x"), op.shape.element_type);
+            let dims: Vec<String> = op
+                .shape
+                .dims
+                .iter()
+                .map(|d| alloc::format!("{}", d))
+                .collect();
+            let shape_str =
+                alloc::format!("tensor<{}x{:?}>", dims.join("x"), op.shape.element_type);
 
             match &op.kind {
                 HloOpKind::Parameter { index } => {
-                    out.push_str(&alloc::format!("  %{} = stablehlo.parameter[{}] : {}  // {}\n",
-                        op.id, index, shape_str, op.name));
-                },
-                HloOpKind::DotGeneral { lhs_contracting, rhs_contracting } => {
+                    out.push_str(&alloc::format!(
+                        "  %{} = stablehlo.parameter[{}] : {}  // {}\n",
+                        op.id,
+                        index,
+                        shape_str,
+                        op.name
+                    ));
+                }
+                HloOpKind::DotGeneral {
+                    lhs_contracting,
+                    rhs_contracting,
+                } => {
                     out.push_str(&alloc::format!(
                         "  %{} = stablehlo.dot_general %{}, %{}, contracting=[{:?}, {:?}] : {}\n",
-                        op.id, op.inputs[0], op.inputs[1],
-                        lhs_contracting, rhs_contracting, shape_str));
-                },
+                        op.id,
+                        op.inputs[0],
+                        op.inputs[1],
+                        lhs_contracting,
+                        rhs_contracting,
+                        shape_str
+                    ));
+                }
                 HloOpKind::CustomCall { call_name } => {
                     out.push_str(&alloc::format!(
                         "  %{} = stablehlo.custom_call @{} : {}  // {}\n",
-                        op.id, call_name, shape_str, op.name));
-                },
+                        op.id,
+                        call_name,
+                        shape_str,
+                        op.name
+                    ));
+                }
                 _ => {
-                    let inputs: Vec<String> = op.inputs.iter().map(|i| alloc::format!("%{}", i)).collect();
-                    out.push_str(&alloc::format!("  %{} = stablehlo.{:?}({}) : {}\n",
-                        op.id, op.kind, inputs.join(", "), shape_str));
-                },
+                    let inputs: Vec<String> =
+                        op.inputs.iter().map(|i| alloc::format!("%{}", i)).collect();
+                    out.push_str(&alloc::format!(
+                        "  %{} = stablehlo.{:?}({}) : {}\n",
+                        op.id,
+                        op.kind,
+                        inputs.join(", "),
+                        shape_str
+                    ));
+                }
             }
         }
 
@@ -538,9 +638,13 @@ impl HloBuilder {
 // ---------------------------------------------------------------------------
 
 fn fast_sqrt(x: f32) -> f32 {
-    if x <= 0.0 { return 0.0; }
+    if x <= 0.0 {
+        return 0.0;
+    }
     let mut g = x;
-    for _ in 0..5 { g = 0.5 * (g + x / g); }
+    for _ in 0..5 {
+        g = 0.5 * (g + x / g);
+    }
     g
 }
 
@@ -573,7 +677,10 @@ mod tests {
         let _sm = b.softmax(x, -1);
 
         // Softmax decomposes into: max, broadcast, negate, add, exp, sum, broadcast, divide
-        assert!(b.num_ops() > 5, "Softmax should decompose into multiple ops");
+        assert!(
+            b.num_ops() > 5,
+            "Softmax should decompose into multiple ops"
+        );
     }
 
     #[test]
@@ -584,9 +691,21 @@ mod tests {
         let seq_len = 1024;
         let head_dim = 64;
 
-        let q = b.parameter("q", &[batch, heads, seq_len, head_dim], HloElementType::BF16);
-        let k = b.parameter("k", &[batch, heads, seq_len, head_dim], HloElementType::BF16);
-        let v = b.parameter("v", &[batch, heads, seq_len, head_dim], HloElementType::BF16);
+        let q = b.parameter(
+            "q",
+            &[batch, heads, seq_len, head_dim],
+            HloElementType::BF16,
+        );
+        let k = b.parameter(
+            "k",
+            &[batch, heads, seq_len, head_dim],
+            HloElementType::BF16,
+        );
+        let v = b.parameter(
+            "v",
+            &[batch, heads, seq_len, head_dim],
+            HloElementType::BF16,
+        );
 
         let _out = b.flash_attention_block(q, k, v, 128, 128, true);
 

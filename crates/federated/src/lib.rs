@@ -6,6 +6,11 @@
 #![cfg_attr(not(test), no_std)]
 #![deny(clippy::all)]
 #![warn(clippy::pedantic)]
+#![allow(
+    clippy::approx_constant,
+    clippy::assign_op_pattern,
+    clippy::needless_range_loop
+)]
 //! RunuX Federated Learning — Distributed training and gradient aggregation
 //!
 //! Provides kernel-level support for federated learning across RISC-V edge
@@ -40,9 +45,9 @@
 //! - Secure aggregation encrypts individual updates
 
 extern crate alloc;
+use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
-use alloc::string::String;
 
 use ai_runtime::DataType;
 
@@ -202,9 +207,13 @@ impl PrivacyConfig {
     /// Returns the remaining privacy budget after `rounds_completed` rounds.
     pub fn remaining_budget(&self, rounds_completed: usize) -> f64 {
         // Using basic composition theorem: ε_total = ε_per_round × √n
-        let eps_used = self.epsilon * sqrt_f64(rounds_completed as f64)
-            / sqrt_f64(self.max_rounds as f64);
-        if self.epsilon > eps_used { self.epsilon - eps_used } else { 0.0 }
+        let eps_used =
+            self.epsilon * sqrt_f64(rounds_completed as f64) / sqrt_f64(self.max_rounds as f64);
+        if self.epsilon > eps_used {
+            self.epsilon - eps_used
+        } else {
+            0.0
+        }
     }
 }
 
@@ -251,7 +260,12 @@ impl LoraConfig {
     }
 
     /// Returns the percentage of parameters that are trainable.
-    pub fn trainable_percent(&self, total_params: usize, hidden_dim: usize, num_modules: usize) -> f32 {
+    pub fn trainable_percent(
+        &self,
+        total_params: usize,
+        hidden_dim: usize,
+        num_modules: usize,
+    ) -> f32 {
         let trainable = self.trainable_params(hidden_dim, num_modules);
         (trainable as f32 / total_params as f32) * 100.0
     }
@@ -331,8 +345,7 @@ impl GradientBuffer {
             // Box-Muller transform for Gaussian noise
             let u1 = lcg_next(&mut state);
             let u2 = lcg_next(&mut state);
-            let z = sqrt_f64(-2.0 * ln_f64(u1))
-                * cos_f64(2.0 * core::f64::consts::PI * u2);
+            let z = sqrt_f64(-2.0 * ln_f64(u1)) * cos_f64(2.0 * core::f64::consts::PI * u2);
             *val += (z * noise_scale) as f32;
         }
     }
@@ -394,7 +407,8 @@ pub fn fedavg_aggregate(gradients: &[GradientBuffer]) -> GradientBuffer {
     }
 
     // Average loss
-    result.local_loss = gradients.iter()
+    result.local_loss = gradients
+        .iter()
         .map(|g| g.local_loss * g.local_samples as f32 / total_samples as f32)
         .sum();
 
@@ -519,10 +533,15 @@ impl FederatedCluster {
 
     /// Count online clients.
     pub fn online_clients(&self) -> usize {
-        self.config.nodes.iter().filter(|n| {
-            n.role == NodeRole::Client && n.status != NodeStatus::Failed
-                && n.status != NodeStatus::Disconnected
-        }).count()
+        self.config
+            .nodes
+            .iter()
+            .filter(|n| {
+                n.role == NodeRole::Client
+                    && n.status != NodeStatus::Failed
+                    && n.status != NodeStatus::Disconnected
+            })
+            .count()
     }
 
     /// Check if enough clients are available for a round.
@@ -537,29 +556,37 @@ impl FederatedCluster {
 
     /// Get remaining privacy budget.
     pub fn remaining_budget(&self) -> f64 {
-        self.config.privacy.remaining_budget(self.current_round as usize)
+        self.config
+            .privacy
+            .remaining_budget(self.current_round as usize)
     }
 
     /// Estimate total cluster compute in TOPS.
     pub fn total_tops(&self) -> u32 {
-        self.config.nodes.iter().map(|n| {
-            match n.platform {
+        self.config
+            .nodes
+            .iter()
+            .map(|n| match n.platform {
                 NodePlatform::AiboxK3 => 60,
                 NodePlatform::BpiF3 => 2,
                 _ => 1,
-            }
-        }).sum()
+            })
+            .sum()
     }
 
     /// Estimate total cluster RAM in GB.
     pub fn total_ram_gb(&self) -> u32 {
-        self.config.nodes.iter().map(|n| {
-            match n.platform {
-                NodePlatform::AiboxK3 => 32, // Assume max config
-                NodePlatform::BpiF3 => 8,
-                _ => 4,
-            }
-        }).sum()
+        self.config
+            .nodes
+            .iter()
+            .map(|n| {
+                match n.platform {
+                    NodePlatform::AiboxK3 => 32, // Assume max config
+                    NodePlatform::BpiF3 => 8,
+                    _ => 4,
+                }
+            })
+            .sum()
     }
 }
 
@@ -569,7 +596,9 @@ impl FederatedCluster {
 
 /// Simple sqrt for no_std (f32).
 fn fast_sqrt_simple(x: f32) -> f32 {
-    if x <= 0.0 { return 0.0; }
+    if x <= 0.0 {
+        return 0.0;
+    }
     let mut guess = x;
     for _ in 0..5 {
         guess = 0.5 * (guess + x / guess);
@@ -579,7 +608,9 @@ fn fast_sqrt_simple(x: f32) -> f32 {
 
 /// Simple sqrt for no_std (f64).
 fn sqrt_f64(x: f64) -> f64 {
-    if x <= 0.0 { return 0.0; }
+    if x <= 0.0 {
+        return 0.0;
+    }
     let mut guess = x;
     for _ in 0..8 {
         guess = 0.5 * (guess + x / guess);
@@ -589,7 +620,9 @@ fn sqrt_f64(x: f64) -> f64 {
 
 /// Simple natural log for no_std (f64).
 fn ln_f64(x: f64) -> f64 {
-    if x <= 0.0 { return f64::MIN; }
+    if x <= 0.0 {
+        return f64::MIN;
+    }
     // Use identity: ln(x) = ln(m * 2^e) = ln(m) + e*ln(2)
     let bits = x.to_bits();
     let exp = ((bits >> 52) & 0x7FF) as f64 - 1023.0;
@@ -609,8 +642,12 @@ fn sin_f64(mut x: f64) -> f64 {
     let pi = core::f64::consts::PI;
     let two_pi = 2.0 * pi;
     x = x % two_pi;
-    if x > pi { x -= two_pi; }
-    if x < -pi { x += two_pi; }
+    if x > pi {
+        x -= two_pi;
+    }
+    if x < -pi {
+        x += two_pi;
+    }
     let abs_x = if x < 0.0 { -x } else { x };
     let y = 4.0 / pi * x - 4.0 / (pi * pi) * x * abs_x;
     0.225 * (y * (if y < 0.0 { -y } else { y }) - y) + y
@@ -618,7 +655,9 @@ fn sin_f64(mut x: f64) -> f64 {
 
 /// Simple natural log for no_std.
 fn fast_ln_simple(x: f32) -> f32 {
-    if x <= 0.0 { return f32::MIN; }
+    if x <= 0.0 {
+        return f32::MIN;
+    }
     let bits = x.to_bits();
     let exp = ((bits >> 23) & 0xFF) as f32 - 127.0;
     let m_bits = (bits & 0x007F_FFFF) | 0x3F80_0000;
@@ -628,7 +667,9 @@ fn fast_ln_simple(x: f32) -> f32 {
 
 /// Linear congruential generator, returns value in [0, 1).
 fn lcg_next(state: &mut u64) -> f64 {
-    *state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+    *state = state
+        .wrapping_mul(6364136223846793005)
+        .wrapping_add(1442695040888963407);
     (*state >> 11) as f64 / (1u64 << 53) as f64
 }
 
@@ -714,19 +755,25 @@ mod tests {
         let config = FederatedConfig {
             nodes: vec![
                 NodeAddress {
-                    id: 0, ip: String::new(), port: 8080,
+                    id: 0,
+                    ip: String::new(),
+                    port: 8080,
                     role: NodeRole::Server,
                     platform: NodePlatform::AiboxK3,
                     status: NodeStatus::Ready,
                 },
                 NodeAddress {
-                    id: 1, ip: String::new(), port: 8081,
+                    id: 1,
+                    ip: String::new(),
+                    port: 8081,
                     role: NodeRole::Client,
                     platform: NodePlatform::BpiF3,
                     status: NodeStatus::Ready,
                 },
                 NodeAddress {
-                    id: 2, ip: String::new(), port: 8082,
+                    id: 2,
+                    ip: String::new(),
+                    port: 8082,
                     role: NodeRole::Client,
                     platform: NodePlatform::BpiF3,
                     status: NodeStatus::Ready,

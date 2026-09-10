@@ -4,16 +4,20 @@
 //
 // PATENT NOTICE:
 // This source code implements proprietary systems and methods for telemetry-guided,
-// policy-directed reinforcement learning scheduler task allocations (WARS) 
-// in heterogeneous multi-core architectures (e.g., big.LITTLE). 
+// policy-directed reinforcement learning scheduler task allocations (WARS)
+// in heterogeneous multi-core architectures (e.g., big.LITTLE).
 // Patent Pending (Socrate AI Labs, U.S. Patent Application Ser. No. XX/XXX,XXX).
 // Unauthorized duplication, reverse engineering, or distribution is prohibited.
 // ==============================================================================
 
-#![allow(clippy::all, clippy::pedantic)]
 #![no_std]
-#![warn(clippy::pedantic)]
 #![deny(clippy::all)]
+#![warn(clippy::pedantic)]
+#![allow(
+    clippy::missing_safety_doc,
+    clippy::needless_range_loop,
+    clippy::collapsible_if
+)]
 
 //! RunuX WARS Scheduler — Workload-Adaptive RL Scheduler (Fair Queueing)
 //!
@@ -29,10 +33,10 @@ use core::ffi::c_int;
 
 pub const TASK_TYPE_VECTOR: u8 = 0;
 pub const TASK_TYPE_MEMORY: u8 = 1;
-pub const TASK_TYPE_IO: u8     = 2;
+pub const TASK_TYPE_IO: u8 = 2;
 
 pub const CORE_TYPE_LITTLE: u8 = 0;
-pub const CORE_TYPE_BIG:    u8 = 1;
+pub const CORE_TYPE_BIG: u8 = 1;
 
 pub const MAX_QUEUED_TASKS: usize = 128; // Increased capacity for high-performance servers
 
@@ -45,7 +49,7 @@ pub struct task_struct {
     pub prio: c_int,
     pub static_prio: c_int,
     pub normal_prio: c_int,
-    
+
     // ── PROPRIETARY WARS TELEMETRY FIELDS ─────────────────────────────────
     /// Semantic task type: 0 = Vector, 1 = Memory-bound, 2 = I/O
     pub task_type: u8,
@@ -60,7 +64,7 @@ pub struct task_struct {
 }
 
 /// A Completely Fair Scheduling ready queue.
-/// 
+///
 /// Stores pointers to `task_struct` and their corresponding virtual runtimes,
 /// sorted in ascending order of `vruntime` to make `pick_next` an O(1) operation.
 #[repr(C)]
@@ -73,14 +77,10 @@ pub struct SchedReadyQueue {
 
 // Nice to weight lookup table. Derived from standard Linux CFS tables (-20 to 19 nice levels).
 const PRIO_TO_WEIGHT: [u32; 40] = [
-    /* -20 */ 88761, 71755, 56483, 46273, 36291,
-    /* -15 */ 29154, 23254, 18705, 14949, 11916,
-    /* -10 */  9548,  7620,  6100,  4904,  3906,
-    /*  -5 */  3121,  2501,  1991,  1586,  1277,
-    /*   0 */  1024,   820,   655,   526,   423,
-    /*   5 */   335,   272,   215,   172,   137,
-    /*  10 */   110,    87,    70,    56,    45,
-    /*  15 */    36,    29,    23,    18,    15,
+    /* -20 */ 88761, 71755, 56483, 46273, 36291, /* -15 */ 29154, 23254, 18705, 14949,
+    11916, /* -10 */ 9548, 7620, 6100, 4904, 3906, /*  -5 */ 3121, 2501, 1991, 1586,
+    1277, /*   0 */ 1024, 820, 655, 526, 423, /*   5 */ 335, 272, 215, 172, 137,
+    /*  10 */ 110, 87, 70, 56, 45, /*  15 */ 36, 29, 23, 18, 15,
 ];
 
 const NICE_0_LOAD: u32 = 1024;
@@ -137,7 +137,7 @@ impl SchedReadyQueue {
 
         if let Some(idx) = remove_idx {
             let task_vruntime = self.vruntime[idx];
-            
+
             // Shift elements to the left
             for i in idx..(self.len - 1) {
                 self.tasks[i] = self.tasks[i + 1];
@@ -303,7 +303,7 @@ pub unsafe extern "C" fn sched_fair_entity_tick(
     }
 
     let t = &mut *task;
-    
+
     // 1. Calculate Nice priority weight
     let prio_index = (t.prio - 100).clamp(0, 39) as usize;
     let base_weight = PRIO_TO_WEIGHT[prio_index];
@@ -321,7 +321,7 @@ pub unsafe extern "C" fn sched_fair_entity_tick(
                 wars_multiplier = 0.667; // 1.5x efficiency boost
             } else if current_core_type == CORE_TYPE_LITTLE {
                 // Vector task mismatch on LITTLE core: accelerate vruntime (evict quickly)
-                wars_multiplier = 2.0; 
+                wars_multiplier = 2.0;
             }
         } else if t.task_type == TASK_TYPE_MEMORY && t.l1_misses_per_k_instr > 150 {
             // High memory cache thrashing detected: adjust runtime progression to mitigate thrashing
@@ -352,7 +352,7 @@ pub unsafe extern "C" fn sched_fair_entity_tick(
 
 /// Advanced Reinforcement Learning Dynamic Priority Advisor Hook.
 ///
-/// Allows external models (e.g. `mlgo_advisor` userspace daemon) to directly adjust 
+/// Allows external models (e.g. `mlgo_advisor` userspace daemon) to directly adjust
 /// scheduler queues to dynamically match power states or global swarm latency limits.
 #[no_mangle]
 pub unsafe extern "C" fn wars_adjust_ready_queue_priorities(
@@ -416,7 +416,10 @@ impl<'a> SafeTask<'a> {
         if ptr.is_null() {
             None
         } else {
-            Some(Self { ptr, _marker: core::marker::PhantomData })
+            Some(Self {
+                ptr,
+                _marker: core::marker::PhantomData,
+            })
         }
     }
 }

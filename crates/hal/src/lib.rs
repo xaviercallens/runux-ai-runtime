@@ -40,9 +40,9 @@
 //! ```
 
 extern crate alloc;
+use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
-use alloc::string::String;
 
 // ---------------------------------------------------------------------------
 // Core Types
@@ -75,7 +75,10 @@ impl DType {
 
     /// Whether this dtype is natively supported on TPU MXUs.
     pub fn is_tpu_native(&self) -> bool {
-        matches!(self, DType::BF16 | DType::FP8E4M3 | DType::FP8E5M2 | DType::INT8)
+        matches!(
+            self,
+            DType::BF16 | DType::FP8E4M3 | DType::FP8E5M2 | DType::INT8
+        )
     }
 
     /// Whether this dtype is natively supported on RISC-V RVV.
@@ -92,7 +95,9 @@ pub struct Shape {
 
 impl Shape {
     pub fn new(dims: &[usize]) -> Self {
-        Self { dims: dims.to_vec() }
+        Self {
+            dims: dims.to_vec(),
+        }
     }
 
     /// Scalar shape.
@@ -107,12 +112,18 @@ impl Shape {
 
     /// Matrix shape.
     pub fn matrix(rows: usize, cols: usize) -> Self {
-        Self { dims: vec![rows, cols] }
+        Self {
+            dims: vec![rows, cols],
+        }
     }
 
     /// Total number of elements.
     pub fn num_elements(&self) -> usize {
-        if self.dims.is_empty() { 1 } else { self.dims.iter().product() }
+        if self.dims.is_empty() {
+            1
+        } else {
+            self.dims.iter().product()
+        }
     }
 
     /// Number of dimensions.
@@ -300,10 +311,10 @@ impl HardwareCaps {
             peak_tflops: 5.6, // 5.6 TFLOPS half-precision
             native_dtype: DType::F16,
             memory_bytes: ram_gb * 1024 * 1024 * 1024,
-            memory_bw_gbs: 100.0, // base M2 UMA bandwidth
+            memory_bw_gbs: 100.0,  // base M2 UMA bandwidth
             optimal_tile_size: 64, // Metal threadgroup SIMD width
-            tdp_watts: 20.0, // average power under full GPU/CPU load
-            ridge_point: 0.056, // 5.6 / 100
+            tdp_watts: 20.0,       // average power under full GPU/CPU load
+            ridge_point: 0.056,    // 5.6 / 100
             supports_distributed: false,
             ici_bw_gbs: 0.0,
         }
@@ -344,7 +355,9 @@ impl HardwareCaps {
 
     /// Whether an operation with given arithmetic intensity is memory-bound.
     pub fn is_memory_bound(&self, flops: u64, bytes: u64) -> bool {
-        if bytes == 0 { return false; }
+        if bytes == 0 {
+            return false;
+        }
         let intensity = flops as f32 / bytes as f32;
         intensity < self.ridge_point
     }
@@ -416,7 +429,9 @@ pub trait Accelerator {
     fn caps(&self) -> &HardwareCaps;
 
     /// Name of this backend instance.
-    fn name(&self) -> &str { self.caps().name }
+    fn name(&self) -> &str {
+        self.caps().name
+    }
 
     /// Allocate a tensor on this backend's memory.
     fn alloc_tensor(&self, shape: &Shape, dtype: DType) -> TensorDesc;
@@ -425,11 +440,7 @@ pub trait Accelerator {
     ///
     /// Shapes: A=[M×K], B=[K×N], C=[M×N].
     /// Backend chooses optimal tiling for its hardware.
-    fn matmul(
-        &self,
-        a: &[f32], b: &[f32], c: &mut [f32],
-        m: usize, n: usize, k: usize,
-    );
+    fn matmul(&self, a: &[f32], b: &[f32], c: &mut [f32], m: usize, n: usize, k: usize);
 
     /// FlashAttention forward pass.
     ///
@@ -437,7 +448,9 @@ pub trait Accelerator {
     /// Tile sizes are backend-specific (MXU dim, VLEN, etc.)
     fn flash_attention(
         &self,
-        q: &[f32], k: &[f32], v: &[f32],
+        q: &[f32],
+        k: &[f32],
+        v: &[f32],
         output: &mut [f32],
         config: &FlashConfig,
     );
@@ -474,7 +487,9 @@ pub struct CpuBackend {
 
 impl CpuBackend {
     pub fn new() -> Self {
-        Self { caps: HardwareCaps::cpu_reference() }
+        Self {
+            caps: HardwareCaps::cpu_reference(),
+        }
     }
 }
 
@@ -485,19 +500,19 @@ impl Default for CpuBackend {
 }
 
 impl Accelerator for CpuBackend {
-    fn caps(&self) -> &HardwareCaps { &self.caps }
+    fn caps(&self) -> &HardwareCaps {
+        &self.caps
+    }
 
     fn alloc_tensor(&self, shape: &Shape, dtype: DType) -> TensorDesc {
         TensorDesc::new("cpu_tensor", shape.clone(), dtype)
     }
 
-    fn matmul(
-        &self,
-        a: &[f32], b: &[f32], c: &mut [f32],
-        m: usize, n: usize, k: usize,
-    ) {
+    fn matmul(&self, a: &[f32], b: &[f32], c: &mut [f32], m: usize, n: usize, k: usize) {
         // Clear output
-        for v in c.iter_mut() { *v = 0.0; }
+        for v in c.iter_mut() {
+            *v = 0.0;
+        }
         // Naive O(M×N×K) matmul
         for i in 0..m {
             for j in 0..n {
@@ -512,7 +527,9 @@ impl Accelerator for CpuBackend {
 
     fn flash_attention(
         &self,
-        q: &[f32], k: &[f32], v: &[f32],
+        q: &[f32],
+        k: &[f32],
+        v: &[f32],
         output: &mut [f32],
         config: &FlashConfig,
     ) {
@@ -528,24 +545,33 @@ impl Accelerator for CpuBackend {
             let mut max_score = f32::NEG_INFINITY;
 
             for j in 0..m {
-                if config.causal && j > i { continue; }
+                if config.causal && j > i {
+                    continue;
+                }
                 let mut dot = 0.0f32;
                 for dd in 0..d {
                     dot += q[i * d + dd] * k[j * d + dd];
                 }
                 scores[j] = dot * scale;
-                if scores[j] > max_score { max_score = scores[j]; }
+                if scores[j] > max_score {
+                    max_score = scores[j];
+                }
             }
 
             // Softmax
             let mut sum = 0.0f32;
-            for j in 0..m {
-                if scores[j] == f32::NEG_INFINITY { scores[j] = 0.0; continue; }
-                scores[j] = fast_exp(scores[j] - max_score);
-                sum += scores[j];
+            for score in scores.iter_mut().take(m) {
+                if *score == f32::NEG_INFINITY {
+                    *score = 0.0;
+                    continue;
+                }
+                *score = fast_exp(*score - max_score);
+                sum += *score;
             }
             if sum > 0.0 {
-                for j in 0..m { scores[j] /= sum; }
+                for score in scores.iter_mut().take(m) {
+                    *score /= sum;
+                }
             }
 
             // Weighted sum
@@ -560,7 +586,9 @@ impl Accelerator for CpuBackend {
     }
 
     fn softmax(&self, x: &mut [f32]) {
-        if x.is_empty() { return; }
+        if x.is_empty() {
+            return;
+        }
         let max = x.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
         let mut sum = 0.0f32;
         for v in x.iter_mut() {
@@ -568,14 +596,18 @@ impl Accelerator for CpuBackend {
             sum += *v;
         }
         if sum > 0.0 {
-            for v in x.iter_mut() { *v /= sum; }
+            for v in x.iter_mut() {
+                *v /= sum;
+            }
         }
     }
 
     fn rms_norm(&self, x: &mut [f32], weight: &[f32], eps: f32) {
         let n = x.len();
         let mut sum_sq = 0.0f32;
-        for &v in x.iter() { sum_sq += v * v; }
+        for &v in x.iter() {
+            sum_sq += v * v;
+        }
         let rms = fast_sqrt(sum_sq / n as f32 + eps);
         let inv_rms = 1.0 / rms;
         for i in 0..n {
@@ -593,7 +625,9 @@ impl Accelerator for CpuBackend {
     fn rope(&self, x: &mut [f32], position: usize, head_dim: usize, theta: f32) {
         let half = head_dim / 2;
         for i in 0..half {
-            if 2 * i + 1 >= x.len() { break; }
+            if 2 * i + 1 >= x.len() {
+                break;
+            }
             let freq = 1.0 / fast_pow(theta, (2 * i) as f32 / head_dim as f32);
             let angle = position as f32 * freq;
             let cos_a = fast_cos(angle);
@@ -639,7 +673,9 @@ impl TpuSimulatorBackend {
 }
 
 impl Accelerator for TpuSimulatorBackend {
-    fn caps(&self) -> &HardwareCaps { &self.caps }
+    fn caps(&self) -> &HardwareCaps {
+        &self.caps
+    }
 
     fn alloc_tensor(&self, shape: &Shape, dtype: DType) -> TensorDesc {
         // Simulate HBM allocation
@@ -649,17 +685,15 @@ impl Accelerator for TpuSimulatorBackend {
         desc
     }
 
-    fn matmul(
-        &self,
-        a: &[f32], b: &[f32], c: &mut [f32],
-        m: usize, n: usize, k: usize,
-    ) {
+    fn matmul(&self, a: &[f32], b: &[f32], c: &mut [f32], m: usize, n: usize, k: usize) {
         // Simulate MXU-aligned tiled matmul
         // In real TPU: this would be a StableHLO dot_general op
         let tile = self.caps.optimal_tile_size; // 128 (v5e) or 256 (v6e)
 
         // Tiled matmul matching MXU dimensions
-        for v in c.iter_mut() { *v = 0.0; }
+        for v in c.iter_mut() {
+            *v = 0.0;
+        }
 
         let tm = tile.min(m);
         let tn = tile.min(n);
@@ -688,7 +722,9 @@ impl Accelerator for TpuSimulatorBackend {
 
     fn flash_attention(
         &self,
-        q: &[f32], k: &[f32], v: &[f32],
+        q: &[f32],
+        k: &[f32],
+        v: &[f32],
         output: &mut [f32],
         config: &FlashConfig,
     ) {
@@ -701,11 +737,15 @@ impl Accelerator for TpuSimulatorBackend {
         self.cpu.flash_attention(q, k, v, output, &tpu_config);
     }
 
-    fn softmax(&self, x: &mut [f32]) { self.cpu.softmax(x); }
+    fn softmax(&self, x: &mut [f32]) {
+        self.cpu.softmax(x);
+    }
     fn rms_norm(&self, x: &mut [f32], weight: &[f32], eps: f32) {
         self.cpu.rms_norm(x, weight, eps);
     }
-    fn silu(&self, x: &mut [f32]) { self.cpu.silu(x); }
+    fn silu(&self, x: &mut [f32]) {
+        self.cpu.silu(x);
+    }
     fn rope(&self, x: &mut [f32], position: usize, head_dim: usize, theta: f32) {
         self.cpu.rope(x, position, head_dim, theta);
     }
@@ -735,7 +775,9 @@ impl AppleSiliconBackend {
 }
 
 impl Accelerator for AppleSiliconBackend {
-    fn caps(&self) -> &HardwareCaps { &self.caps }
+    fn caps(&self) -> &HardwareCaps {
+        &self.caps
+    }
 
     fn alloc_tensor(&self, shape: &Shape, dtype: DType) -> TensorDesc {
         // Zero-copy UMA allocation: data is shared directly between CPU and GPU
@@ -745,17 +787,15 @@ impl Accelerator for AppleSiliconBackend {
         desc
     }
 
-    fn matmul(
-        &self,
-        a: &[f32], b: &[f32], c: &mut [f32],
-        m: usize, n: usize, k: usize,
-    ) {
+    fn matmul(&self, a: &[f32], b: &[f32], c: &mut [f32], m: usize, n: usize, k: usize) {
         // GPU Accelerate MPS matrix multiplication simulation
         // In real macOS M2, this executes: [MPSMatrixMultiplication encodeToCommandBuffer:...]
         let tile = self.caps.optimal_tile_size; // 64 (threadgroup size)
 
         // Clear output
-        for v in c.iter_mut() { *v = 0.0; }
+        for v in c.iter_mut() {
+            *v = 0.0;
+        }
 
         let tm = tile.min(m);
         let tn = tile.min(n);
@@ -785,7 +825,9 @@ impl Accelerator for AppleSiliconBackend {
 
     fn flash_attention(
         &self,
-        q: &[f32], k: &[f32], v: &[f32],
+        q: &[f32],
+        k: &[f32],
+        v: &[f32],
         output: &mut [f32],
         config: &FlashConfig,
     ) {
@@ -827,7 +869,9 @@ pub fn compare_outputs(reference: &[f32], test: &[f32]) -> f32 {
     let len = reference.len().min(test.len());
     for i in 0..len {
         let err = (reference[i] - test[i]).abs();
-        if err > max_err { max_err = err; }
+        if err > max_err {
+            max_err = err;
+        }
     }
     max_err
 }
@@ -849,8 +893,12 @@ pub struct BackendComparison {
 // ---------------------------------------------------------------------------
 
 fn fast_exp(x: f32) -> f32 {
-    if x < -88.0 { return 0.0; }
-    if x > 88.0 { return f32::MAX; }
+    if x < -88.0 {
+        return 0.0;
+    }
+    if x > 88.0 {
+        return f32::MAX;
+    }
     let a = 12_102_203.0f32;
     let b = 1_065_353_216.0f32;
     let bits = (a * x + b) as u32;
@@ -858,21 +906,29 @@ fn fast_exp(x: f32) -> f32 {
 }
 
 fn fast_sqrt(x: f32) -> f32 {
-    if x <= 0.0 { return 0.0; }
+    if x <= 0.0 {
+        return 0.0;
+    }
     let mut g = x;
-    for _ in 0..5 { g = 0.5 * (g + x / g); }
+    for _ in 0..5 {
+        g = 0.5 * (g + x / g);
+    }
     g
 }
 
 fn fast_pow(base: f32, exp: f32) -> f32 {
     // For integer exponents: exact power-by-squaring
     let n = exp as u32;
-    if n == 0 { return 1.0; }
+    if n == 0 {
+        return 1.0;
+    }
     let mut result = 1.0f32;
     let mut b = base;
     let mut e = n;
     while e > 0 {
-        if e & 1 == 1 { result *= b; }
+        if e & 1 == 1 {
+            result *= b;
+        }
         b *= b;
         e >>= 1;
     }
@@ -883,8 +939,12 @@ fn fast_sin(x: f32) -> f32 {
     let pi = core::f32::consts::PI;
     let two_pi = 2.0 * pi;
     let mut a = x % two_pi;
-    if a > pi { a -= two_pi; }
-    if a < -pi { a += two_pi; }
+    if a > pi {
+        a -= two_pi;
+    }
+    if a < -pi {
+        a += two_pi;
+    }
     let abs_a = if a < 0.0 { -a } else { a };
     let y = 4.0 / pi * a - 4.0 / (pi * pi) * a * abs_a;
     0.225 * (y * (if y < 0.0 { -y } else { y }) - y) + y
@@ -923,8 +983,15 @@ mod tests {
         let mut x = vec![1.0, 2.0, 3.0];
         cpu.softmax(&mut x);
         let sum: f32 = x.iter().sum();
-        assert!((sum - 1.0).abs() < 0.01, "Softmax should sum to 1.0, got {}", sum);
-        assert!(x[2] > x[1] && x[1] > x[0], "Softmax should preserve ordering");
+        assert!(
+            (sum - 1.0).abs() < 0.01,
+            "Softmax should sum to 1.0, got {}",
+            sum
+        );
+        assert!(
+            x[2] > x[1] && x[1] > x[0],
+            "Softmax should preserve ordering"
+        );
     }
 
     #[test]
@@ -937,7 +1004,11 @@ mod tests {
         // Normalized: [0.365, 0.730, 1.095, 1.461]
         assert!(x[0] < x[1] && x[1] < x[2] && x[2] < x[3]);
         let norm_sq: f32 = x.iter().map(|v| v * v).sum::<f32>() / x.len() as f32;
-        assert!((norm_sq - 1.0).abs() < 0.1, "RMS norm should normalize to ~1, got {}", norm_sq);
+        assert!(
+            (norm_sq - 1.0).abs() < 0.1,
+            "RMS norm should normalize to ~1, got {}",
+            norm_sq
+        );
     }
 
     #[test]
@@ -1063,14 +1134,18 @@ mod tests {
         let m: u64 = 1024;
         let flops = 2 * m * m * m;
         let bytes = 3 * m * m * 2; // BF16
-        assert!(!v5e.is_memory_bound(flops as u64, bytes as u64),
-            "Large matmul should be compute-bound on TPU");
+        assert!(
+            !v5e.is_memory_bound(flops as u64, bytes as u64),
+            "Large matmul should be compute-bound on TPU"
+        );
 
         // Small batch-1 decode: memory-bound
         let decode_flops: u64 = 2 * 1024; // 1 × 1024 × 1
         let decode_bytes: u64 = 1024 * 1024 * 2; // load full weight matrix
-        assert!(v5e.is_memory_bound(decode_flops as u64, decode_bytes as u64),
-            "Batch-1 decode should be memory-bound on TPU");
+        assert!(
+            v5e.is_memory_bound(decode_flops as u64, decode_bytes as u64),
+            "Batch-1 decode should be memory-bound on TPU"
+        );
     }
 
     #[test]

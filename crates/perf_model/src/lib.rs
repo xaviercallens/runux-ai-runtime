@@ -6,6 +6,12 @@
 #![cfg_attr(not(test), no_std)]
 #![deny(clippy::all)]
 #![warn(clippy::pedantic)]
+#![allow(
+    clippy::implicit_saturating_sub,
+    clippy::manual_checked_ops,
+    clippy::manual_div_ceil,
+    clippy::needless_range_loop
+)]
 //! RunuX Performance Model — Analytical roofline estimator for RISC-V LLM
 //!
 //! Models LLM inference performance using the **roofline model** to identify
@@ -80,12 +86,12 @@ impl HardwareSpec {
             n_cores: 8,
             clock_ghz: 1.6,
             vlen_bits: 256,
-            fp32_gflops_per_core: 2.0,  // 256-bit × 1.6GHz / 32-bit × 2 (FMA)
+            fp32_gflops_per_core: 2.0, // 256-bit × 1.6GHz / 32-bit × 2 (FMA)
             int8_tops_per_core: 0.25,
-            dram_bw_gbs: 12.8,          // LPDDR4-3200 single-channel
-            l1_size: 32 * 1024,         // 32KB per core
-            l2_size: 1024 * 1024,       // 1MB shared
-            l1_bw_gbs: 51.2,            // 2× clock × 256-bit / core
+            dram_bw_gbs: 12.8,    // LPDDR4-3200 single-channel
+            l1_size: 32 * 1024,   // 32KB per core
+            l2_size: 1024 * 1024, // 1MB shared
+            l1_bw_gbs: 51.2,      // 2× clock × 256-bit / core
             l2_bw_gbs: 25.6,
             has_ai_cores: false,
             ai_core_tops: 0.0,
@@ -99,15 +105,15 @@ impl HardwareSpec {
             n_cores: 8,
             clock_ghz: 2.0,
             vlen_bits: 1024,
-            fp32_gflops_per_core: 16.0,  // 1024-bit × 2GHz / 32-bit × 2 (FMA)
+            fp32_gflops_per_core: 16.0, // 1024-bit × 2GHz / 32-bit × 2 (FMA)
             int8_tops_per_core: 0.5,
-            dram_bw_gbs: 51.2,           // LPDDR5-6400 dual-channel
-            l1_size: 64 * 1024,          // 64KB per core
-            l2_size: 4 * 1024 * 1024,    // 4MB shared
+            dram_bw_gbs: 51.2,        // LPDDR5-6400 dual-channel
+            l1_size: 64 * 1024,       // 64KB per core
+            l2_size: 4 * 1024 * 1024, // 4MB shared
             l1_bw_gbs: 128.0,
             l2_bw_gbs: 64.0,
             has_ai_cores: true,
-            ai_core_tops: 60.0,          // 8× A100 AI cores
+            ai_core_tops: 60.0, // 8× A100 AI cores
         }
     }
 
@@ -350,7 +356,7 @@ pub fn estimate_token_cost(
         // 1. RMSNorm (pre-attention)
         ops.push(OpCost::compute(
             OpType::RmsNorm,
-            (d * 3) as u64, // 3 ops per element: x², mean, normalize
+            (d * 3) as u64,     // 3 ops per element: x², mean, normalize
             (d * 4 * 2) as u64, // read x + gamma
             (d * 4) as u64,
             hw,
@@ -360,21 +366,39 @@ pub fn estimate_token_cost(
         // Q: [1 × d] @ [d × d] → [1 × d]
         let q_flops = 2 * d * d; // 2 for FMA
         let q_bytes_read = (d as f32 * d as f32 * bpw) as u64 + (d * 4) as u64;
-        ops.push(OpCost::compute(OpType::Linear, q_flops as u64, q_bytes_read, (d * 4) as u64, hw));
+        ops.push(OpCost::compute(
+            OpType::Linear,
+            q_flops as u64,
+            q_bytes_read,
+            (d * 4) as u64,
+            hw,
+        ));
 
         // K: [1 × d] @ [d × (nkv×d_k)] → [1 × nkv×d_k]
         let kv_dim = nkv * d_k;
         let k_flops = 2 * d * kv_dim;
         let k_bytes_read = (d as f32 * kv_dim as f32 * bpw) as u64 + (d * 4) as u64;
-        ops.push(OpCost::compute(OpType::Linear, k_flops as u64, k_bytes_read, (kv_dim * 4) as u64, hw));
+        ops.push(OpCost::compute(
+            OpType::Linear,
+            k_flops as u64,
+            k_bytes_read,
+            (kv_dim * 4) as u64,
+            hw,
+        ));
 
         // V: same as K
-        ops.push(OpCost::compute(OpType::Linear, k_flops as u64, k_bytes_read, (kv_dim * 4) as u64, hw));
+        ops.push(OpCost::compute(
+            OpType::Linear,
+            k_flops as u64,
+            k_bytes_read,
+            (kv_dim * 4) as u64,
+            hw,
+        ));
 
         // 3. RoPE (on Q and K)
         ops.push(OpCost::compute(
             OpType::RoPE,
-            (d_k * nh * 6) as u64, // sin, cos, 4 multiplies per pair
+            (d_k * nh * 6) as u64,     // sin, cos, 4 multiplies per pair
             (d_k * nh * 4 * 2) as u64, // read Q + freqs
             (d_k * nh * 4) as u64,
             hw,
@@ -384,7 +408,13 @@ pub fn estimate_token_cost(
         // Per head: [1 × d_k] · [d_k × seq_len] → [1 × seq_len]
         let attn_flops = 2 * nh * d_k * seq_len;
         let attn_bytes = (seq_len * nkv * d_k * 2) as u64 + (nh * d_k * 4) as u64; // KV-cache (FP16) + Q
-        ops.push(OpCost::compute(OpType::AttentionScore, attn_flops as u64, attn_bytes, (nh * seq_len * 4) as u64, hw));
+        ops.push(OpCost::compute(
+            OpType::AttentionScore,
+            attn_flops as u64,
+            attn_bytes,
+            (nh * seq_len * 4) as u64,
+            hw,
+        ));
 
         // 5. Softmax over scores
         ops.push(OpCost::compute(
@@ -398,10 +428,22 @@ pub fn estimate_token_cost(
         // 6. Attention output: O = scores · V
         let out_flops = 2 * nh * seq_len * d_k;
         let out_bytes = (seq_len * nkv * d_k * 2) as u64 + (nh * seq_len * 4) as u64;
-        ops.push(OpCost::compute(OpType::AttentionOutput, out_flops as u64, out_bytes, (d * 4) as u64, hw));
+        ops.push(OpCost::compute(
+            OpType::AttentionOutput,
+            out_flops as u64,
+            out_bytes,
+            (d * 4) as u64,
+            hw,
+        ));
 
         // 7. Output projection: [1 × d] @ [d × d]
-        ops.push(OpCost::compute(OpType::Linear, q_flops as u64, q_bytes_read, (d * 4) as u64, hw));
+        ops.push(OpCost::compute(
+            OpType::Linear,
+            q_flops as u64,
+            q_bytes_read,
+            (d * 4) as u64,
+            hw,
+        ));
 
         // --- FFN block ---
 
@@ -417,10 +459,22 @@ pub fn estimate_token_cost(
         // 9. Gate projection: [1 × d] @ [d × d_ff]
         let gate_flops = 2 * d * d_ff;
         let gate_bytes = (d as f32 * d_ff as f32 * bpw) as u64 + (d * 4) as u64;
-        ops.push(OpCost::compute(OpType::Linear, gate_flops as u64, gate_bytes, (d_ff * 4) as u64, hw));
+        ops.push(OpCost::compute(
+            OpType::Linear,
+            gate_flops as u64,
+            gate_bytes,
+            (d_ff * 4) as u64,
+            hw,
+        ));
 
         // 10. Up projection: same as gate
-        ops.push(OpCost::compute(OpType::Linear, gate_flops as u64, gate_bytes, (d_ff * 4) as u64, hw));
+        ops.push(OpCost::compute(
+            OpType::Linear,
+            gate_flops as u64,
+            gate_bytes,
+            (d_ff * 4) as u64,
+            hw,
+        ));
 
         // 11. SiLU activation
         ops.push(OpCost::compute(
@@ -434,20 +488,50 @@ pub fn estimate_token_cost(
         // 12. Down projection: [1 × d_ff] @ [d_ff × d]
         let down_flops = 2 * d_ff * d;
         let down_bytes = (d_ff as f32 * d as f32 * bpw) as u64 + (d_ff * 4) as u64;
-        ops.push(OpCost::compute(OpType::Linear, down_flops as u64, down_bytes, (d * 4) as u64, hw));
+        ops.push(OpCost::compute(
+            OpType::Linear,
+            down_flops as u64,
+            down_bytes,
+            (d * 4) as u64,
+            hw,
+        ));
     }
 
     // Final RMSNorm + LM Head
-    ops.push(OpCost::compute(OpType::RmsNorm, (d * 3) as u64, (d * 4 * 2) as u64, (d * 4) as u64, hw));
+    ops.push(OpCost::compute(
+        OpType::RmsNorm,
+        (d * 3) as u64,
+        (d * 4 * 2) as u64,
+        (d * 4) as u64,
+        hw,
+    ));
     let lm_flops = 2 * d * model.vocab_size;
     let lm_bytes = (d as f32 * model.vocab_size as f32 * bpw) as u64 + (d * 4) as u64;
-    ops.push(OpCost::compute(OpType::Linear, lm_flops as u64, lm_bytes, (model.vocab_size * 4) as u64, hw));
+    ops.push(OpCost::compute(
+        OpType::Linear,
+        lm_flops as u64,
+        lm_bytes,
+        (model.vocab_size * 4) as u64,
+        hw,
+    ));
 
     // Aggregate
     let total_us: f32 = ops.iter().map(|o| o.estimated_us).sum();
-    let mem_bound_time: f32 = ops.iter().filter(|o| o.is_memory_bound).map(|o| o.estimated_us).sum();
-    let memory_bound_fraction = if total_us > 0.0 { mem_bound_time / total_us } else { 0.0 };
-    let tokens_per_second = if total_us > 0.0 { 1_000_000.0 / total_us } else { 0.0 };
+    let mem_bound_time: f32 = ops
+        .iter()
+        .filter(|o| o.is_memory_bound)
+        .map(|o| o.estimated_us)
+        .sum();
+    let memory_bound_fraction = if total_us > 0.0 {
+        mem_bound_time / total_us
+    } else {
+        0.0
+    };
+    let tokens_per_second = if total_us > 0.0 {
+        1_000_000.0 / total_us
+    } else {
+        0.0
+    };
 
     // TTFT: roughly seq_len × per-token cost (prefill processes all tokens)
     let ttft_us = total_us * seq_len as f32;
@@ -495,11 +579,7 @@ pub fn compatibility_matrix() -> Vec<CompatibilityEntry> {
         (HardwareSpec::spacemit_k3(), 34_359_738_368usize), // 32GB
     ];
 
-    let hw_names = [
-        "BPI-F3 (4GB)",
-        "AIBOX-K3 (8GB)",
-        "AIBOX-K3 (32GB)",
-    ];
+    let hw_names = ["BPI-F3 (4GB)", "AIBOX-K3 (8GB)", "AIBOX-K3 (32GB)"];
 
     let mut results = Vec::new();
 
@@ -513,8 +593,16 @@ pub fn compatibility_matrix() -> Vec<CompatibilityEntry> {
 
             let max_ctx = if fits {
                 let kv_per_tok = 2 * model.n_layers * model.n_kv_heads * model.head_dim() * 2;
-                let remaining = if *ram > weight_bytes as usize { *ram - weight_bytes as usize } else { 0 };
-                if kv_per_tok > 0 { remaining / kv_per_tok } else { 0 }
+                let remaining = if *ram > weight_bytes as usize {
+                    *ram - weight_bytes as usize
+                } else {
+                    0
+                };
+                if kv_per_tok > 0 {
+                    remaining / kv_per_tok
+                } else {
+                    0
+                }
             } else {
                 0
             };
@@ -578,9 +666,11 @@ mod tests {
         // This is expected: 2 FLOPs / 0.5 bytes = 4 FLOP/byte > ridge ~1.25.
         // Real-world batch=1 decode is still latency-limited by DRAM access
         // patterns, but the roofline captures throughput-optimal behavior.
-        assert!(cost.tokens_per_second > 1.0,
+        assert!(
+            cost.tokens_per_second > 1.0,
             "Should estimate reasonable tok/s, got {:.1}",
-            cost.tokens_per_second);
+            cost.tokens_per_second
+        );
     }
 
     #[test]
@@ -592,9 +682,12 @@ mod tests {
         let cost_k1 = estimate_token_cost(&model, &k1, 256);
         let cost_k3 = estimate_token_cost(&model, &k3, 256);
 
-        assert!(cost_k3.tokens_per_second > cost_k1.tokens_per_second,
+        assert!(
+            cost_k3.tokens_per_second > cost_k1.tokens_per_second,
             "K3 ({:.1} tok/s) should be faster than K1 ({:.1} tok/s)",
-            cost_k3.tokens_per_second, cost_k1.tokens_per_second);
+            cost_k3.tokens_per_second,
+            cost_k1.tokens_per_second
+        );
     }
 
     #[test]
@@ -608,12 +701,16 @@ mod tests {
         let cost = estimate_token_cost(&model, &hw, 512);
 
         // Verify that non-linear ops are memory-bound (low arithmetic intensity)
-        let nonlinear_ops: Vec<_> = cost.ops.iter()
+        let nonlinear_ops: Vec<_> = cost
+            .ops
+            .iter()
             .filter(|o| matches!(o.op, OpType::Softmax | OpType::RmsNorm | OpType::Activation))
             .collect();
         let mem_bound_nonlinear = nonlinear_ops.iter().filter(|o| o.is_memory_bound).count();
-        assert!(mem_bound_nonlinear > 0,
-            "Non-linear ops should be memory-bound (softmax, RMSNorm, activation)");
+        assert!(
+            mem_bound_nonlinear > 0,
+            "Non-linear ops should be memory-bound (softmax, RMSNorm, activation)"
+        );
 
         // Verify the model produces a valid, positive time estimate
         assert!(cost.total_us > 0.0, "Total cost should be positive");
@@ -625,16 +722,21 @@ mod tests {
         assert!(!matrix.is_empty());
 
         // Qwen 0.5B Q4 on BPI-F3 should fit
-        let qwen_bpi = matrix.iter()
+        let qwen_bpi = matrix
+            .iter()
             .find(|e| e.model.contains("0.5B") && e.hardware.contains("BPI-F3"))
             .expect("Should have Qwen 0.5B on BPI-F3");
         assert!(qwen_bpi.fits_in_ram, "Qwen 0.5B Q4 should fit on 4GB");
 
         // DeepSeek 14B on BPI-F3 should NOT fit
-        let ds14_bpi = matrix.iter()
+        let ds14_bpi = matrix
+            .iter()
             .find(|e| e.model.contains("14B") && e.hardware.contains("BPI-F3"))
             .expect("Should have DS 14B on BPI-F3");
-        assert!(!ds14_bpi.fits_in_ram, "14B model should not fit on 4GB BPI-F3");
+        assert!(
+            !ds14_bpi.fits_in_ram,
+            "14B model should not fit on 4GB BPI-F3"
+        );
     }
 
     #[test]
@@ -645,8 +747,11 @@ mod tests {
         let cost_256 = estimate_token_cost(&model, &hw, 256);
         let cost_4096 = estimate_token_cost(&model, &hw, 4096);
 
-        assert!(cost_4096.total_us > cost_256.total_us,
+        assert!(
+            cost_4096.total_us > cost_256.total_us,
             "Longer context should be slower: 256={:.0}µs, 4096={:.0}µs",
-            cost_256.total_us, cost_4096.total_us);
+            cost_256.total_us,
+            cost_4096.total_us
+        );
     }
 }

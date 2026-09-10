@@ -6,6 +6,11 @@
 #![cfg_attr(not(test), no_std)]
 #![deny(clippy::all)]
 #![warn(clippy::pedantic)]
+#![allow(
+    clippy::manual_checked_ops,
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes
+)]
 //! RunuX Arena Memory — Deterministic, zero-fragmentation allocator for LLM
 //!
 //! Traditional heap allocation (`Vec`, `Box`) introduces unpredictable latency
@@ -92,7 +97,7 @@ impl ArenaConfig {
             total_bytes: 30_064_771_072, // 28GB
             weight_fraction: 0.50,
             kv_cache_fraction: 0.40,
-            alignment: 128, // 1024-bit VLEN alignment
+            alignment: 128,      // 1024-bit VLEN alignment
             kv_page_size: 65536, // 64KB pages for K3
         }
     }
@@ -217,7 +222,9 @@ impl BumpAllocator {
 
     /// Utilization as a percentage.
     pub fn utilization_percent(&self) -> f32 {
-        if self.capacity == 0 { return 0.0; }
+        if self.capacity == 0 {
+            return 0.0;
+        }
         (self.offset.get() as f32 / self.capacity as f32) * 100.0
     }
 }
@@ -249,6 +256,8 @@ pub struct KvPage {
 /// pages rather than contiguous per-sequence blocks. This eliminates
 /// internal fragmentation when sequences have different lengths.
 pub struct PagedKvCache {
+    /// Contiguous backing storage buffer for all pages
+    storage: Vec<u8>,
     /// All pages
     pages: Vec<KvPage>,
     /// Free page list (indices into `pages`)
@@ -262,9 +271,14 @@ pub struct PagedKvCache {
 }
 
 impl PagedKvCache {
-    /// Create a new paged KV-cache.
+    /// Create a new paged KV-cache with contiguous backing memory.
     pub fn new(total_bytes: usize, page_size: usize) -> Self {
-        let num_pages = total_bytes / page_size;
+        let num_pages = if page_size > 0 {
+            total_bytes / page_size
+        } else {
+            0
+        };
+        let storage = alloc::vec![0u8; num_pages * page_size];
         let pages: Vec<KvPage> = (0..num_pages)
             .map(|i| KvPage {
                 page_id: i as u32,
@@ -279,6 +293,7 @@ impl PagedKvCache {
         let free_list: Vec<u32> = (0..num_pages as u32).rev().collect();
 
         Self {
+            storage,
             pages,
             free_list,
             page_size,
@@ -299,12 +314,74 @@ impl PagedKvCache {
         Some(page_id)
     }
 
-    /// Free a page, returning it to the free list.
+    /// Free a page, clearing its backing memory and returning it to the free list.
     pub fn free_page(&mut self, page_id: u32) {
         if (page_id as usize) < self.pages.len() {
-            self.pages[page_id as usize].active = false;
+            let idx = page_id as usize;
+            self.pages[idx].active = false;
+            let mem_start = self.pages[idx].mem_offset;
+            for b in &mut self.storage[mem_start..mem_start + self.page_size] {
+                *b = 0;
+            }
             self.free_list.push(page_id);
         }
+    }
+
+    /// Write data bytes to an active page starting at offset within the page.
+    pub fn write_page_data(
+        &mut self,
+        page_id: u32,
+        offset: usize,
+        data: &[u8],
+    ) -> Result<(), &'static str> {
+        let idx = page_id as usize;
+        if idx >= self.pages.len() || !self.pages[idx].active {
+            return Err("Page not active or invalid page_id");
+        }
+        if offset + data.len() > self.page_size {
+            return Err("Write exceeds page boundary");
+        }
+        let mem_start = self.pages[idx].mem_offset + offset;
+        self.storage[mem_start..mem_start + data.len()].copy_from_slice(data);
+        self.touch(page_id);
+        Ok(())
+    }
+
+    /// Read data bytes from an active page starting at offset within the page.
+    pub fn read_page_data<'a>(
+        &'a self,
+        page_id: u32,
+        offset: usize,
+        len: usize,
+    ) -> Result<&'a [u8], &'static str> {
+        let idx = page_id as usize;
+        if idx >= self.pages.len() || !self.pages[idx].active {
+            return Err("Page not active or invalid page_id");
+        }
+        if offset + len > self.page_size {
+            return Err("Read exceeds page boundary");
+        }
+        let mem_start = self.pages[idx].mem_offset + offset;
+        Ok(&self.storage[mem_start..mem_start + len])
+    }
+
+    /// Read mutable data slice from an active page.
+    pub fn read_page_data_mut<'a>(
+        &'a mut self,
+        page_id: u32,
+        offset: usize,
+        len: usize,
+    ) -> Result<&'a mut [u8], &'static str> {
+        let idx = page_id as usize;
+        if idx >= self.pages.len() || !self.pages[idx].active {
+            return Err("Page not active or invalid page_id");
+        }
+        if offset + len > self.page_size {
+            return Err("Read exceeds page boundary");
+        }
+        let mem_start = self.pages[idx].mem_offset + offset;
+        self.touch(page_id);
+        Ok(&mut self.storage[mem_start..mem_start + len])
     }
 
     /// Evict the least-recently-used page.
@@ -351,7 +428,9 @@ impl PagedKvCache {
 
     /// Utilization as a percentage.
     pub fn utilization_percent(&self) -> f32 {
-        if self.num_pages == 0 { return 0.0; }
+        if self.num_pages == 0 {
+            return 0.0;
+        }
         (self.active_pages() as f32 / self.num_pages as f32) * 100.0
     }
 }
@@ -383,14 +462,14 @@ pub struct MemoryBudget {
 
 /// Plan memory allocation for a model on specific hardware.
 pub fn plan_memory(
-    model_params: u64,       // number of parameters
-    bits_per_param: u32,     // quantization bits (4, 8, 16, 32)
+    model_params: u64,   // number of parameters
+    bits_per_param: u32, // quantization bits (4, 8, 16, 32)
     head_dim: usize,
     n_heads: usize,
     n_kv_heads: usize,
     n_layers: usize,
     target_seq_len: usize,
-    available_ram: usize,    // bytes
+    available_ram: usize, // bytes
 ) -> MemoryBudget {
     // Weight memory: params × bits / 8
     let weights_bytes = (model_params as usize * bits_per_param as usize) / 8;
@@ -419,9 +498,15 @@ pub fn plan_memory(
     };
 
     let recommended_quant = if !fits_in_memory(total, available_ram) {
-        if fits_in_memory(recalc_weight_bytes(model_params, 4) + kv_cache_bytes + scratch_per_token, available_ram) {
+        if fits_in_memory(
+            recalc_weight_bytes(model_params, 4) + kv_cache_bytes + scratch_per_token,
+            available_ram,
+        ) {
             Some("Q4_K_M (4-bit)")
-        } else if fits_in_memory(recalc_weight_bytes(model_params, 2) + kv_cache_bytes + scratch_per_token, available_ram) {
+        } else if fits_in_memory(
+            recalc_weight_bytes(model_params, 2) + kv_cache_bytes + scratch_per_token,
+            available_ram,
+        ) {
             Some("IQ2_XS (2-bit)")
         } else {
             Some("Model too large for this hardware")
@@ -525,13 +610,13 @@ mod tests {
     #[test]
     fn test_memory_plan_qwen_0_5b_bpi_f3() {
         let budget = plan_memory(
-            500_000_000, // 0.5B params
-            4,           // Q4_K_M
-            64,          // head_dim
-            14,          // n_heads
-            2,           // n_kv_heads
-            24,          // n_layers
-            4096,        // target seq len
+            500_000_000,        // 0.5B params
+            4,                  // Q4_K_M
+            64,                 // head_dim
+            14,                 // n_heads
+            2,                  // n_kv_heads
+            24,                 // n_layers
+            4096,               // target seq len
             4_294_967_296usize, // 4GB RAM
         );
 
@@ -542,13 +627,13 @@ mod tests {
     #[test]
     fn test_memory_plan_deepseek_1_5b_bpi_f3() {
         let budget = plan_memory(
-            1_500_000_000, // 1.5B params
-            4,             // Q4_K_M
-            128,           // head_dim
-            12,            // n_heads
-            2,             // n_kv_heads
-            28,            // n_layers
-            4096,          // target seq len
+            1_500_000_000,      // 1.5B params
+            4,                  // Q4_K_M
+            128,                // head_dim
+            12,                 // n_heads
+            2,                  // n_kv_heads
+            28,                 // n_layers
+            4096,               // target seq len
             4_294_967_296usize, // 4GB RAM
         );
 
@@ -561,5 +646,35 @@ mod tests {
         let config = ArenaConfig::for_bpi_f3();
         assert!(config.weight_fraction + config.kv_cache_fraction < 1.0);
         assert!(config.scratch_bytes() > 0);
+    }
+
+    #[test]
+    fn test_paged_kv_real_memory_read_write() {
+        let mut cache = PagedKvCache::new(1024, 256); // 4 pages
+        let p0 = cache
+            .allocate_page(0, 16)
+            .expect("Allocation should succeed");
+
+        let test_payload = [0xDE, 0xAD, 0xBE, 0xEF, 0x01, 0x02, 0x03, 0x04];
+        cache
+            .write_page_data(p0, 0, &test_payload)
+            .expect("Write should succeed");
+
+        let read_back = cache.read_page_data(p0, 0, 8).expect("Read should succeed");
+        assert_eq!(read_back, &test_payload);
+
+        // Out-of-bounds write check
+        let large_payload = [0xFF; 300];
+        assert!(cache.write_page_data(p0, 0, &large_payload).is_err());
+
+        // Free page zeroes backing memory
+        cache.free_page(p0);
+        let p0_realloc = cache
+            .allocate_page(0, 16)
+            .expect("Reallocation should succeed");
+        let cleared_back = cache
+            .read_page_data(p0_realloc, 0, 8)
+            .expect("Read should succeed");
+        assert_eq!(cleared_back, &[0u8; 8]);
     }
 }
