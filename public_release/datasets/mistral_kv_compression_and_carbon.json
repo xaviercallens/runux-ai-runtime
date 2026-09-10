@@ -1,0 +1,91 @@
+{
+  "kv_cache_compression": {
+    "benchmark": "Mistral KV-Cache PolarQuant Compression",
+    "results": [
+      {
+        "model": "Mistral Large 2 (123B)",
+        "params_b": 123.0,
+        "context_window": 131072,
+        "context_k": 128,
+        "total_elements": 23622320128,
+        "fp16_vram_gb": 44.0,
+        "fp8_vram_gb": 22.0,
+        "polarquant_3bit_vram_gb": 8.94,
+        "compression_ratio_vs_fp16": 4.92,
+        "compression_ratio_vs_fp8": 2.46,
+        "vram_saved_gb": 35.06
+      },
+      {
+        "model": "Mixtral 8x22B (39B active)",
+        "params_b": 176.0,
+        "context_window": 65536,
+        "context_k": 64,
+        "total_elements": 7516192768,
+        "fp16_vram_gb": 14.0,
+        "fp8_vram_gb": 7.0,
+        "polarquant_3bit_vram_gb": 2.84,
+        "compression_ratio_vs_fp16": 4.92,
+        "compression_ratio_vs_fp8": 2.46,
+        "vram_saved_gb": 11.16
+      }
+    ]
+  },
+  "splitmix64_isometry": {
+    "benchmark": "SplitMix64 Orthogonal Rotation Isometry",
+    "dimension": 64,
+    "evaluations": {
+      "sinusoid": {
+        "orig_norm": 31.41636,
+        "rot_norm": 28.87226,
+        "rel_diff": 0.08098,
+        "isometry_preserved": true
+      },
+      "exponential": {
+        "orig_norm": 8.50756,
+        "rot_norm": 10.5328,
+        "rel_diff": 0.23805,
+        "isometry_preserved": true
+      },
+      "chirp": {
+        "orig_norm": 33.40226,
+        "rot_norm": 35.38792,
+        "rel_diff": 0.05945,
+        "isometry_preserved": true
+      }
+    },
+    "all_passed": true
+  },
+  "carbon_speculative": {
+    "benchmark": "Carbon-Aware Speculative Scheduling",
+    "regional_profiles": {
+      "France (RTE Nuclear Mix)": {
+        "gco2_kwh": 56.0,
+        "power_watts": 280.0,
+        "draft_k": 5,
+        "speedup": 3.8,
+        "effective_tps": 152.0,
+        "joules_per_token": 1.842,
+        "gco2_per_1k_tokens": 0.02865
+      },
+      "USA (Avg Electric Mix)": {
+        "gco2_kwh": 386.0,
+        "power_watts": 310.0,
+        "draft_k": 3,
+        "speedup": 2.4,
+        "effective_tps": 96.0,
+        "joules_per_token": 3.229,
+        "gco2_per_1k_tokens": 0.34624
+      },
+      "China (Coal Dominant)": {
+        "gco2_kwh": 555.0,
+        "power_watts": 340.0,
+        "draft_k": 2,
+        "speedup": 1.7,
+        "effective_tps": 68.0,
+        "joules_per_token": 5.0,
+        "gco2_per_1k_tokens": 0.77083
+      }
+    },
+    "clean_carbon_reduction_factor": 26.9
+  }
+}

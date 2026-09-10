@@ -45,3 +45,10 @@ secrets/
 # Python test & coverage
 .coverage
 .pytest_cache/
+
+# LaTeX build artifacts
+*.aux
+*.out
+papers/*.aux
+papers/*.out
+papers/*.log

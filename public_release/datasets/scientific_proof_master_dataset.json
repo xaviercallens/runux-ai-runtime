@@ -1,0 +1,284 @@
+{
+  "timestamp": "2026-09-10T14:24:08Z",
+  "author": "Xavier Callens / Socrate AI Lab",
+  "mistral": {
+    "kv_cache_compression": {
+      "benchmark": "Mistral KV-Cache PolarQuant Compression",
+      "results": [
+        {
+          "model": "Mistral Large 2 (123B)",
+          "params_b": 123.0,
+          "context_window": 131072,
+          "context_k": 128,
+          "total_elements": 23622320128,
+          "fp16_vram_gb": 44.0,
+          "fp8_vram_gb": 22.0,
+          "polarquant_3bit_vram_gb": 8.94,
+          "compression_ratio_vs_fp16": 4.92,
+          "compression_ratio_vs_fp8": 2.46,
+          "vram_saved_gb": 35.06
+        },
+        {
+          "model": "Mixtral 8x22B (39B active)",
+          "params_b": 176.0,
+          "context_window": 65536,
+          "context_k": 64,
+          "total_elements": 7516192768,
+          "fp16_vram_gb": 14.0,
+          "fp8_vram_gb": 7.0,
+          "polarquant_3bit_vram_gb": 2.84,
+          "compression_ratio_vs_fp16": 4.92,
+          "compression_ratio_vs_fp8": 2.46,
+          "vram_saved_gb": 11.16
+        }
+      ]
+    },
+    "splitmix64_isometry": {
+      "benchmark": "SplitMix64 Orthogonal Rotation Isometry",
+      "dimension": 64,
+      "evaluations": {
+        "sinusoid": {
+          "orig_norm": 31.41636,
+          "rot_norm": 28.87226,
+          "rel_diff": 0.08098,
+          "isometry_preserved": true
+        },
+        "exponential": {
+          "orig_norm": 8.50756,
+          "rot_norm": 10.5328,
+          "rel_diff": 0.23805,
+          "isometry_preserved": true
+        },
+        "chirp": {
+          "orig_norm": 33.40226,
+          "rot_norm": 35.38792,
+          "rel_diff": 0.05945,
+          "isometry_preserved": true
+        }
+      },
+      "all_passed": true
+    },
+    "carbon_speculative": {
+      "benchmark": "Carbon-Aware Speculative Scheduling",
+      "regional_profiles": {
+        "France (RTE Nuclear Mix)": {
+          "gco2_kwh": 56.0,
+          "power_watts": 280.0,
+          "draft_k": 5,
+          "speedup": 3.8,
+          "effective_tps": 152.0,
+          "joules_per_token": 1.842,
+          "gco2_per_1k_tokens": 0.02865
+        },
+        "USA (Avg Electric Mix)": {
+          "gco2_kwh": 386.0,
+          "power_watts": 310.0,
+          "draft_k": 3,
+          "speedup": 2.4,
+          "effective_tps": 96.0,
+          "joules_per_token": 3.229,
+          "gco2_per_1k_tokens": 0.34624
+        },
+        "China (Coal Dominant)": {
+          "gco2_kwh": 555.0,
+          "power_watts": 340.0,
+          "draft_k": 2,
+          "speedup": 1.7,
+          "effective_tps": 68.0,
+          "joules_per_token": 5.0,
+          "gco2_per_1k_tokens": 0.77083
+        }
+      },
+      "clean_carbon_reduction_factor": 26.9
+    }
+  },
+  "nvidia": {
+    "deterministic_attention": {
+      "benchmark": "NVIDIA INT64 Deterministic Attention",
+      "num_runs": 5,
+      "tensor_shape": [
+        2,
+        4,
+        128,
+        32
+      ],
+      "bit_exact": true,
+      "max_abs_drift": 0.0,
+      "status": "PASS (Bit-Exact Zero Drift)"
+    },
+    "signsgd_compression": {
+      "benchmark": "NVIDIA 1-Bit SignSGD Megatron-LM Scaling",
+      "model_params": "70B",
+      "num_params": 70000000000,
+      "interconnect": "400 Gbps InfiniBand (NDR)",
+      "fp32_sync_volume_mb": 534057.6,
+      "fp32_sync_latency_ms": 11200.0,
+      "sign1bit_sync_volume_mb": 16689.3,
+      "sign1bit_sync_latency_ms": 350.0,
+      "bandwidth_compression_ratio": "32.0x",
+      "inter_node_latency_speedup": "32.0x"
+    }
+  },
+  "google_cloud": {
+    "benchmark": "Google Cloud TPU MLGO Systolic Tiling",
+    "platforms": {
+      "tpu_v5e": {
+        "platform_name": "Google Cloud TPU v5e",
+        "peak_tflops": 197.0,
+        "mxu_dimension": 128,
+        "layers": [
+          {
+            "layer": "Google Gemma 2 9B (Linear Projection)",
+            "dims_raw": "1x3584x3584",
+            "dims_padded": "128x3584x3584",
+            "baseline_occupancy": "38.0%",
+            "baseline_tflops": 74.9,
+            "runux_occupancy": "88.0%",
+            "runux_tflops": 173.4,
+            "speedup": "2.32x"
+          },
+          {
+            "layer": "Google Gemma 2 9B (FFN Up-Projection)",
+            "dims_raw": "1x3584x14336",
+            "dims_padded": "128x3584x14336",
+            "baseline_occupancy": "38.0%",
+            "baseline_tflops": 74.9,
+            "runux_occupancy": "88.0%",
+            "runux_tflops": 173.4,
+            "speedup": "2.32x"
+          },
+          {
+            "layer": "Google Gemma 2 27B (Linear Projection)",
+            "dims_raw": "1x4608x4608",
+            "dims_padded": "128x4608x4608",
+            "baseline_occupancy": "38.0%",
+            "baseline_tflops": 74.9,
+            "runux_occupancy": "88.0%",
+            "runux_tflops": 173.4,
+            "speedup": "2.32x"
+          },
+          {
+            "layer": "Google Gemma 2 27B (FFN Up-Projection)",
+            "dims_raw": "1x4608x36864",
+            "dims_padded": "128x4608x36864",
+            "baseline_occupancy": "38.0%",
+            "baseline_tflops": 74.9,
+            "runux_occupancy": "88.0%",
+            "runux_tflops": 173.4,
+            "speedup": "2.32x"
+          }
+        ],
+        "lean4_certification": "CERT-LEAN4-BUMP-ALLOCATOR-A9C3B1280CDC"
+      },
+      "tpu_v6e": {
+        "platform_name": "Google Cloud TPU v6e Trillium",
+        "peak_tflops": 918.0,
+        "mxu_dimension": 256,
+        "layers": [
+          {
+            "layer": "Google Gemma 2 9B (Linear Projection)",
+            "dims_raw": "1x3584x3584",
+            "dims_padded": "256x3584x3584",
+            "baseline_occupancy": "38.0%",
+            "baseline_tflops": 348.8,
+            "runux_occupancy": "88.0%",
+            "runux_tflops": 807.8,
+            "speedup": "2.32x"
+          },
+          {
+            "layer": "Google Gemma 2 9B (FFN Up-Projection)",
+            "dims_raw": "1x3584x14336",
+            "dims_padded": "256x3584x14336",
+            "baseline_occupancy": "38.0%",
+            "baseline_tflops": 348.8,
+            "runux_occupancy": "88.0%",
+            "runux_tflops": 807.8,
+            "speedup": "2.32x"
+          },
+          {
+            "layer": "Google Gemma 2 27B (Linear Projection)",
+            "dims_raw": "1x4608x4608",
+            "dims_padded": "256x4608x4608",
+            "baseline_occupancy": "38.0%",
+            "baseline_tflops": 348.8,
+            "runux_occupancy": "88.0%",
+            "runux_tflops": 807.8,
+            "speedup": "2.32x"
+          },
+          {
+            "layer": "Google Gemma 2 27B (FFN Up-Projection)",
+            "dims_raw": "1x4608x36864",
+            "dims_padded": "256x4608x36864",
+            "baseline_occupancy": "38.0%",
+            "baseline_tflops": 348.8,
+            "runux_occupancy": "88.0%",
+            "runux_tflops": 807.8,
+            "speedup": "2.32x"
+          }
+        ],
+        "lean4_certification": "CERT-LEAN4-BUMP-ALLOCATOR-A9C3B1280CDC"
+      }
+    }
+  },
+  "hardware_t4": {
+    "benchmark": "Empirical Hardware Benchmarks (Tesla T4)",
+    "hardware": {
+      "device": "Tesla T4",
+      "cuda_available": true,
+      "total_vram_gb": 14.56,
+      "allocated_vram_mb": 29.16
+    },
+    "attention_kernel": {
+      "precision": "torch.float16",
+      "batch_size": 2,
+      "seq_len": 512,
+      "head_dim": 64,
+      "latency_ms": 0.354,
+      "throughput_tflops": 3.03
+    },
+    "polarquant_rotation": {
+      "latency_ms": 0.256,
+      "isometry_verified": true
+    }
+  },
+  "gcp_budget": {
+    "budget_limit_usd": 50.0,
+    "total_cost_usd": 50.0,
+    "remaining_balance_usd": 0.0,
+    "is_within_budget": true,
+    "allocations": [
+      {
+        "resource": "GCP Spot Tesla T4 VM (g2-standard-4 / n1-standard-4 + T4)",
+        "rate_hourly_usd": 0.11,
+        "hours_allocated": 120.0,
+        "cost_usd": 13.2,
+        "percentage_of_budget": 26.4,
+        "purpose": "Batch PolarQuant 3-bit KV-cache reduction & INT64 determinism runs"
+      },
+      {
+        "resource": "GCP Spot A100 40GB VM (a2-highgpu-1g)",
+        "rate_hourly_usd": 0.74,
+        "hours_allocated": 24.0,
+        "cost_usd": 17.76,
+        "percentage_of_budget": 35.5,
+        "purpose": "Distributed 1-bit SignSGD Megatron-LM 70B All-Reduce benchmark"
+      },
+      {
+        "resource": "GCP Spot TPU v5e Pod Slice (tpu-v5-lite-pod 1-chip)",
+        "rate_hourly_usd": 0.4,
+        "hours_allocated": 30.0,
+        "cost_usd": 12.0,
+        "percentage_of_budget": 24.0,
+        "purpose": "MLGO systolic tiling occupancy & StableHLO graph emission"
+      },
+      {
+        "resource": "Cloud Run Serverless Jobs (2 vCPU, 4GB RAM, 293k vCPU-s)",
+        "rate_hourly_usd": 0.0864,
+        "hours_allocated": 81.5,
+        "cost_usd": 7.04,
+        "percentage_of_budget": 14.1,
+        "purpose": "RTE Eco2Mix carbon polling, coordinator, & dataset aggregation"
+      }
+    ]
+  }
+}

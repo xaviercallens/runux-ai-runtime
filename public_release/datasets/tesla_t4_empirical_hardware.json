@@ -1,0 +1,21 @@
+{
+  "benchmark": "Empirical Hardware Benchmarks (Tesla T4)",
+  "hardware": {
+    "device": "Tesla T4",
+    "cuda_available": true,
+    "total_vram_gb": 14.56,
+    "allocated_vram_mb": 29.16
+  },
+  "attention_kernel": {
+    "precision": "torch.float16",
+    "batch_size": 2,
+    "seq_len": 512,
+    "head_dim": 64,
+    "latency_ms": 0.354,
+    "throughput_tflops": 3.03
+  },
+  "polarquant_rotation": {
+    "latency_ms": 0.256,
+    "isometry_verified": true
+  }
+}

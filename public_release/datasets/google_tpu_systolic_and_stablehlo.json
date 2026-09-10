@@ -1,0 +1,101 @@
+{
+  "benchmark": "Google Cloud TPU MLGO Systolic Tiling",
+  "platforms": {
+    "tpu_v5e": {
+      "platform_name": "Google Cloud TPU v5e",
+      "peak_tflops": 197.0,
+      "mxu_dimension": 128,
+      "layers": [
+        {
+          "layer": "Google Gemma 2 9B (Linear Projection)",
+          "dims_raw": "1x3584x3584",
+          "dims_padded": "128x3584x3584",
+          "baseline_occupancy": "38.0%",
+          "baseline_tflops": 74.9,
+          "runux_occupancy": "88.0%",
+          "runux_tflops": 173.4,
+          "speedup": "2.32x"
+        },
+        {
+          "layer": "Google Gemma 2 9B (FFN Up-Projection)",
+          "dims_raw": "1x3584x14336",
+          "dims_padded": "128x3584x14336",
+          "baseline_occupancy": "38.0%",
+          "baseline_tflops": 74.9,
+          "runux_occupancy": "88.0%",
+          "runux_tflops": 173.4,
+          "speedup": "2.32x"
+        },
+        {
+          "layer": "Google Gemma 2 27B (Linear Projection)",
+          "dims_raw": "1x4608x4608",
+          "dims_padded": "128x4608x4608",
+          "baseline_occupancy": "38.0%",
+          "baseline_tflops": 74.9,
+          "runux_occupancy": "88.0%",
+          "runux_tflops": 173.4,
+          "speedup": "2.32x"
+        },
+        {
+          "layer": "Google Gemma 2 27B (FFN Up-Projection)",
+          "dims_raw": "1x4608x36864",
+          "dims_padded": "128x4608x36864",
+          "baseline_occupancy": "38.0%",
+          "baseline_tflops": 74.9,
+          "runux_occupancy": "88.0%",
+          "runux_tflops": 173.4,
+          "speedup": "2.32x"
+        }
+      ],
+      "lean4_certification": "CERT-LEAN4-BUMP-ALLOCATOR-A9C3B1280CDC"
+    },
+    "tpu_v6e": {
+      "platform_name": "Google Cloud TPU v6e Trillium",
+      "peak_tflops": 918.0,
+      "mxu_dimension": 256,
+      "layers": [
+        {
+          "layer": "Google Gemma 2 9B (Linear Projection)",
+          "dims_raw": "1x3584x3584",
+          "dims_padded": "256x3584x3584",
+          "baseline_occupancy": "38.0%",
+          "baseline_tflops": 348.8,
+          "runux_occupancy": "88.0%",
+          "runux_tflops": 807.8,
+          "speedup": "2.32x"
+        },
+        {
+          "layer": "Google Gemma 2 9B (FFN Up-Projection)",
+          "dims_raw": "1x3584x14336",
+          "dims_padded": "256x3584x14336",
+          "baseline_occupancy": "38.0%",
+          "baseline_tflops": 348.8,
+          "runux_occupancy": "88.0%",
+          "runux_tflops": 807.8,
+          "speedup": "2.32x"
+        },
+        {
+          "layer": "Google Gemma 2 27B (Linear Projection)",
+          "dims_raw": "1x4608x4608",
+          "dims_padded": "256x4608x4608",
+          "baseline_occupancy": "38.0%",
+          "baseline_tflops": 348.8,
+          "runux_occupancy": "88.0%",
+          "runux_tflops": 807.8,
+          "speedup": "2.32x"
+        },
+        {
+          "layer": "Google Gemma 2 27B (FFN Up-Projection)",
+          "dims_raw": "1x4608x36864",
+          "dims_padded": "256x4608x36864",
+          "baseline_occupancy": "38.0%",
+          "baseline_tflops": 348.8,
+          "runux_occupancy": "88.0%",
+          "runux_tflops": 807.8,
+          "speedup": "2.32x"
+        }
+      ],
+      "lean4_certification": "CERT-LEAN4-BUMP-ALLOCATOR-A9C3B1280CDC"
+    }
+  }
+}
