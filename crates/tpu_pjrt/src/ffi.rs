@@ -156,3 +156,23 @@ impl PjrtPluginLoader {
         false
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_pjrt_plugin_loader() {
+        let loader = PjrtPluginLoader::new(PjrtPluginLoader::DEFAULT_TPU_PLUGIN_PATH);
+        assert_eq!(loader.plugin_path(), "/usr/local/lib/libpjrt_c_api.so");
+        assert!(!loader.is_plugin_present());
+    }
+
+    #[test]
+    fn test_pjrt_error_codes() {
+        assert_eq!(PjrtErrorCode::Ok as i32, 0);
+        assert_eq!(PjrtErrorCode::InvalidArgument as i32, 3);
+        assert_eq!(PjrtErrorCode::Internal as i32, 13);
+        assert_eq!(PjrtErrorCode::Unavailable as i32, 14);
+    }
+}

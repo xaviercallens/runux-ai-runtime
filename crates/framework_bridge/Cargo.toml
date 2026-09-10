@@ -11,3 +11,9 @@ gpu_compute = { path = "../gpu_compute" }
 
 [lib]
 crate-type = ["lib", "cdylib"]
+
+[dev-dependencies]
+arena_mem = { path = "../arena_mem" }
+flash_attention = { path = "../flash_attention" }
+turbo_quant = { path = "../turbo_quant" }
+ai_runtime = { path = "../ai_runtime" }

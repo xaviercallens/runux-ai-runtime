@@ -323,4 +323,49 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn test_a100_context_metadata_and_errors() {
+        let ctx = A100Context::new(7).unwrap();
+        assert_eq!(ctx.core_id(), 7);
+        #[cfg(not(target_arch = "riscv64"))]
+        assert!(!ctx.is_native());
+
+        // Buffer size too small
+        let a = [0u8; 2];
+        let b = [0u8; 4];
+        let mut c = [0.0f32; 4];
+        assert!(matches!(ctx.matmul_fp8(&a, &b, &mut c, 2, 2, 2), Err(AiError::ComputeError)));
+
+        let a2 = [0u8; 4];
+        let b2 = [0u8; 2];
+        assert!(matches!(ctx.matmul_fp8(&a2, &b2, &mut c, 2, 2, 2), Err(AiError::ComputeError)));
+
+        let mut c_short = [0.0f32; 2];
+        assert!(matches!(ctx.matmul_fp8(&a2, &a2, &mut c_short, 2, 2, 2), Err(AiError::ComputeError)));
+    }
+
+    #[test]
+    fn test_fp8_e4m3_edge_cases_nan_saturation_subnormal() {
+        // NaN handling
+        assert_eq!(f32_to_fp8_e4m3(f32::NAN), 0x7F);
+
+        // Underflow to zero with sign
+        assert_eq!(f32_to_fp8_e4m3(0.00001), 0x00);
+        assert_eq!(f32_to_fp8_e4m3(-0.00001), 0x80);
+
+        // Saturation to 448.0
+        assert_eq!(f32_to_fp8_e4m3(500.0), 0x7E);
+        assert_eq!(f32_to_fp8_e4m3(-500.0), 0xFE);
+
+        // Subnormal values
+        let subnormal_pos = f32_to_fp8_e4m3(0.005);
+        assert!(subnormal_pos & 0x80 == 0);
+        let subnormal_neg = f32_to_fp8_e4m3(-0.005);
+        assert!(subnormal_neg & 0x80 == 0x80);
+
+        // f32_pow2_exp large and small exponents
+        assert_eq!(f32_pow2_exp(-10), 0.0);
+        assert!(f32_pow2_exp(10) > 256.0);
+    }
 }

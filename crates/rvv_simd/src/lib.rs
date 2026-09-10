@@ -37,7 +37,7 @@
 
 extern crate alloc;
 
-use ai_runtime::{AiError, DataType, DeviceType, TensorDescriptor};
+use ai_runtime::{AiError, TensorDescriptor};
 
 // ---------------------------------------------------------------------------
 // Vector Length Detection
@@ -694,6 +694,7 @@ pub fn tensor_matmul(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ai_runtime::{DataType, DeviceType};
 
     #[test]
     fn test_scalar_matmul() {
@@ -828,5 +829,158 @@ mod tests {
         let result = fused_dot_fp8(&weights, &activations, 4);
         // 4 * 1.0 * 2.0 = 8.0
         assert!((result - 8.0).abs() < 0.1, "Expected ~8.0, got {}", result);
+    }
+
+    #[test]
+    fn test_dequant_matmul_q4() {
+        let block0 = QuantBlockQ4 {
+            scale: 1.0,
+            min: 0.0,
+            quants: [0x10; 16], // 16 lo=0, 16 hi=1
+        };
+        let block1 = QuantBlockQ4 {
+            scale: 2.0,
+            min: 1.0,
+            quants: [0x00; 16], // all 0 -> val = 1.0
+        };
+        let weights = [block0, block1];
+        let activations = [1.0f32; Q4_BLOCK_SIZE];
+        let mut output = [0.0f32; 2];
+
+        dequant_matmul_q4(&weights, &activations, &mut output, 2, Q4_BLOCK_SIZE);
+        assert!((output[0] - 16.0).abs() < 1e-4);
+        assert!((output[1] - 32.0).abs() < 1e-4);
+    }
+
+    #[test]
+    fn test_dequant_fp8_e4m3_buffer() {
+        let input = [0x00, 0x38, 0xB8]; // 0.0, 1.0, -1.0
+        let mut output = [0.0f32; 3];
+        dequant_fp8_e4m3(&input, &mut output);
+        assert_eq!(output[0], 0.0);
+        assert!((output[1] - 1.0).abs() < 1e-3);
+        assert!((output[2] - (-1.0)).abs() < 1e-3);
+    }
+
+    #[test]
+    fn test_layer_norm_f32() {
+        let mut empty: [f32; 0] = [];
+        let gamma_empty: [f32; 0] = [];
+        let beta_empty: [f32; 0] = [];
+        layer_norm_f32(&mut empty, &gamma_empty, &beta_empty, 1e-5);
+
+        let mut x = [1.0f32, 2.0, 3.0, 4.0];
+        let gamma = [1.0f32; 4];
+        let beta = [0.0f32; 4];
+        layer_norm_f32(&mut x, &gamma, &beta, 1e-5);
+        let mean: f32 = x.iter().sum::<f32>() / 4.0;
+        assert!(mean.abs() < 1e-5);
+    }
+
+    #[test]
+    fn test_gelu_f32() {
+        let mut x = [0.0f32, 1.0, -1.0];
+        gelu_f32(&mut x);
+        assert!((x[0] - 0.0).abs() < 1e-5);
+        assert!(x[1] > 0.8 && x[1] < 0.9); // GELU(1) ≈ 0.8413
+        assert!(x[2] > -0.2 && x[2] < 0.0); // GELU(-1) ≈ -0.1587
+    }
+
+    #[test]
+    fn test_apply_rope_f32() {
+        let mut x = [1.0f32, 0.0, 0.0, 1.0];
+        apply_rope_f32(&mut x, 1, 4, 10000.0);
+        // RoPE rotates coordinates; elements should be finite and norm approximately preserved within approximation error
+        assert!(x.iter().all(|v| v.is_finite()));
+        let norm_before = 2.0f32;
+        let norm_after: f32 = x.iter().map(|v| v * v).sum();
+        assert!((norm_after - norm_before).abs() < 0.2);
+    }
+
+    #[test]
+    fn test_fast_math_edge_cases() {
+        // fast_exp limits
+        assert_eq!(fast_exp(-100.0), 0.0);
+        assert_eq!(fast_exp(100.0), f32::MAX);
+        assert!((fast_exp(0.0) - 1.0).abs() < 0.05);
+
+        // fast_pow_2
+        assert_eq!(fast_pow_2(0), 1.0);
+        assert_eq!(fast_pow_2(3), 8.0);
+        assert!((fast_pow_2(-2) - 0.25).abs() < 1e-5);
+        assert_eq!(fast_pow_2(40), 0.0);
+        assert_eq!(fast_pow_2(-150), 0.0);
+
+        // sigmoid & tanh
+        assert!((sigmoid(0.0) - 0.5).abs() < 0.05);
+        assert!((fast_tanh(0.0) - 0.0).abs() < 0.05);
+        assert!(fast_tanh(5.0) > 0.9);
+        assert!(fast_tanh(-5.0) < -0.9);
+
+        // fast_sqrt
+        assert_eq!(fast_sqrt(0.0), 0.0);
+        assert_eq!(fast_sqrt(-1.0), 0.0);
+        assert!((fast_sqrt(16.0) - 4.0).abs() < 0.05);
+
+        // fast_ln & fast_pow
+        assert_eq!(fast_ln(0.0), f32::MIN);
+        assert_eq!(fast_ln(-2.0), f32::MIN);
+        assert!((fast_ln(1.0) - 0.0).abs() < 0.1);
+        assert!((fast_pow(2.0, 3.0) - 8.0).abs() < 1.0);
+
+        // fast_sin & fast_cos
+        assert!((fast_sin(0.0) - 0.0).abs() < 0.05);
+        assert!((fast_cos(0.0) - 1.0).abs() < 0.05);
+        assert!((fast_sin(10.0) - (10.0f32.sin())).abs() < 0.2);
+        assert!((fast_sin(-10.0) - (-10.0f32.sin())).abs() < 0.2);
+    }
+
+    #[test]
+    fn test_empty_slices_softmax_and_rms_norm() {
+        let mut empty: [f32; 0] = [];
+        softmax_f32(&mut empty);
+        assert!(empty.is_empty());
+
+        let gamma_empty: [f32; 0] = [];
+        rms_norm_f32(&mut empty, &gamma_empty, 1e-5);
+        assert!(empty.is_empty());
+    }
+
+    #[test]
+    fn test_vector_length_detect() {
+        let vlen = VectorLength::detect();
+        assert!(vlen.fp32_elements() >= 8);
+    }
+
+    #[test]
+    fn test_tensor_matmul_dispatch() {
+        let a = TensorDescriptor::new(&[2, 3], DataType::FP32, DeviceType::Cpu);
+        let b = TensorDescriptor::new(&[3, 4], DataType::FP32, DeviceType::Cpu);
+        let mut c = TensorDescriptor::new(&[0, 0], DataType::FP32, DeviceType::Cpu);
+
+        let res = tensor_matmul(&a, &b, &mut c);
+        assert!(res.is_ok());
+        assert_eq!(c.shape[0], 2);
+        assert_eq!(c.shape[1], 4);
+        assert_eq!(c.ndim, 2);
+
+        // Shape mismatch test
+        let b_mismatch = TensorDescriptor::new(&[4, 4], DataType::FP32, DeviceType::Cpu);
+        let res_err = tensor_matmul(&a, &b_mismatch, &mut c);
+        assert!(matches!(res_err, Err(AiError::ShapeMismatch { .. })));
+
+        // Ndim < 2 test
+        let a_invalid = TensorDescriptor::new(&[2], DataType::FP32, DeviceType::Cpu);
+        let res_ndim = tensor_matmul(&a_invalid, &b, &mut c);
+        assert!(matches!(res_ndim, Err(AiError::ComputeError)));
+    }
+
+    #[test]
+    fn test_fp8_subnormal_decoding() {
+        // Subnormal: exp = 0, mantissa > 0
+        let subnormal_val = fp8_e4m3_to_f32(0x03); // sign=0, exp=0, mantissa=3
+        assert!(subnormal_val > 0.0);
+        let subnormal_neg = fp8_e4m3_to_f32(0x83); // sign=1, exp=0, mantissa=3
+        assert!(subnormal_neg < 0.0);
     }
 }

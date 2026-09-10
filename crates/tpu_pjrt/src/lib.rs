@@ -670,4 +670,25 @@ mod tests {
         assert!(dev.hbm_utilization_pct() > 0.0);
         assert!(dev.hbm_available() < dev.hbm_total);
     }
+
+    #[test]
+    fn test_client_v6e_and_platform_methods() {
+        let mut client = PjrtClient::sim_v6e(2);
+        assert_eq!(client.device_count(), 2);
+        assert_eq!(client.devices().len(), 2);
+        assert_eq!(client.generation(), TpuGeneration::V6e);
+        assert!(client.platform_name().contains("v6e"));
+        assert_eq!(client.mxu_dim(), 256);
+
+        let dev0 = client.device(0).unwrap();
+        assert_eq!(dev0.ici_links, 6);
+        assert_eq!(dev0.hbm_total, 32 * 1024 * 1024 * 1024);
+
+        assert!(client.device(99).is_none());
+
+        // Allocate on non-existent device
+        let shape = Shape::matrix(64, 64);
+        let err_alloc = client.alloc_buffer(&shape, DType::F32, 99);
+        assert!(matches!(err_alloc, Err(PjrtError::DeviceUnavailable)));
+    }
 }

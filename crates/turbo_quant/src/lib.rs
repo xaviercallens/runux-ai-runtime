@@ -744,4 +744,39 @@ mod tests {
         assert!(scales[0] >= (100.0 - 1.0) / 7.0);
         assert!(!output.is_empty());
     }
+
+    #[test]
+    fn test_compressed_kv_cache_memory_and_compression_ratio() {
+        let config = TurboQuantConfig::default();
+        let mut cache = CompressedKvCache::new(config, 2, 64, 4);
+        assert_eq!(cache.memory_bytes(), 0);
+        assert_eq!(cache.compression_ratio(), 0.0);
+
+        let entry = CompressedKvEntry {
+            key_quantized: vec![1, 2, 3],
+            value_quantized: vec![4, 5, 6],
+            key_scales: vec![0.1],
+            value_scales: vec![0.2],
+            key_zeros: vec![0.0],
+            value_zeros: vec![0.0],
+            key_qjl: vec![0.5],
+            value_qjl: vec![0.5],
+            seq_pos: 0,
+            dim: 64,
+        };
+        cache.layers[0].push(entry);
+        cache.seq_len = 1;
+
+        assert!(cache.memory_bytes() > 0);
+        assert!(cache.compression_ratio() > 0.0);
+    }
+
+    #[test]
+    fn test_polarquant_dim_zero() {
+        let polar = PolarQuant::new(42, 0);
+        let x: Vec<f32> = vec![];
+        let mut y: Vec<f32> = vec![];
+        polar.rotate_forward(&x, &mut y);
+        assert!(y.is_empty());
+    }
 }

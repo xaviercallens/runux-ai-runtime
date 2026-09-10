@@ -883,4 +883,61 @@ mod tests {
         assert_eq!(config.right.kv_cache_dtype, DataType::INT4); // PolarQuant 3-bit
         assert_eq!(config.left.device, DeviceType::PowerVrGpu); // represents Metal GPU
     }
+
+    #[test]
+    fn test_ai_error_display() {
+        let errs = [
+            AiError::ModelNotFound,
+            AiError::OutOfMemory { required: 2 * 1024 * 1024, available: 1024 * 1024 },
+            AiError::UnsupportedQuant(QuantFormat::Gptq),
+            AiError::DeviceNotAvailable(DeviceType::A100AiCore),
+            AiError::ShapeMismatch { expected: [1, 2, 0, 0, 0, 0, 0, 0], got: [2, 1, 0, 0, 0, 0, 0, 0] },
+            AiError::ComputeError,
+            AiError::InvalidConfig(String::from("bad dim")),
+            AiError::UnsupportedHardware,
+        ];
+        for err in &errs {
+            let msg = alloc::format!("{}", err);
+            assert!(!msg.is_empty());
+        }
+    }
+
+    #[test]
+    fn test_tensor_descriptor_display_and_contiguity() {
+        let t = TensorDescriptor::new(&[2, 3], DataType::FP16, DeviceType::PowerVrGpu);
+        let s = alloc::format!("{}", t);
+        assert!(s.contains("2×3"));
+        assert!(s.contains("fp16"));
+
+        let mut non_contig = t.clone();
+        non_contig.strides[0] = 100;
+        assert!(!non_contig.is_contiguous());
+
+        let scalar = TensorDescriptor::new(&[], DataType::FP32, DeviceType::Cpu);
+        assert!(scalar.is_contiguous());
+    }
+
+    #[test]
+    fn test_model_registry_and_quant_formats() {
+        let m1 = ModelRegistry::deepseek_r1_1_5b(DeviceType::Cpu);
+        assert_eq!(m1.arch, ModelArch::DeepSeekR1);
+
+        let m14 = ModelRegistry::qwen_14b(DeviceType::Cpu);
+        assert_eq!(m14.params_billions, 14);
+
+        let all = ModelRegistry::all_models();
+        assert_eq!(all.len(), 4);
+
+        let mut config = m1.clone();
+        config.quant_format = QuantFormat::None;
+        assert!(config.estimated_ram_bytes() > 0);
+
+        config.quant_format = QuantFormat::GgufQ6K;
+        assert!(config.estimated_ram_bytes() > 0);
+
+        let k1 = HardwareCaps::spacemit_k1(8);
+        let quant_cfg = SymBrainQuantConfig::v3_bourbaki(&k1);
+        assert!(quant_cfg.fits_in_ram(4096, 32 * 1024 * 1024 * 1024));
+        assert!(!quant_cfg.fits_in_ram(4096, 100));
+    }
 }

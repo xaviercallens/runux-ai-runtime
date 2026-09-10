@@ -753,6 +753,17 @@ mod tests {
     fn test_hlo_element_types() {
         assert_eq!(HloElementType::from(DType::BF16), HloElementType::BF16);
         assert_eq!(HloElementType::from(DType::F32), HloElementType::F32);
+        assert_eq!(HloElementType::from(DType::F16), HloElementType::F16);
         assert_eq!(HloElementType::from(DType::INT8), HloElementType::S8);
+        assert_eq!(HloElementType::from(DType::Q8_0), HloElementType::S8);
+        assert_eq!(HloElementType::from(DType::INT4), HloElementType::F32);
+
+        let shape = HloShape::new(&[2, 3, 4], HloElementType::F32);
+        assert_eq!(shape.rank(), 3);
+        assert_eq!(shape.num_elements(), 24);
+
+        let scalar_shape = HloShape::new(&[], HloElementType::F32);
+        assert_eq!(scalar_shape.rank(), 0);
+        assert_eq!(scalar_shape.num_elements(), 1);
     }
 }

@@ -41,3 +41,7 @@ secrets/
 .terraform/
 *.tfstate
 *.tfstate.backup
+
+# Python test & coverage
+.coverage
+.pytest_cache/
