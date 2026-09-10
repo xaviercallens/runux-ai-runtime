@@ -5,6 +5,7 @@
 
 #![deny(clippy::all)]
 #![warn(clippy::pedantic)]
+#![allow(clippy::manual_c_str_literals)]
 //! RunuX Framework Bridge — C-compatible FFI for ML framework integration
 //!
 //! Enables RunuX kernels to be called from:
@@ -89,8 +90,12 @@ pub extern "C" fn runux_capabilities() -> u32 {
 /// - `backend`: 0=CPU, 1=RISC-V, 2=TPU, 3=GPU
 #[no_mangle]
 pub unsafe extern "C" fn runux_matmul(
-    a_ptr: *const f32, b_ptr: *const f32, c_ptr: *mut f32,
-    m: i32, n: i32, k: i32,
+    a_ptr: *const f32,
+    b_ptr: *const f32,
+    c_ptr: *mut f32,
+    m: i32,
+    n: i32,
+    k: i32,
     backend: i32,
 ) -> i32 {
     if a_ptr.is_null() || b_ptr.is_null() || c_ptr.is_null() {
@@ -114,7 +119,7 @@ pub unsafe extern "C" fn runux_matmul(
             let cpu = CpuBackend::new();
             cpu.matmul(a, b, c, m, n, k);
             RUNUX_OK
-        },
+        }
         _ => RUNUX_ERR_BACKEND,
     }
 }
@@ -138,9 +143,14 @@ pub unsafe extern "C" fn runux_matmul(
 /// - `backend`: 0=CPU, 1=RISC-V, 2=TPU, 3=GPU
 #[no_mangle]
 pub unsafe extern "C" fn runux_flash_attention(
-    q_ptr: *const f32, k_ptr: *const f32, v_ptr: *const f32,
+    q_ptr: *const f32,
+    k_ptr: *const f32,
+    v_ptr: *const f32,
     out_ptr: *mut f32,
-    batch: i32, heads: i32, seq_len: i32, head_dim: i32,
+    batch: i32,
+    heads: i32,
+    seq_len: i32,
+    head_dim: i32,
     causal: i32,
     backend: i32,
 ) -> i32 {
@@ -180,20 +190,24 @@ pub unsafe extern "C" fn runux_flash_attention(
                 for h in 0..heads {
                     let offset = (b * heads + h) * per_head;
                     let end = offset + per_head;
-                    if end > total { break; }
+                    if end > total {
+                        break;
+                    }
                     let single_config = FlashConfig {
                         n_heads: 1,
                         ..config.clone()
                     };
                     cpu.flash_attention(
-                        &q[offset..end], &k[offset..end], &v[offset..end],
+                        &q[offset..end],
+                        &k[offset..end],
+                        &v[offset..end],
                         &mut out[offset..end],
                         &single_config,
                     );
                 }
             }
             RUNUX_OK
-        },
+        }
         _ => RUNUX_ERR_BACKEND,
     }
 }
@@ -213,8 +227,12 @@ pub unsafe extern "C" fn runux_rms_norm(
     dim: i32,
     eps: f32,
 ) -> i32 {
-    if x_ptr.is_null() || weight_ptr.is_null() { return RUNUX_ERR_NULL_PTR; }
-    if dim <= 0 { return RUNUX_ERR_INVALID_DIMS; }
+    if x_ptr.is_null() || weight_ptr.is_null() {
+        return RUNUX_ERR_NULL_PTR;
+    }
+    if dim <= 0 {
+        return RUNUX_ERR_INVALID_DIMS;
+    }
 
     let dim = dim as usize;
     let x = core::slice::from_raw_parts_mut(x_ptr, dim);
@@ -231,8 +249,12 @@ pub unsafe extern "C" fn runux_rms_norm(
 /// Caller must ensure pointer is valid.
 #[no_mangle]
 pub unsafe extern "C" fn runux_silu(x_ptr: *mut f32, len: i32) -> i32 {
-    if x_ptr.is_null() { return RUNUX_ERR_NULL_PTR; }
-    if len <= 0 { return RUNUX_ERR_INVALID_DIMS; }
+    if x_ptr.is_null() {
+        return RUNUX_ERR_NULL_PTR;
+    }
+    if len <= 0 {
+        return RUNUX_ERR_INVALID_DIMS;
+    }
 
     let x = core::slice::from_raw_parts_mut(x_ptr, len as usize);
     let cpu = CpuBackend::new();
@@ -246,8 +268,12 @@ pub unsafe extern "C" fn runux_silu(x_ptr: *mut f32, len: i32) -> i32 {
 /// Caller must ensure pointer is valid.
 #[no_mangle]
 pub unsafe extern "C" fn runux_softmax(x_ptr: *mut f32, len: i32) -> i32 {
-    if x_ptr.is_null() { return RUNUX_ERR_NULL_PTR; }
-    if len <= 0 { return RUNUX_ERR_INVALID_DIMS; }
+    if x_ptr.is_null() {
+        return RUNUX_ERR_NULL_PTR;
+    }
+    if len <= 0 {
+        return RUNUX_ERR_INVALID_DIMS;
+    }
 
     let x = core::slice::from_raw_parts_mut(x_ptr, len as usize);
     let cpu = CpuBackend::new();
@@ -260,9 +286,13 @@ pub unsafe extern "C" fn runux_softmax(x_ptr: *mut f32, len: i32) -> i32 {
 // ---------------------------------------------------------------------------
 
 fn fast_sqrt(x: f32) -> f32 {
-    if x <= 0.0 { return 0.0; }
+    if x <= 0.0 {
+        return 0.0;
+    }
     let mut g = x;
-    for _ in 0..5 { g = 0.5 * (g + x / g); }
+    for _ in 0..5 {
+        g = 0.5 * (g + x / g);
+    }
     g
 }
 
@@ -294,9 +324,7 @@ mod tests {
         let b = vec![5.0f32, 6.0, 7.0, 8.0]; // 2×2
         let mut c = vec![0.0f32; 4];
 
-        let result = unsafe {
-            runux_matmul(a.as_ptr(), b.as_ptr(), c.as_mut_ptr(), 2, 2, 2, 0)
-        };
+        let result = unsafe { runux_matmul(a.as_ptr(), b.as_ptr(), c.as_mut_ptr(), 2, 2, 2, 0) };
         assert_eq!(result, RUNUX_OK);
         assert!((c[0] - 19.0).abs() < 1e-5);
         assert!((c[3] - 50.0).abs() < 1e-5);
@@ -306,7 +334,15 @@ mod tests {
     fn test_matmul_null_check() {
         let mut c = vec![0.0f32; 4];
         let result = unsafe {
-            runux_matmul(core::ptr::null(), core::ptr::null(), c.as_mut_ptr(), 2, 2, 2, 0)
+            runux_matmul(
+                core::ptr::null(),
+                core::ptr::null(),
+                c.as_mut_ptr(),
+                2,
+                2,
+                2,
+                0,
+            )
         };
         assert_eq!(result, RUNUX_ERR_NULL_PTR);
     }
@@ -316,9 +352,7 @@ mod tests {
         let mut x = vec![1.0f32, 2.0, 3.0, 4.0];
         let w = vec![1.0f32; 4];
 
-        let result = unsafe {
-            runux_rms_norm(x.as_mut_ptr(), w.as_ptr(), 4, 1e-6)
-        };
+        let result = unsafe { runux_rms_norm(x.as_mut_ptr(), w.as_ptr(), 4, 1e-6) };
         assert_eq!(result, RUNUX_OK);
         // Should be normalized
         let norm_sq: f32 = x.iter().map(|v| v * v).sum::<f32>() / x.len() as f32;
@@ -346,9 +380,7 @@ mod tests {
     fn test_invalid_dims() {
         let a = vec![1.0f32; 4];
         let mut c = vec![0.0f32; 4];
-        let result = unsafe {
-            runux_matmul(a.as_ptr(), a.as_ptr(), c.as_mut_ptr(), -1, 2, 2, 0)
-        };
+        let result = unsafe { runux_matmul(a.as_ptr(), a.as_ptr(), c.as_mut_ptr(), -1, 2, 2, 0) };
         assert_eq!(result, RUNUX_ERR_INVALID_DIMS);
     }
 }

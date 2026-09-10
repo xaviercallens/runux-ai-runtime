@@ -6,6 +6,7 @@
 #![cfg_attr(not(test), no_std)]
 #![deny(clippy::all)]
 #![warn(clippy::pedantic)]
+#![allow(clippy::manual_c_str_literals)]
 //! RunuX AI Bridge — C FFI bridge for Python/C++ ML framework interop
 //!
 //! Provides a C-compatible API for interacting with the RunuX AI runtime
@@ -34,11 +35,8 @@ use alloc::boxed::Box;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use ai_runtime::{
-    DataType, DeviceType, HardwareCaps,
-    TensorDescriptor, MAX_DIMS,
-};
-use rvv_simd::{matmul_rvv_f32, softmax_f32, silu_f32};
+use ai_runtime::{DataType, DeviceType, HardwareCaps, TensorDescriptor, MAX_DIMS};
+use rvv_simd::{matmul_rvv_f32, silu_f32, softmax_f32};
 
 // ---------------------------------------------------------------------------
 // C-Compatible Type Aliases
@@ -384,9 +382,8 @@ mod tests {
     #[test]
     fn test_tensor_create_and_fill() {
         let shape = [2usize, 3usize];
-        let tensor = unsafe {
-            runux_tensor_create(shape.as_ptr(), 2, RUNUX_DTYPE_FP32, RUNUX_DEV_CPU)
-        };
+        let tensor =
+            unsafe { runux_tensor_create(shape.as_ptr(), 2, RUNUX_DTYPE_FP32, RUNUX_DEV_CPU) };
         assert!(!tensor.is_null());
 
         let data: [f32; 6] = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0];
@@ -410,12 +407,10 @@ mod tests {
         let shape_a = [2usize, 2usize];
         let shape_b = [2usize, 2usize];
 
-        let ta = unsafe {
-            runux_tensor_create(shape_a.as_ptr(), 2, RUNUX_DTYPE_FP32, RUNUX_DEV_CPU)
-        };
-        let tb = unsafe {
-            runux_tensor_create(shape_b.as_ptr(), 2, RUNUX_DTYPE_FP32, RUNUX_DEV_CPU)
-        };
+        let ta =
+            unsafe { runux_tensor_create(shape_a.as_ptr(), 2, RUNUX_DTYPE_FP32, RUNUX_DEV_CPU) };
+        let tb =
+            unsafe { runux_tensor_create(shape_b.as_ptr(), 2, RUNUX_DTYPE_FP32, RUNUX_DEV_CPU) };
 
         let a_data: [f32; 4] = [1.0, 2.0, 3.0, 4.0];
         let b_data: [f32; 4] = [5.0, 6.0, 7.0, 8.0];

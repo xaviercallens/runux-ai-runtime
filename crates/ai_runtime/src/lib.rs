@@ -36,8 +36,8 @@
 //! - **PowerVR BXM-4-64** (K3 iGPU): OpenCL 3.0, Vulkan 1.3
 
 extern crate alloc;
-use alloc::vec::Vec;
 use alloc::string::String;
+use alloc::vec::Vec;
 
 use core::fmt;
 
@@ -84,12 +84,15 @@ impl DataType {
 
     /// Returns the size in bytes (rounded up) for one element.
     pub const fn bytes(self) -> usize {
-        (self.bits() + 7) / 8
+        self.bits().div_ceil(8)
     }
 
     /// Returns true if this dtype is natively accelerated on K3 A100 cores.
     pub const fn is_k3_native(self) -> bool {
-        matches!(self, Self::FP8 | Self::BF16 | Self::FP16 | Self::INT8 | Self::INT4)
+        matches!(
+            self,
+            Self::FP8 | Self::BF16 | Self::FP16 | Self::INT8 | Self::INT4
+        )
     }
 }
 
@@ -174,9 +177,7 @@ impl TensorDescriptor {
         let mut s = [0usize; MAX_DIMS];
         let mut strides = [0usize; MAX_DIMS];
 
-        for i in 0..ndim {
-            s[i] = shape[i];
-        }
+        s[..ndim].copy_from_slice(&shape[..ndim]);
 
         // Compute contiguous strides (row-major)
         if ndim > 0 {
@@ -211,7 +212,7 @@ impl TensorDescriptor {
     /// Returns the total size in bytes of the tensor data.
     pub fn size_bytes(&self) -> usize {
         let bits = self.numel() * self.dtype.bits();
-        (bits + 7) / 8
+        bits.div_ceil(8)
     }
 
     /// Returns true if the tensor is stored contiguously in memory.
@@ -320,22 +321,20 @@ impl ModelConfig {
     pub fn estimated_ram_bytes(&self) -> usize {
         let params = (self.params_billions as usize) * 1_000_000_000;
         let weight_bytes = match self.quant_format {
-            QuantFormat::None => params * 4,             // FP32
-            QuantFormat::Fp8E4M3 => params,              // 1 byte per param
-            QuantFormat::GgufQ8_0 => params,             // ~1 byte per param
-            QuantFormat::GgufQ6K => params * 6 / 8,      // 0.75 bytes per param
-            QuantFormat::GgufQ4KM | QuantFormat::GgufQ4KS
-            | QuantFormat::Awq | QuantFormat::Gptq => params / 2, // 0.5 bytes per param
+            QuantFormat::None => params * 4,        // FP32
+            QuantFormat::Fp8E4M3 => params,         // 1 byte per param
+            QuantFormat::GgufQ8_0 => params,        // ~1 byte per param
+            QuantFormat::GgufQ6K => params * 6 / 8, // 0.75 bytes per param
+            QuantFormat::GgufQ4KM
+            | QuantFormat::GgufQ4KS
+            | QuantFormat::Awq
+            | QuantFormat::Gptq => params / 2, // 0.5 bytes per param
         };
 
         // KV cache estimate: 2 * num_layers * num_kv_heads * hidden_dim/num_heads * max_ctx * 2bytes
-        let head_dim = if self.num_heads > 0 {
-            self.hidden_dim / self.num_heads
-        } else {
-            128
-        };
-        let kv_cache = 2 * self.num_layers * self.num_kv_heads * head_dim
-            * self.max_context_len.min(4096) * 2;
+        let head_dim = self.hidden_dim.checked_div(self.num_heads).unwrap_or(128);
+        let kv_cache =
+            2 * self.num_layers * self.num_kv_heads * head_dim * self.max_context_len.min(4096) * 2;
 
         // ~500MB overhead for runtime, tokenizer, etc.
         let overhead = 500 * 1024 * 1024;
@@ -365,7 +364,10 @@ pub enum AiError {
     /// Device not available (e.g., A100 cores on K1 hardware)
     DeviceNotAvailable(DeviceType),
     /// Tensor shape mismatch
-    ShapeMismatch { expected: [usize; MAX_DIMS], got: [usize; MAX_DIMS] },
+    ShapeMismatch {
+        expected: [usize; MAX_DIMS],
+        got: [usize; MAX_DIMS],
+    },
     /// Computation error
     ComputeError,
     /// Invalid configuration
@@ -378,10 +380,16 @@ impl fmt::Display for AiError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::ModelNotFound => write!(f, "Model file not found"),
-            Self::OutOfMemory { required, available } => {
-                write!(f, "OOM: need {}MB, have {}MB",
+            Self::OutOfMemory {
+                required,
+                available,
+            } => {
+                write!(
+                    f,
+                    "OOM: need {}MB, have {}MB",
                     required / (1024 * 1024),
-                    available / (1024 * 1024))
+                    available / (1024 * 1024)
+                )
             }
             Self::UnsupportedQuant(q) => write!(f, "Unsupported quant: {:?}", q),
             Self::DeviceNotAvailable(d) => write!(f, "Device unavailable: {}", d),
@@ -627,7 +635,10 @@ impl SymBrainHemisphereConfig {
             QuantFormat::None => params * 4,
             QuantFormat::Fp8E4M3 | QuantFormat::GgufQ8_0 => params,
             QuantFormat::GgufQ6K => params * 6 / 8,
-            QuantFormat::GgufQ4KM | QuantFormat::GgufQ4KS | QuantFormat::Awq | QuantFormat::Gptq => params * 9 / 16, // ~4.5 bits
+            QuantFormat::GgufQ4KM
+            | QuantFormat::GgufQ4KS
+            | QuantFormat::Awq
+            | QuantFormat::Gptq => params * 9 / 16, // ~4.5 bits
         };
 
         // KV cache footprint
@@ -643,7 +654,8 @@ impl SymBrainHemisphereConfig {
         // Let's assume standard GQA with 8 KV heads and head_dim=128
         let head_dim = 128;
         let num_kv_heads = 8;
-        let kv_cache_bytes = 2 * self.num_layers * num_kv_heads * head_dim * max_context_len * kv_bytes_per_element;
+        let kv_cache_bytes =
+            2 * self.num_layers * num_kv_heads * head_dim * max_context_len * kv_bytes_per_element;
 
         weight_bytes + kv_cache_bytes
     }
@@ -677,7 +689,11 @@ impl SymBrainQuantConfig {
         };
 
         let (right_quant, right_kv, right_device) = if is_k3 {
-            (QuantFormat::GgufQ8_0, DataType::INT4, DeviceType::A100AiCore) // INT4 represent PolarQuant 3-bit
+            (
+                QuantFormat::GgufQ8_0,
+                DataType::INT4,
+                DeviceType::A100AiCore,
+            ) // INT4 represent PolarQuant 3-bit
         } else {
             (QuantFormat::GgufQ8_0, DataType::FP16, DeviceType::Cpu)
         };
@@ -730,11 +746,11 @@ impl SymBrainQuantConfig {
                 name: String::from("Qwen-7B-Reasoning"),
                 component: SymBrainHemisphere::LeftHemisphere,
                 weight_quant: QuantFormat::GgufQ4KM, // MPS-accelerated GGUF Q4
-                kv_cache_dtype: DataType::FP16,     // standard F16 GPU cache
+                kv_cache_dtype: DataType::FP16,      // standard F16 GPU cache
                 params_billions: 7.0,
                 hidden_dim: 4096,
                 num_layers: 32,
-                device: DeviceType::PowerVrGpu,      // represents Metal GPU core in HAL
+                device: DeviceType::PowerVrGpu, // represents Metal GPU core in HAL
             },
             right: SymBrainHemisphereConfig {
                 name: String::from("Ministral-8B-Creative"),
@@ -744,17 +760,17 @@ impl SymBrainQuantConfig {
                 params_billions: 8.0,
                 hidden_dim: 4096,
                 num_layers: 32,
-                device: DeviceType::PowerVrGpu,      // running on GPU
+                device: DeviceType::PowerVrGpu, // running on GPU
             },
             pfc: SymBrainHemisphereConfig {
                 name: String::from("WARS-CI-DFA-Bridge"),
                 component: SymBrainHemisphere::PfcController,
-                weight_quant: QuantFormat::None,     // FP16 controller
+                weight_quant: QuantFormat::None, // FP16 controller
                 kv_cache_dtype: DataType::FP16,
                 params_billions: 0.5,
                 hidden_dim: 1024,
                 num_layers: 12,
-                device: DeviceType::Cpu,             // CPU AMX/NEON coordinator
+                device: DeviceType::Cpu, // CPU AMX/NEON coordinator
             },
             profile_name: String::from("macos_m2_unified"),
         }
@@ -841,7 +857,7 @@ mod tests {
         assert_eq!(config.profile_name, "edge_spacemit_k1");
         assert_eq!(config.left.weight_quant, QuantFormat::GgufQ4KM);
         assert_eq!(config.right.weight_quant, QuantFormat::GgufQ8_0);
-        
+
         let total_ram_needed = config.total_vram_bytes(4096);
         // Total footprint should fit inside 8GB easily since 7B is Q4 and 8B is Q8
         assert!(total_ram_needed < 15 * 1024 * 1024 * 1024);

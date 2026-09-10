@@ -12,9 +12,9 @@ use alloc::vec;
 use alloc::vec::Vec;
 
 use ai_runtime::{HardwareCaps as RhCaps, SymBrainQuantConfig};
-use hal::{HardwareCaps as HalCaps, AppleSiliconBackend, Accelerator, FlashConfig};
-use rvv_simd::{QuantBlockQ4, dequant_matmul_q4, softmax_f32, Q4_BLOCK_SIZE};
-use turbo_quant::{TurboQuantConfig, compress_kv};
+use hal::{Accelerator, AppleSiliconBackend, FlashConfig, HardwareCaps as HalCaps};
+use rvv_simd::{dequant_matmul_q4, softmax_f32, QuantBlockQ4, Q4_BLOCK_SIZE};
+use turbo_quant::{compress_kv, TurboQuantConfig};
 
 // ---------------------------------------------------------------------------
 // Bare-Metal Allocator Stub (for compatibility)
@@ -73,18 +73,29 @@ impl SymBrainM2Engine {
         {
             std::println!("\n[UMA] Memory-mapping SymBrain v3 GGUF weights into Apple Silicon Unified Memory...");
             std::println!("  - Profile Target: {}", self.config.profile_name);
-            std::println!("  - Unified Memory (UMA) Capacity: {} GB", self.hal_caps.memory_gb());
-            std::println!("  - UMA Memory Bandwidth: {:.1} GB/s", self.hal_caps.memory_bw_gbs);
+            std::println!(
+                "  - Unified Memory (UMA) Capacity: {} GB",
+                self.hal_caps.memory_gb()
+            );
+            std::println!(
+                "  - UMA Memory Bandwidth: {:.1} GB/s",
+                self.hal_caps.memory_bw_gbs
+            );
             std::println!("  - Dynamic Partitioning allocated:");
             std::println!("    ├─ Left Hemisphere (Qwen-7B-Reasoning)   --> GPU VRAM segment: {:.2} GB [GgufQ4KM]", 
                          self.config.left.estimated_vram_bytes(4096) as f32 / 1e9);
             std::println!("    ├─ Right Hemisphere (Ministral-8B-Creative) --> GPU VRAM segment: {:.2} GB [GgufQ8_0]", 
                          self.config.right.estimated_vram_bytes(4096) as f32 / 1e9);
-            std::println!("    └─ PFC Controller (WARS-CI-DFA Bridge)  --> CPU AMX segment:  {:.2} GB [FP16]", 
-                         self.config.pfc.estimated_vram_bytes(4096) as f32 / 1e9);
+            std::println!(
+                "    └─ PFC Controller (WARS-CI-DFA Bridge)  --> CPU AMX segment:  {:.2} GB [FP16]",
+                self.config.pfc.estimated_vram_bytes(4096) as f32 / 1e9
+            );
             std::println!("  - CPU-GPU Data Copys / PCIe Transfers: STRICTLY 0.00 MB (Zero-Copy)");
-            std::println!("  - Memory Load Status: ✅ FITS (Occupies {:.2}% of UMA Pool)", 
-                         (self.config.total_vram_bytes(4096) as f32 / self.hal_caps.memory_bytes as f32) * 100.0);
+            std::println!(
+                "  - Memory Load Status: ✅ FITS (Occupies {:.2}% of UMA Pool)",
+                (self.config.total_vram_bytes(4096) as f32 / self.hal_caps.memory_bytes as f32)
+                    * 100.0
+            );
         }
     }
 
@@ -103,21 +114,22 @@ impl SymBrainM2Engine {
         let mut left_output = vec![0.0f32; size];
 
         // Simulate Metal Performance Shaders (MPS) Tiled Matrix multiplication
-        self.m2_backend.matmul(
-            &activations,
-            &weights,
-            &mut left_output,
-            1,
-            size,
-            size,
-        );
+        self.m2_backend
+            .matmul(&activations, &weights, &mut left_output, 1, size, size);
 
         #[cfg(feature = "std")]
         {
             std::println!("\n[LEFT] GPU Apple Metal (MPS) Matrix Multiplication complete:");
-            std::println!("  - Active Threadgroup SIMD width: {}", self.hal_caps.optimal_tile_size);
-            std::println!("  - Floating Point Output slice: [{:.4}, {:.4}, {:.4}, ...]",
-                         left_output[0], left_output[1], left_output[2]);
+            std::println!(
+                "  - Active Threadgroup SIMD width: {}",
+                self.hal_caps.optimal_tile_size
+            );
+            std::println!(
+                "  - Floating Point Output slice: [{:.4}, {:.4}, {:.4}, ...]",
+                left_output[0],
+                left_output[1],
+                left_output[2]
+            );
         }
 
         // --- STEP 2: GPU MPS-Accelerated Right Hemisphere creative generation (Ministral-8B) ---
@@ -147,18 +159,28 @@ impl SymBrainM2Engine {
         #[cfg(feature = "std")]
         {
             std::println!("\n[RIGHT] GPU Metal FlashAttention & PolarQuant KV Cache complete:");
-            std::println!("  - Attention output slice: [{:.4}, {:.4}, {:.4}, ...]",
-                         right_output[0], right_output[1], right_output[2]);
+            std::println!(
+                "  - Attention output slice: [{:.4}, {:.4}, {:.4}, ...]",
+                right_output[0],
+                right_output[1],
+                right_output[2]
+            );
             std::println!("  - PolarQuant 3-bit KV Cache Memory Reduction: 13.2×");
-            std::println!("  - Compressed Key footprint: {} Bytes", compressed_kv.key_quantized.len());
-            std::println!("  - Compressed Value footprint: {} Bytes", compressed_kv.value_quantized.len());
+            std::println!(
+                "  - Compressed Key footprint: {} Bytes",
+                compressed_kv.key_quantized.len()
+            );
+            std::println!(
+                "  - Compressed Value footprint: {} Bytes",
+                compressed_kv.value_quantized.len()
+            );
         }
 
         // --- STEP 3: CPU NEON/AMX PFC WARS-CI-DFA Coordination ---
         let mut routing_scores = vec![0.0f32; 3];
-        routing_scores[0] = left_output[0] * 1.8;  // reasoning score
+        routing_scores[0] = left_output[0] * 1.8; // reasoning score
         routing_scores[1] = right_output[0] * 1.1; // creative score
-        routing_scores[2] = 0.50f32;               // PFC gate boundary
+        routing_scores[2] = 0.50f32; // PFC gate boundary
 
         // Execute fast NEON-vectorized stable softmax
         self.m2_backend.softmax(&mut routing_scores);
@@ -177,9 +199,13 @@ impl SymBrainM2Engine {
 pub fn run_macos_m2_demo() {
     #[cfg(feature = "std")]
     {
-        std::println!("================================================================================");
+        std::println!(
+            "================================================================================"
+        );
         std::println!("        RUNUX AI ENGINE - LOCAL MACOS M2 EDGE CO-INFERENCE RUNTIME");
-        std::println!("================================================================================");
+        std::println!(
+            "================================================================================"
+        );
     }
 
     // Initialize M2 Engine with 16GB Unified RAM
@@ -194,7 +220,9 @@ pub fn run_macos_m2_demo() {
     {
         std::println!("\n[DECODE] Local M2 Edge Decoded Sequence:");
         std::println!("  >> \"{}\"", decoded);
-        std::println!("================================================================================");
+        std::println!(
+            "================================================================================"
+        );
     }
 }
 

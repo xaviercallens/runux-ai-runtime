@@ -6,6 +6,7 @@
 #![cfg_attr(not(test), no_std)]
 #![deny(clippy::all)]
 #![warn(clippy::pedantic)]
+#![allow(clippy::approx_constant, clippy::needless_range_loop)]
 //! RunuX Transformer — Complete transformer forward pass for LLM inference
 //!
 //! Implements the decoder-only transformer architecture used by:
@@ -45,7 +46,7 @@ extern crate alloc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use rvv_simd::{matmul_scalar_f32, softmax_f32, rms_norm_f32, silu_f32};
+use rvv_simd::{matmul_scalar_f32, rms_norm_f32, silu_f32, softmax_f32};
 
 // ---------------------------------------------------------------------------
 // Model Configuration
@@ -225,26 +226,23 @@ impl KvCache {
     }
 
     /// Store a key vector for a given layer, position, and KV head.
-    pub fn store_key(
-        &mut self,
-        layer: usize,
-        position: usize,
-        kv_head: usize,
-        key: &[f32],
-    ) {
+    pub fn store_key(&mut self, layer: usize, position: usize, kv_head: usize, key: &[f32]) {
         let (ls, ps, hs) = self.stride();
         let offset = layer * ls + position * ps + kv_head * hs;
-        let scale_offset = layer * (self.max_seq_len * self.n_kv_heads) + position * self.n_kv_heads + kv_head;
+        let scale_offset =
+            layer * (self.max_seq_len * self.n_kv_heads) + position * self.n_kv_heads + kv_head;
         let len = key.len().min(self.head_dim);
-        
+
         let mut max_abs = 0.0f32;
         for &v in &key[..len] {
             let abs_v = v.abs();
-            if abs_v > max_abs { max_abs = abs_v; }
+            if abs_v > max_abs {
+                max_abs = abs_v;
+            }
         }
         let scale = max_abs / 127.0;
         self.key_scales[scale_offset] = scale;
-        
+
         for i in 0..len {
             let q = if scale == 0.0 { 0.0 } else { key[i] / scale };
             self.keys[offset + i] = q.clamp(-127.0, 127.0) as i8;
@@ -252,26 +250,23 @@ impl KvCache {
     }
 
     /// Store a value vector for a given layer, position, and KV head.
-    pub fn store_value(
-        &mut self,
-        layer: usize,
-        position: usize,
-        kv_head: usize,
-        value: &[f32],
-    ) {
+    pub fn store_value(&mut self, layer: usize, position: usize, kv_head: usize, value: &[f32]) {
         let (ls, ps, hs) = self.stride();
         let offset = layer * ls + position * ps + kv_head * hs;
-        let scale_offset = layer * (self.max_seq_len * self.n_kv_heads) + position * self.n_kv_heads + kv_head;
+        let scale_offset =
+            layer * (self.max_seq_len * self.n_kv_heads) + position * self.n_kv_heads + kv_head;
         let len = value.len().min(self.head_dim);
-        
+
         let mut max_abs = 0.0f32;
         for &v in &value[..len] {
             let abs_v = v.abs();
-            if abs_v > max_abs { max_abs = abs_v; }
+            if abs_v > max_abs {
+                max_abs = abs_v;
+            }
         }
         let scale = max_abs / 127.0;
         self.value_scales[scale_offset] = scale;
-        
+
         for i in 0..len {
             let q = if scale == 0.0 { 0.0 } else { value[i] / scale };
             self.values[offset + i] = q.clamp(-127.0, 127.0) as i8;
@@ -282,16 +277,24 @@ impl KvCache {
     pub fn get_key(&self, layer: usize, position: usize, kv_head: usize) -> (&[i8], f32) {
         let (ls, ps, hs) = self.stride();
         let offset = layer * ls + position * ps + kv_head * hs;
-        let scale_offset = layer * (self.max_seq_len * self.n_kv_heads) + position * self.n_kv_heads + kv_head;
-        (&self.keys[offset..offset + self.head_dim], self.key_scales[scale_offset])
+        let scale_offset =
+            layer * (self.max_seq_len * self.n_kv_heads) + position * self.n_kv_heads + kv_head;
+        (
+            &self.keys[offset..offset + self.head_dim],
+            self.key_scales[scale_offset],
+        )
     }
 
     /// Get a value vector and its scale for a given layer, position, and KV head.
     pub fn get_value(&self, layer: usize, position: usize, kv_head: usize) -> (&[i8], f32) {
         let (ls, ps, hs) = self.stride();
         let offset = layer * ls + position * ps + kv_head * hs;
-        let scale_offset = layer * (self.max_seq_len * self.n_kv_heads) + position * self.n_kv_heads + kv_head;
-        (&self.values[offset..offset + self.head_dim], self.value_scales[scale_offset])
+        let scale_offset =
+            layer * (self.max_seq_len * self.n_kv_heads) + position * self.n_kv_heads + kv_head;
+        (
+            &self.values[offset..offset + self.head_dim],
+            self.value_scales[scale_offset],
+        )
     }
 
     /// Memory usage in bytes.
@@ -338,11 +341,7 @@ impl Default for SamplingConfig {
 ///
 /// Applies temperature scaling, top-k filtering, top-p (nucleus) filtering,
 /// then samples from the resulting distribution.
-pub fn sample_token(
-    logits: &[f32],
-    config: &SamplingConfig,
-    rng_state: &mut u64,
-) -> u32 {
+pub fn sample_token(logits: &[f32], config: &SamplingConfig, rng_state: &mut u64) -> u32 {
     let n = logits.len();
     if n == 0 {
         return 0;
@@ -360,7 +359,8 @@ pub fn sample_token(
         // Find the top-k threshold
         let mut sorted_logits: Vec<f32> = scaled.clone();
         // Simple partial sort for top-k
-        sorted_logits.sort_unstable_by(|a, b| b.partial_cmp(a).unwrap_or(core::cmp::Ordering::Equal));
+        sorted_logits
+            .sort_unstable_by(|a, b| b.partial_cmp(a).unwrap_or(core::cmp::Ordering::Equal));
         let threshold = sorted_logits[config.top_k - 1];
         for v in &mut scaled {
             if *v < threshold {
@@ -376,7 +376,8 @@ pub fn sample_token(
     if config.top_p < 1.0 {
         // Sort by probability descending
         let mut indexed: Vec<(usize, f32)> = scaled.iter().copied().enumerate().collect();
-        indexed.sort_unstable_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(core::cmp::Ordering::Equal));
+        indexed
+            .sort_unstable_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(core::cmp::Ordering::Equal));
 
         let mut cumsum = 0.0f32;
         let mut cutoff_idx = indexed.len();
@@ -419,7 +420,8 @@ pub fn sample_token(
     }
 
     // Fallback: argmax
-    scaled.iter()
+    scaled
+        .iter()
         .enumerate()
         .max_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(core::cmp::Ordering::Equal))
         .map(|(i, _)| i as u32)
@@ -428,7 +430,8 @@ pub fn sample_token(
 
 /// Greedy sampling (argmax).
 pub fn sample_greedy(logits: &[f32]) -> u32 {
-    logits.iter()
+    logits
+        .iter()
         .enumerate()
         .max_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(core::cmp::Ordering::Equal))
         .map(|(i, _)| i as u32)
@@ -448,7 +451,7 @@ pub fn apply_rms_norm(x: &mut [f32], weight: &[f32], eps: f32) {
 ///
 /// Returns softmax(Q·K^T / sqrt(d_k)) · V
 pub fn attention_head(
-    query: &[f32],      // [head_dim]
+    query: &[f32], // [head_dim]
     kv_cache: &KvCache,
     layer: usize,
     kv_head: usize,
@@ -491,9 +494,9 @@ pub fn attention_head(
 /// out = down_proj(silu(gate_proj(x)) * up_proj(x))
 pub fn ffn_forward(
     x: &[f32],
-    gate_weight: &[f32],  // [intermediate_dim × hidden_dim]
-    up_weight: &[f32],    // [intermediate_dim × hidden_dim]
-    down_weight: &[f32],  // [hidden_dim × intermediate_dim]
+    gate_weight: &[f32], // [intermediate_dim × hidden_dim]
+    up_weight: &[f32],   // [intermediate_dim × hidden_dim]
+    down_weight: &[f32], // [hidden_dim × intermediate_dim]
     hidden_dim: usize,
     intermediate_dim: usize,
 ) -> Vec<f32> {
@@ -513,7 +516,14 @@ pub fn ffn_forward(
 
     // output = down_weight @ gate
     let mut output = vec![0.0f32; hidden_dim];
-    matmul_scalar_f32(down_weight, &gate, &mut output, hidden_dim, intermediate_dim, 1);
+    matmul_scalar_f32(
+        down_weight,
+        &gate,
+        &mut output,
+        hidden_dim,
+        intermediate_dim,
+        1,
+    );
 
     output
 }
@@ -534,7 +544,9 @@ fn xorshift64_f32(state: &mut u64) -> f32 {
 
 /// Fast approximate sqrt (Newton-Raphson).
 fn fast_sqrt(x: f32) -> f32 {
-    if x <= 0.0 { return 0.0; }
+    if x <= 0.0 {
+        return 0.0;
+    }
     let mut guess = x;
     for _ in 0..5 {
         guess = 0.5 * (guess + x / guess);
@@ -547,11 +559,15 @@ fn fast_cos(x: f32) -> f32 {
     // Reduce to [0, 2π]
     let pi2 = 6.283_185_5;
     let mut a = x % pi2;
-    if a < 0.0 { a += pi2; }
+    if a < 0.0 {
+        a += pi2;
+    }
     // Taylor series: cos(x) ≈ 1 - x²/2 + x⁴/24 - x⁶/720
     // Center around 0 by shifting to [-π, π]
     let pi = 3.141_592_7;
-    if a > pi { a -= pi2; }
+    if a > pi {
+        a -= pi2;
+    }
     let x2 = a * a;
     let x4 = x2 * x2;
     let x6 = x4 * x2;
@@ -562,9 +578,13 @@ fn fast_cos(x: f32) -> f32 {
 fn fast_sin(x: f32) -> f32 {
     let pi2 = 6.283_185_5;
     let mut a = x % pi2;
-    if a < 0.0 { a += pi2; }
+    if a < 0.0 {
+        a += pi2;
+    }
     let pi = 3.141_592_7;
-    if a > pi { a -= pi2; }
+    if a > pi {
+        a -= pi2;
+    }
     let x2 = a * a;
     let x4 = x2 * x2;
     let x6 = x4 * x2;
@@ -574,13 +594,17 @@ fn fast_sin(x: f32) -> f32 {
 /// Fast approximate power function.
 fn fast_powf(base: f32, exp: f32) -> f32 {
     // Use exp(exp * ln(base))
-    if base <= 0.0 { return 0.0; }
+    if base <= 0.0 {
+        return 0.0;
+    }
     fast_exp(exp * fast_ln(base))
 }
 
 /// Fast approximate natural logarithm.
 fn fast_ln(x: f32) -> f32 {
-    if x <= 0.0 { return f32::NEG_INFINITY; }
+    if x <= 0.0 {
+        return f32::NEG_INFINITY;
+    }
     let bits = x.to_bits();
     let exponent = ((bits >> 23) & 0xFF) as f32 - 127.0;
     let mantissa = f32::from_bits((bits & 0x007F_FFFF) | 0x3F80_0000);
@@ -592,12 +616,16 @@ fn fast_ln(x: f32) -> f32 {
 
 /// Fast approximate exponential.
 fn fast_exp(x: f32) -> f32 {
-    if x < -88.0 { return 0.0; }
-    if x > 88.0 { return f32::MAX; }
+    if x < -88.0 {
+        return 0.0;
+    }
+    if x > 88.0 {
+        return f32::MAX;
+    }
     // Clamped range for bit manipulation trick
     let a = 12102203.0f32; // 2^23 / ln(2)
     let b = 1065353216.0f32; // 127 * 2^23 (IEEE 754 bias)
-    let bits = ((a * x + b) as u32).max(0).min(0x7F80_0000);
+    let bits = ((a * x + b) as u32).min(0x7F80_0000);
     f32::from_bits(bits)
 }
 
@@ -631,9 +659,13 @@ mod tests {
         rope.apply(&mut vec, 0);
         // At position 0, cos=1 and sin=0, so vector should be unchanged
         for i in 0..8 {
-            assert!((vec[i] - original[i]).abs() < 0.01,
+            assert!(
+                (vec[i] - original[i]).abs() < 0.01,
                 "RoPE at pos=0 should be near identity, idx={}: got={} expected={}",
-                i, vec[i], original[i]);
+                i,
+                vec[i],
+                original[i]
+            );
         }
     }
 
@@ -645,7 +677,10 @@ mod tests {
         rope.apply(&mut vec_pos0, 0);
         rope.apply(&mut vec_pos5, 5);
         // Different positions should give different results
-        assert!(vec_pos0 != vec_pos5, "Different positions should produce different rotations");
+        assert!(
+            vec_pos0 != vec_pos5,
+            "Different positions should produce different rotations"
+        );
     }
 
     #[test]
@@ -672,7 +707,9 @@ mod tests {
         let (retrieved, scale) = cache.get_key(0, 0, 0);
         // It's INT8, so let's dequantize to compare
         let mut deq = vec![0.0f32; 4];
-        for i in 0..4 { deq[i] = retrieved[i] as f32 * scale; }
+        for i in 0..4 {
+            deq[i] = retrieved[i] as f32 * scale;
+        }
         // 4.0/127.0 * 127 = 4.0. We should expect near original values
         assert!((deq[3] - 4.0).abs() < 0.1);
 
@@ -716,7 +753,11 @@ mod tests {
     fn test_fast_trig() {
         // Verify our fast trig is reasonably accurate
         let cos_0 = fast_cos(0.0);
-        assert!((cos_0 - 1.0).abs() < 0.01, "cos(0) should be ~1.0, got {}", cos_0);
+        assert!(
+            (cos_0 - 1.0).abs() < 0.01,
+            "cos(0) should be ~1.0, got {}",
+            cos_0
+        );
 
         let sin_0 = fast_sin(0.0);
         assert!(sin_0.abs() < 0.01, "sin(0) should be ~0.0, got {}", sin_0);
@@ -726,10 +767,18 @@ mod tests {
     fn test_fast_exp_ln() {
         let x = 2.0f32;
         let ln_x = fast_ln(x);
-        assert!((ln_x - 0.693).abs() < 0.05, "ln(2) should be ~0.693, got {}", ln_x);
+        assert!(
+            (ln_x - 0.693).abs() < 0.05,
+            "ln(2) should be ~0.693, got {}",
+            ln_x
+        );
 
         let exp_0 = fast_exp(0.0);
-        assert!((exp_0 - 1.0).abs() < 0.01, "exp(0) should be ~1.0, got {}", exp_0);
+        assert!(
+            (exp_0 - 1.0).abs() < 0.01,
+            "exp(0) should be ~1.0, got {}",
+            exp_0
+        );
     }
 
     #[test]

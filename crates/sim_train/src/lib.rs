@@ -6,6 +6,11 @@
 #![cfg_attr(not(test), no_std)]
 #![deny(clippy::all)]
 #![warn(clippy::pedantic)]
+#![allow(
+    clippy::approx_constant,
+    clippy::assign_op_pattern,
+    clippy::needless_range_loop
+)]
 //! RunuX Simulated Training — LoRA fine-tuning and federated training simulation
 //!
 //! Implements simulated LoRA (Low-Rank Adaptation) training and federated
@@ -146,11 +151,11 @@ impl LoraConfig {
     /// Memory for gradients + optimizer state (AdamW: 2× momentum).
     pub fn training_memory_bytes(&self) -> usize {
         let params = self.total_trainable_params();
-        let adapter = params * 2;          // BF16 parameters
-        let gradients = params * 2;        // BF16 gradients
-        let optimizer = params * 4 * 2;    // AdamW: m + v (first and second moments in FP32)
-        // Simulated: Base model weights and activations are cached in E4M3 FP8 (1 byte per param).
-        // This halves the activation gradient memory needed during the backward pass.
+        let adapter = params * 2; // BF16 parameters
+        let gradients = params * 2; // BF16 gradients
+        let optimizer = params * 4 * 2; // AdamW: m + v (first and second moments in FP32)
+                                        // Simulated: Base model weights and activations are cached in E4M3 FP8 (1 byte per param).
+                                        // This halves the activation gradient memory needed during the backward pass.
         adapter + gradients + optimizer
     }
 }
@@ -474,7 +479,8 @@ pub fn simulate_lora_training(
         if (step + 1) % config.grad_accum_steps == 0 {
             // Cosine learning rate schedule
             let progress = step as f32 / total_steps as f32;
-            let lr = config.learning_rate * 0.5 * (1.0 + fast_cos(core::f32::consts::PI * progress));
+            let lr =
+                config.learning_rate * 0.5 * (1.0 + fast_cos(core::f32::consts::PI * progress));
 
             for adapter in &mut adapters {
                 adapter.adamw_step(lr, 0.9, 0.999, 1e-8, config.weight_decay, step);
@@ -619,7 +625,10 @@ pub fn simulate_federated_training(
     let n_adapters = config.lora.target_layers.len();
 
     // Global model adapters (on aggregation server)
-    let mut global_adapters: Vec<LoraAdapter> = config.lora.target_layers.iter()
+    let mut global_adapters: Vec<LoraAdapter> = config
+        .lora
+        .target_layers
+        .iter()
         .map(|&layer| LoraAdapter::new(layer, d, r, 2000 + layer as u64))
         .collect();
 
@@ -632,7 +641,12 @@ pub fn simulate_federated_training(
     for round in 0..config.n_rounds {
         // Select participating clients
         let n_part_f = (config.n_clients as f32) * config.participation_rate;
-        let n_participating = (n_part_f as usize) + if n_part_f > (n_part_f as usize) as f32 { 1 } else { 0 };
+        let n_participating = (n_part_f as usize)
+            + if n_part_f > (n_part_f as usize) as f32 {
+                1
+            } else {
+                0
+            };
         let n_participating = n_participating.max(1);
 
         // Each client trains locally
@@ -668,7 +682,8 @@ pub fn simulate_federated_training(
 
             // Average B matrices
             for i in 0..global_adapters[adapter_idx].b_matrix.len() {
-                let sum: f32 = client_updates.iter()
+                let sum: f32 = client_updates
+                    .iter()
                     .map(|c| c[adapter_idx].b_matrix[i])
                     .sum();
                 global_adapters[adapter_idx].b_matrix[i] = sum / n;
@@ -676,7 +691,8 @@ pub fn simulate_federated_training(
 
             // Average A matrices
             for i in 0..global_adapters[adapter_idx].a_matrix.len() {
-                let sum: f32 = client_updates.iter()
+                let sum: f32 = client_updates
+                    .iter()
                     .map(|c| c[adapter_idx].a_matrix[i])
                     .sum();
                 global_adapters[adapter_idx].a_matrix[i] = sum / n;
@@ -795,7 +811,8 @@ fn simulate_local_training(
         // Step
         if (step + 1) % config.grad_accum_steps == 0 {
             let progress = step as f32 / steps as f32;
-            let lr = config.learning_rate * 0.5 * (1.0 + fast_cos(core::f32::consts::PI * progress));
+            let lr =
+                config.learning_rate * 0.5 * (1.0 + fast_cos(core::f32::consts::PI * progress));
             for adapter in adapters.iter_mut() {
                 adapter.adamw_step(lr, 0.9, 0.999, 1e-8, config.weight_decay, step);
             }
@@ -842,9 +859,13 @@ impl XorShift64 {
 }
 
 fn fast_sqrt(x: f32) -> f32 {
-    if x <= 0.0 { return 0.0; }
+    if x <= 0.0 {
+        return 0.0;
+    }
     let mut g = x;
-    for _ in 0..5 { g = 0.5 * (g + x / g); }
+    for _ in 0..5 {
+        g = 0.5 * (g + x / g);
+    }
     g
 }
 
@@ -852,7 +873,9 @@ fn fast_pow(base: f32, exp: f32) -> f32 {
     // For AdamW bias correction, exp is always a positive integer (step count).
     // Use exact iterative multiplication to avoid fast_exp/fast_ln error accumulation.
     let n = exp as u32;
-    if n == 0 { return 1.0; }
+    if n == 0 {
+        return 1.0;
+    }
     let mut result = 1.0f32;
     let mut b = base;
     let mut e = n;
@@ -868,16 +891,24 @@ fn fast_pow(base: f32, exp: f32) -> f32 {
 }
 
 fn fast_exp(x: f32) -> f32 {
-    if x < -88.0 { return 0.0; }
-    if x > 88.0 { return f32::MAX; }
+    if x < -88.0 {
+        return 0.0;
+    }
+    if x > 88.0 {
+        return f32::MAX;
+    }
     let x = 1.0 + x / 256.0;
     let mut r = x;
-    for _ in 0..8 { r = r * r; }
+    for _ in 0..8 {
+        r = r * r;
+    }
     r
 }
 
 fn fast_ln(x: f32) -> f32 {
-    if x <= 0.0 { return f32::MIN; }
+    if x <= 0.0 {
+        return f32::MIN;
+    }
     let bits = x.to_bits();
     let exp = ((bits >> 23) & 0xFF) as f32 - 127.0;
     let m = f32::from_bits((bits & 0x007F_FFFF) | 0x3F80_0000);
@@ -892,8 +923,12 @@ fn fast_sin(mut x: f32) -> f32 {
     let pi = core::f32::consts::PI;
     let two_pi = 2.0 * pi;
     x = x % two_pi;
-    if x > pi { x -= two_pi; }
-    if x < -pi { x += two_pi; }
+    if x > pi {
+        x -= two_pi;
+    }
+    if x < -pi {
+        x += two_pi;
+    }
     let abs_x = if x < 0.0 { -x } else { x };
     let y = 4.0 / pi * x - 4.0 / (pi * pi) * x * abs_x;
     0.225 * (y * (if y < 0.0 { -y } else { y }) - y) + y
@@ -949,8 +984,11 @@ mod tests {
 
         assert!(result.total_steps > 0);
         assert!(result.loss_history.len() > 0);
-        assert!(result.loss_reduction > 0.0,
-            "Training should reduce loss, got {:.1}% reduction", result.loss_reduction);
+        assert!(
+            result.loss_reduction > 0.0,
+            "Training should reduce loss, got {:.1}% reduction",
+            result.loss_reduction
+        );
     }
 
     #[test]
@@ -963,8 +1001,11 @@ mod tests {
         assert_eq!(mem, expected);
 
         // Should fit in BPI-F3 (8GB) with room for the base model
-        assert!(mem < 1 * 1024 * 1024 * 1024, // < 1GB
-            "LoRA training memory should be < 1GB, got {}MB", mem / (1024 * 1024));
+        assert!(
+            mem < 1 * 1024 * 1024 * 1024, // < 1GB
+            "LoRA training memory should be < 1GB, got {}MB",
+            mem / (1024 * 1024)
+        );
     }
 
     #[test]
@@ -995,10 +1036,16 @@ mod tests {
 
         assert_eq!(result.rounds_completed, 3);
         assert_eq!(result.round_losses.len(), 3);
-        assert!(result.total_comm_bytes > 0, "Should have communication cost");
+        assert!(
+            result.total_comm_bytes > 0,
+            "Should have communication cost"
+        );
         assert!(result.total_kwh > 0.0, "Should estimate energy");
-        assert!(result.savings_vs_cloud_pct > 0.0,
-            "Edge FL should save energy vs cloud, got {:.1}%", result.savings_vs_cloud_pct);
+        assert!(
+            result.savings_vs_cloud_pct > 0.0,
+            "Edge FL should save energy vs cloud, got {:.1}%",
+            result.savings_vs_cloud_pct
+        );
     }
 
     #[test]
@@ -1015,8 +1062,12 @@ mod tests {
         }
 
         let norm_after = adapter.param_norm();
-        assert!(norm_after > norm_before,
-            "Training should change parameters: before={}, after={}", norm_before, norm_after);
+        assert!(
+            norm_after > norm_before,
+            "Training should change parameters: before={}, after={}",
+            norm_before,
+            norm_after
+        );
     }
 
     #[test]

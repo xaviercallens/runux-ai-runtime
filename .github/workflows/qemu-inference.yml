@@ -146,8 +146,7 @@ jobs:
           cargo test \
             --target riscv64gc-unknown-linux-gnu \
             -p perf_model \
-            -- --test-threads=1 \
-            2>&1 || echo "⚠️ Some QEMU tests may timeout — expected in emulation"
+            -- --test-threads=1
 
       - name: Validate simulation report
         run: echo "✅ QEMU RISC-V inference pipeline validated"
@@ -167,7 +166,7 @@ jobs:
           components: clippy, rustfmt
 
       - name: Clippy (all crates)
-        run: cargo clippy --workspace -- -W clippy::all 2>&1 || true
+        run: cargo clippy --workspace
 
       - name: Format check
-        run: cargo fmt --all -- --check 2>&1 || true
+        run: cargo fmt --all -- --check

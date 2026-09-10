@@ -8,8 +8,8 @@ use alloc::vec;
 use alloc::vec::Vec;
 
 use ai_runtime::{HardwareCaps, SymBrainQuantConfig};
-use rvv_simd::{QuantBlockQ4, dequant_matmul_q4, softmax_f32, Q4_BLOCK_SIZE};
-use turbo_quant::{TurboQuantConfig, compress_kv};
+use rvv_simd::{dequant_matmul_q4, softmax_f32, QuantBlockQ4, Q4_BLOCK_SIZE};
+use turbo_quant::{compress_kv, TurboQuantConfig};
 
 // ---------------------------------------------------------------------------
 // Bare-Metal Allocator Stub
@@ -63,7 +63,10 @@ impl SymBrainEdgeEngine {
         {
             std::println!("[INFO] Memory-mapping SymBrain v3 GGUF weights into Edge RAM...");
             std::println!("  - Profile: {}", self.config.profile_name);
-            std::println!("  - Total Estimated RAM: {:.2} GB", self.config.total_vram_bytes(4096) as f32 / 1e9);
+            std::println!(
+                "  - Total Estimated RAM: {:.2} GB",
+                self.config.total_vram_bytes(4096) as f32 / 1e9
+            );
         }
     }
 
@@ -105,8 +108,12 @@ impl SymBrainEdgeEngine {
             std::println!("[SUCCESS] Left Hemisphere (Dense Reasoning) processed candidates:");
             std::println!("  - Weight Format: {:?}", self.config.left.weight_quant);
             std::println!("  - Vector Kernel executed: dequant_matmul_q4");
-            std::println!("  - Logical thought vector slice: [{:.4}, {:.4}, {:.4}, ...]", 
-                     output_activations[0], output_activations[1], output_activations[2]);
+            std::println!(
+                "  - Logical thought vector slice: [{:.4}, {:.4}, {:.4}, ...]",
+                output_activations[0],
+                output_activations[1],
+                output_activations[2]
+            );
         }
 
         // --- STEP 2: Right Hemisphere Creative Token Generation (Ministral-8B) ---
@@ -133,19 +140,30 @@ impl SymBrainEdgeEngine {
 
         #[cfg(feature = "std")]
         {
-            std::println!("\n[SUCCESS] Right Hemisphere (Creative Formulation) cached sequence context:");
+            std::println!(
+                "\n[SUCCESS] Right Hemisphere (Creative Formulation) cached sequence context:"
+            );
             std::println!("  - KV Quantizer format: TurboQuant 3-bit");
-            std::println!("  - Compressed Key bytes: {}", _compressed_kv.key_quantized.len());
-            std::println!("  - Compressed Value bytes: {}", _compressed_kv.value_quantized.len());
-            std::println!("  - QJL Error Correction projection dimensions: {}", _compressed_kv.key_qjl.len());
+            std::println!(
+                "  - Compressed Key bytes: {}",
+                _compressed_kv.key_quantized.len()
+            );
+            std::println!(
+                "  - Compressed Value bytes: {}",
+                _compressed_kv.value_quantized.len()
+            );
+            std::println!(
+                "  - QJL Error Correction projection dimensions: {}",
+                _compressed_kv.key_qjl.len()
+            );
         }
 
         // --- STEP 3: PFC WARS-CI-DFA Coordination and Unified Softmax Selection ---
         // Synthesizing Left (dense thought) and Right (creative) output scores
         let mut candidate_scores = vec![0.0f32; 3];
         candidate_scores[0] = output_activations[0] * 1.5; // Left Hemisphere thought score
-        candidate_scores[1] = right_output[0] * 1.2;      // Right Hemisphere thought score
-        candidate_scores[2] = 0.45f32;                     // PFC feedback threshold score
+        candidate_scores[1] = right_output[0] * 1.2; // Right Hemisphere thought score
+        candidate_scores[2] = 0.45f32; // PFC feedback threshold score
 
         // Run stable Softmax
         softmax_f32(&mut candidate_scores);
@@ -157,16 +175,22 @@ impl SymBrainEdgeEngine {
                      candidate_scores[0] * 100.0, candidate_scores[1] * 100.0, candidate_scores[2] * 100.0);
         }
 
-        String::from("Unified boundary layer state: Chi(x) = WeylSpinor(KerrGeodesic) - CurvatureFlow(DFA)")
+        String::from(
+            "Unified boundary layer state: Chi(x) = WeylSpinor(KerrGeodesic) - CurvatureFlow(DFA)",
+        )
     }
 }
 
 pub fn execute_edge_inference() {
     #[cfg(feature = "std")]
     {
-        std::println!("================================================================================");
+        std::println!(
+            "================================================================================"
+        );
         std::println!("         SYMBRAIN v3 SWARM BOURBAKI - EDGE CO-INFERENCE DEPLOYMENT RUNTIME");
-        std::println!("================================================================================");
+        std::println!(
+            "================================================================================"
+        );
     }
 
     // Detect hardware capabilities (simulated Edge K1 with 8GB RAM)
@@ -174,7 +198,7 @@ pub fn execute_edge_inference() {
     let mut engine = SymBrainEdgeEngine::new(caps);
 
     engine.simulate_weights_load();
-    
+
     let prompt = "Find the unified boundary layer condition for a Weyl spinor in a Kerr black hole spacetime curvature flow.";
     let _response = engine.forward_co_inference(prompt);
 
@@ -182,7 +206,9 @@ pub fn execute_edge_inference() {
     {
         std::println!("\n[INFO] Edge Inference Decoded Output:");
         std::println!("  >> \"{}\"", _response);
-        std::println!("================================================================================");
+        std::println!(
+            "================================================================================"
+        );
     }
 }
 

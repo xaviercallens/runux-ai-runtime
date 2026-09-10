@@ -6,6 +6,7 @@
 #![cfg_attr(not(test), no_std)]
 #![deny(clippy::all)]
 #![warn(clippy::pedantic)]
+#![allow(clippy::manual_div_ceil)]
 //! RunuX GGUF Loader — Pure Rust parser for GGUF model files
 //!
 //! Parses GGUF v3 model files (llama.cpp format) to extract:
@@ -198,18 +199,18 @@ impl GgufTensorType {
             Self::I16 => 2,
             Self::I32 => 4,
             Self::I64 => 8,
-            Self::Q4_0 => 18,       // 32 × 4-bit + 2-byte scale = 18
-            Self::Q4_1 => 20,       // 32 × 4-bit + 2-byte scale + 2-byte min = 20
-            Self::Q5_0 => 22,       // 32 × 5-bit + 2-byte scale = 22
-            Self::Q5_1 => 24,       // 32 × 5-bit + 2-byte scale + 2-byte min = 24
-            Self::Q8_0 => 34,       // 32 × 8-bit + 2-byte scale = 34
-            Self::Q8_1 => 40,       // 32 × 8-bit + 2-byte scale + 2-byte sum = 40
-            Self::Q2_K => 84,       // 256 elements
+            Self::Q4_0 => 18, // 32 × 4-bit + 2-byte scale = 18
+            Self::Q4_1 => 20, // 32 × 4-bit + 2-byte scale + 2-byte min = 20
+            Self::Q5_0 => 22, // 32 × 5-bit + 2-byte scale = 22
+            Self::Q5_1 => 24, // 32 × 5-bit + 2-byte scale + 2-byte min = 24
+            Self::Q8_0 => 34, // 32 × 8-bit + 2-byte scale = 34
+            Self::Q8_1 => 40, // 32 × 8-bit + 2-byte scale + 2-byte sum = 40
+            Self::Q2_K => 84, // 256 elements
             Self::Q3_K_S => 110,
             Self::Q3_K_M => 110,
             Self::Q3_K_L => 110,
             Self::Q4_K_S => 144,
-            Self::Q4_K_M => 144,    // 256 elements per block
+            Self::Q4_K_M => 144, // 256 elements per block
             Self::Q5_K_S => 176,
             Self::Q5_K_M => 176,
             Self::Q6_K => 210,
@@ -369,7 +370,8 @@ pub struct GgufFile {
 impl GgufFile {
     /// Get a metadata value by key.
     pub fn get_metadata(&self, key: &str) -> Option<&GgufValue> {
-        self.metadata.iter()
+        self.metadata
+            .iter()
             .find(|kv| kv.key == key)
             .map(|kv| &kv.value)
     }
@@ -525,12 +527,62 @@ impl<'a> BinaryReader<'a> {
         }
         let bytes = &self.data[self.pos..self.pos + len];
         self.pos += len;
-        String::from_utf8(bytes.to_vec())
-            .map_err(|_| GgufError::InvalidUtf8)
+        String::from_utf8(bytes.to_vec()).map_err(|_| GgufError::InvalidUtf8)
     }
 
     fn read_bool(&mut self) -> Result<bool, GgufError> {
         Ok(self.read_u8()? != 0)
+    }
+
+    fn skip_value(&mut self, vtype: GgufValueType) -> Result<(), GgufError> {
+        match vtype {
+            GgufValueType::Uint8 | GgufValueType::Int8 | GgufValueType::Bool => {
+                if self.pos + 1 > self.data.len() {
+                    return Err(GgufError::UnexpectedEof);
+                }
+                self.pos += 1;
+                Ok(())
+            }
+            GgufValueType::Uint16 | GgufValueType::Int16 => {
+                if self.pos + 2 > self.data.len() {
+                    return Err(GgufError::UnexpectedEof);
+                }
+                self.pos += 2;
+                Ok(())
+            }
+            GgufValueType::Uint32 | GgufValueType::Int32 | GgufValueType::Float32 => {
+                if self.pos + 4 > self.data.len() {
+                    return Err(GgufError::UnexpectedEof);
+                }
+                self.pos += 4;
+                Ok(())
+            }
+            GgufValueType::Uint64 | GgufValueType::Int64 | GgufValueType::Float64 => {
+                if self.pos + 8 > self.data.len() {
+                    return Err(GgufError::UnexpectedEof);
+                }
+                self.pos += 8;
+                Ok(())
+            }
+            GgufValueType::String => {
+                let len = self.read_u64_le()? as usize;
+                if self.pos + len > self.data.len() {
+                    return Err(GgufError::UnexpectedEof);
+                }
+                self.pos += len;
+                Ok(())
+            }
+            GgufValueType::Array => {
+                let elem_type_raw = self.read_u32_le()?;
+                let elem_type = GgufValueType::from_u32(elem_type_raw)
+                    .ok_or(GgufError::InvalidValueType(elem_type_raw))?;
+                let n = self.read_u64_le()? as usize;
+                for _ in 0..n {
+                    self.skip_value(elem_type)?;
+                }
+                Ok(())
+            }
+        }
     }
 
     fn read_value(&mut self, vtype: GgufValueType) -> Result<GgufValue, GgufError> {
@@ -552,16 +604,16 @@ impl<'a> BinaryReader<'a> {
                 let elem_type = GgufValueType::from_u32(elem_type_raw)
                     .ok_or(GgufError::InvalidValueType(elem_type_raw))?;
                 let n = self.read_u64_le()? as usize;
-                // Limit array size to prevent OOM
-                if n > 1_000_000 {
-                    // Skip large arrays (e.g., tokenizer vocab)
-                    // but still record the count
-                    let mut arr = Vec::new();
-                    for _ in 0..n.min(1000) {
+                // If array exceeds 100,000 items, retain up to 10,000 and cleanly advance the file pointer past remaining elements
+                if n > 100_000 {
+                    let keep = 10_000;
+                    let mut arr = Vec::with_capacity(keep);
+                    for _ in 0..keep {
                         arr.push(self.read_value(elem_type)?);
                     }
-                    // Skip remaining elements
-                    // (this is a simplification — real impl would skip bytes)
+                    for _ in keep..n {
+                        self.skip_value(elem_type)?;
+                    }
                     return Ok(GgufValue::Array(arr));
                 }
                 let mut arr = Vec::with_capacity(n);
@@ -610,7 +662,11 @@ impl core::fmt::Display for GgufError {
             Self::InvalidValueType(t) => write!(f, "Unknown value type: {}", t),
             Self::InvalidTensorType(t) => write!(f, "Unknown tensor type: {}", t),
             Self::TensorCountMismatch { expected, got } => {
-                write!(f, "Tensor count mismatch: expected {}, got {}", expected, got)
+                write!(
+                    f,
+                    "Tensor count mismatch: expected {}, got {}",
+                    expected, got
+                )
             }
         }
     }
@@ -662,8 +718,8 @@ pub fn parse(data: &[u8]) -> Result<GgufFile, GgufError> {
     for _ in 0..n_metadata_kv {
         let key = reader.read_string()?;
         let vtype_raw = reader.read_u32_le()?;
-        let vtype = GgufValueType::from_u32(vtype_raw)
-            .ok_or(GgufError::InvalidValueType(vtype_raw))?;
+        let vtype =
+            GgufValueType::from_u32(vtype_raw).ok_or(GgufError::InvalidValueType(vtype_raw))?;
         let value = reader.read_value(vtype)?;
 
         // Check for alignment override
@@ -686,8 +742,8 @@ pub fn parse(data: &[u8]) -> Result<GgufFile, GgufError> {
             shape.push(reader.read_u64_le()?);
         }
         let dtype_raw = reader.read_u32_le()?;
-        let dtype = GgufTensorType::from_u32(dtype_raw)
-            .ok_or(GgufError::InvalidTensorType(dtype_raw))?;
+        let dtype =
+            GgufTensorType::from_u32(dtype_raw).ok_or(GgufError::InvalidTensorType(dtype_raw))?;
         let offset = reader.read_u64_le()?;
 
         tensors.push(GgufTensorInfo {
@@ -774,7 +830,9 @@ mod tests {
 
     #[test]
     fn test_invalid_magic() {
-        let data = [0x00, 0x00, 0x00, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let data = [
+            0x00, 0x00, 0x00, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ];
         let result = parse(&data);
         assert!(matches!(result, Err(GgufError::InvalidMagic(_))));
     }
@@ -830,5 +888,48 @@ mod tests {
 
         assert_eq!(gguf.architecture(), Some("qwen2"));
         assert_eq!(gguf.context_length(), Some(32768));
+    }
+
+    #[test]
+    fn test_large_array_skipping_preserves_offset() {
+        let mut buffer = Vec::new();
+        // Magic GGUF: 0x46554747
+        buffer.extend_from_slice(&0x46554747u32.to_le_bytes());
+        // Version 3
+        buffer.extend_from_slice(&3u32.to_le_bytes());
+        // n_tensors: 0
+        buffer.extend_from_slice(&0u64.to_le_bytes());
+        // n_metadata_kv: 2
+        buffer.extend_from_slice(&2u64.to_le_bytes());
+
+        // KV 1: key="large_array", type=Array (9), elem_type=Uint8 (0), count=100050
+        let k1 = "large_array";
+        buffer.extend_from_slice(&(k1.len() as u64).to_le_bytes());
+        buffer.extend_from_slice(k1.as_bytes());
+        buffer.extend_from_slice(&9u32.to_le_bytes()); // Array
+        buffer.extend_from_slice(&0u32.to_le_bytes()); // Uint8
+        let count: u64 = 100_050;
+        buffer.extend_from_slice(&count.to_le_bytes());
+        buffer.resize(buffer.len() + count as usize, 42u8);
+
+        // KV 2: key="sentinel", type=String (8), value="intact"
+        let k2 = "sentinel";
+        buffer.extend_from_slice(&(k2.len() as u64).to_le_bytes());
+        buffer.extend_from_slice(k2.as_bytes());
+        buffer.extend_from_slice(&8u32.to_le_bytes()); // String
+        let v2 = "intact";
+        buffer.extend_from_slice(&(v2.len() as u64).to_le_bytes());
+        buffer.extend_from_slice(v2.as_bytes());
+
+        // Parse using parse()
+        let parsed = parse(&buffer).expect("Must parse successfully");
+        assert_eq!(parsed.metadata.len(), 2);
+        assert_eq!(parsed.metadata[0].key, "large_array");
+        assert_eq!(parsed.metadata[1].key, "sentinel");
+        if let GgufValue::String(ref s) = parsed.metadata[1].value {
+            assert_eq!(s, "intact");
+        } else {
+            panic!("Expected String value for sentinel metadata");
+        }
     }
 }

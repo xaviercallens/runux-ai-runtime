@@ -9,13 +9,13 @@
 //! (Normal TPU) and the RunuX Optimized TPU engine on Google TPU v5e specs.
 
 extern crate alloc;
+use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
-use alloc::string::String;
-use hal::{CpuBackend, TpuSimulatorBackend, Accelerator, Shape, DType, FlashConfig};
-use tpu_pjrt::PjrtClient;
-use mlgo_advisor::{TilingAdvisor, FusionPolicy, FusionCandidate, recommend_quantization};
+use hal::{Accelerator, CpuBackend, DType, FlashConfig, Shape, TpuSimulatorBackend};
+use mlgo_advisor::{recommend_quantization, FusionCandidate, FusionPolicy, TilingAdvisor};
 use power_monitor::CarbonFactor;
+use tpu_pjrt::PjrtClient;
 
 // ---------------------------------------------------------------------------
 // Structured Benchmark Data Types
@@ -137,7 +137,9 @@ pub fn run_scientific_tpu_benchmarks() -> TpuBenchmarkReport {
 
         gemm_benchmarks.push(GemmResult {
             name: String::from(name),
-            m, k, n,
+            m,
+            k,
+            n,
             base_latency_ms,
             base_tflops,
             base_mxu_util: base_mxu_util * 100.0,
@@ -166,7 +168,7 @@ pub fn run_scientific_tpu_benchmarks() -> TpuBenchmarkReport {
             + n_heads * seq_len * seq_len * 4 // score read
             + n_heads * seq_len * head_dim * 4 // V
             + n_heads * seq_len * head_dim * 4) as f32; // Out
-        
+
         let base_hbm_mb = base_hbm_bytes / (1024.0 * 1024.0);
         // Standard attention is memory-bandwidth bound, constrained by HBM speed.
         let memory_time_s = base_hbm_bytes / hbm_bw;
@@ -204,11 +206,51 @@ pub fn run_scientific_tpu_benchmarks() -> TpuBenchmarkReport {
 
     // ── SECTION 3: END-TO-END DECODER STEPS & GREEN AI ───────────────────
     let e2e_models = vec![
-        ("Qwen 2.5 0.5B (BF16, 24 layers)", 896, 4864, 24, 14, 2, 0.5f32),
-        ("DeepSeek R1 1.5B (BF16, 28 layers)", 1536, 8960, 28, 12, 2, 1.5f32),
-        ("Google Gemma 2 9B (BF16, 42 layers)", 3584, 14336, 42, 16, 8, 9.0f32),
-        ("Mistral 7B v0.3 (BF16, 32 layers)", 4096, 14336, 32, 32, 8, 7.2f32),
-        ("Google Gemma 2 27B (BF16, 46 layers)", 4608, 36864, 46, 32, 16, 27.0f32),
+        (
+            "Qwen 2.5 0.5B (BF16, 24 layers)",
+            896,
+            4864,
+            24,
+            14,
+            2,
+            0.5f32,
+        ),
+        (
+            "DeepSeek R1 1.5B (BF16, 28 layers)",
+            1536,
+            8960,
+            28,
+            12,
+            2,
+            1.5f32,
+        ),
+        (
+            "Google Gemma 2 9B (BF16, 42 layers)",
+            3584,
+            14336,
+            42,
+            16,
+            8,
+            9.0f32,
+        ),
+        (
+            "Mistral 7B v0.3 (BF16, 32 layers)",
+            4096,
+            14336,
+            32,
+            32,
+            8,
+            7.2f32,
+        ),
+        (
+            "Google Gemma 2 27B (BF16, 46 layers)",
+            4608,
+            36864,
+            46,
+            32,
+            16,
+            27.0f32,
+        ),
     ];
 
     let mut e2e_benchmarks = Vec::new();
@@ -217,7 +259,9 @@ pub fn run_scientific_tpu_benchmarks() -> TpuBenchmarkReport {
     let us = CarbonFactor::us_avg();
     let china = CarbonFactor::china_avg();
 
-    for &(name, hidden_dim, intermediate_dim, n_layers, n_heads, n_kv_heads, params_b) in &e2e_models {
+    for &(name, hidden_dim, intermediate_dim, n_layers, n_heads, n_kv_heads, params_b) in
+        &e2e_models
+    {
         // Estimate compute cost for 1 token decode
         let cost_base = perf_model::estimate_token_cost(
             &perf_model::ModelParams {
@@ -232,10 +276,17 @@ pub fn run_scientific_tpu_benchmarks() -> TpuBenchmarkReport {
             },
             &perf_model::HardwareSpec {
                 name: "Google TPU v5e (sim)",
-                n_cores: 4, clock_ghz: 1.7, vlen_bits: 0,
-                fp32_gflops_per_core: 49250.0, int8_tops_per_core: 0.0,
-                dram_bw_gbs: 800.0, l1_size: 32*1024*1024, l2_size: 0,
-                l1_bw_gbs: 3200.0, l2_bw_gbs: 0.0, has_ai_cores: true,
+                n_cores: 4,
+                clock_ghz: 1.7,
+                vlen_bits: 0,
+                fp32_gflops_per_core: 49250.0,
+                int8_tops_per_core: 0.0,
+                dram_bw_gbs: 800.0,
+                l1_size: 32 * 1024 * 1024,
+                l2_size: 0,
+                l1_bw_gbs: 3200.0,
+                l2_bw_gbs: 0.0,
+                has_ai_cores: true,
                 ai_core_tops: 197.0,
             },
             512,
@@ -262,7 +313,7 @@ pub fn run_scientific_tpu_benchmarks() -> TpuBenchmarkReport {
         // Carbon Footprint calculations (gCO2 per 1000 tokens)
         // CO2 = kWh * carbon_intensity = (Joules / 3,600,000) * 1000 * carbon_intensity
         let joules_to_kwh_1k = 1000.0 / 3_600_000.0;
-        
+
         let base_co2_france = base_joules_per_tok * joules_to_kwh_1k * france.g_co2_per_kwh;
         let opt_co2_france = opt_joules_per_tok * joules_to_kwh_1k * france.g_co2_per_kwh;
 

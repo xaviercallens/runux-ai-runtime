@@ -6,6 +6,11 @@
 #![cfg_attr(not(test), no_std)]
 #![deny(clippy::all)]
 #![warn(clippy::pedantic)]
+#![allow(
+    clippy::approx_constant,
+    clippy::manual_div_ceil,
+    clippy::needless_range_loop
+)]
 //! RunuX FlashAttention — Tiled, fused, IO-aware attention for RISC-V
 //!
 //! Implements the FlashAttention-2 algorithm adapted for RISC-V Vector
@@ -131,9 +136,9 @@ pub struct FlashAttentionOutput {
 /// # Returns
 /// - `FlashAttentionOutput` with output tensor [seq_len_q × head_dim]
 pub fn flash_attention_forward(
-    q: &[f32],    // [N × d]
-    k: &[f32],    // [M × d]
-    v: &[f32],    // [M × d]
+    q: &[f32], // [N × d]
+    k: &[f32], // [M × d]
+    v: &[f32], // [M × d]
     config: &FlashAttentionConfig,
 ) -> FlashAttentionOutput {
     let d = config.head_dim;
@@ -222,7 +227,11 @@ pub fn flash_attention_forward(
 
                 // Update running max
                 let old_max = row_max[qi_global];
-                let new_max = if tile_max > old_max { tile_max } else { old_max };
+                let new_max = if tile_max > old_max {
+                    tile_max
+                } else {
+                    old_max
+                };
 
                 // Compute exp(s - new_max) and row sum
                 let mut tile_sum = 0.0f32;
@@ -384,14 +393,14 @@ pub fn estimate_memory(
 ) -> MemoryEstimate {
     // Standard: N×N score matrix per head per layer + Q,K,V,O
     let standard_per_head = seq_len * seq_len * 4; // score matrix
-    let qkvo = seq_len * head_dim * 4 * 4;         // Q, K, V, O
+    let qkvo = seq_len * head_dim * 4 * 4; // Q, K, V, O
     let standard_bytes = (standard_per_head + qkvo) * n_heads * n_layers;
 
     // Flash: tile_q × tile_kv score tile + Q,K,V tile buffers + O
-    let flash_tile = tile_q * tile_kv * 4;                   // score tile
-    let flash_buf = (tile_q + tile_kv * 2) * head_dim * 4;  // Q, K, V tiles
-    let flash_output = seq_len * head_dim * 4;               // output
-    let flash_lse = seq_len * 4 * 2;                         // lse + max
+    let flash_tile = tile_q * tile_kv * 4; // score tile
+    let flash_buf = (tile_q + tile_kv * 2) * head_dim * 4; // Q, K, V tiles
+    let flash_output = seq_len * head_dim * 4; // output
+    let flash_lse = seq_len * 4 * 2; // lse + max
     let flash_bytes = (flash_tile + flash_buf + flash_output + flash_lse) * n_heads;
 
     let savings_ratio = if flash_bytes > 0 {
@@ -416,8 +425,12 @@ pub fn estimate_memory(
 /// This is the same technique used in the arXiv:2510.06834 paper for
 /// low-cost exponential computation in vectorized FlashAttention.
 fn fast_exp(x: f32) -> f32 {
-    if x < -88.0 { return 0.0; }
-    if x > 88.0 { return f32::MAX; }
+    if x < -88.0 {
+        return 0.0;
+    }
+    if x > 88.0 {
+        return f32::MAX;
+    }
     // Schraudolph: interpret float bits as approximate exp
     let a = 12102203.0f32; // 2^23 / ln(2)
     let b = 1065353216.0f32; // 127 × 2^23
@@ -427,7 +440,9 @@ fn fast_exp(x: f32) -> f32 {
 
 /// Fast natural log via IEEE-754 bit extraction.
 fn fast_ln(x: f32) -> f32 {
-    if x <= 0.0 { return f32::NEG_INFINITY; }
+    if x <= 0.0 {
+        return f32::NEG_INFINITY;
+    }
     let bits = x.to_bits();
     let exp = ((bits >> 23) & 0xFF) as f32 - 127.0;
     let m = f32::from_bits((bits & 0x007F_FFFF) | 0x3F80_0000);
@@ -437,9 +452,13 @@ fn fast_ln(x: f32) -> f32 {
 
 /// Fast inverse square root (Newton-Raphson, 5 iterations).
 fn fast_sqrt(x: f32) -> f32 {
-    if x <= 0.0 { return 0.0; }
+    if x <= 0.0 {
+        return 0.0;
+    }
     let mut g = x;
-    for _ in 0..5 { g = 0.5 * (g + x / g); }
+    for _ in 0..5 {
+        g = 0.5 * (g + x / g);
+    }
     g
 }
 
@@ -499,7 +518,10 @@ mod tests {
             assert!(
                 (result.output[dd] - v[dd]).abs() < 0.5,
                 "First token output[{}]={} should be close to v[{}]={}",
-                dd, result.output[dd], dd, v[dd]
+                dd,
+                result.output[dd],
+                dd,
+                v[dd]
             );
         }
     }
@@ -507,18 +529,21 @@ mod tests {
     #[test]
     fn test_memory_estimate() {
         let est = estimate_memory(
-            4096,  // seq_len
-            128,   // head_dim
-            32,    // n_heads
-            32,    // n_layers
-            64,    // tile_q
-            64,    // tile_kv
+            4096, // seq_len
+            128,  // head_dim
+            32,   // n_heads
+            32,   // n_layers
+            64,   // tile_q
+            64,   // tile_kv
         );
 
         // Standard: ~67GB for 4K seq, 32 heads, 32 layers
         // Flash: ~few MB
-        assert!(est.savings_ratio > 10.0,
-            "FlashAttention should save >10× memory, got {}×", est.savings_ratio);
+        assert!(
+            est.savings_ratio > 10.0,
+            "FlashAttention should save >10× memory, got {}×",
+            est.savings_ratio
+        );
     }
 
     #[test]

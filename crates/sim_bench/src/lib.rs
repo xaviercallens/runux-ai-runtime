@@ -25,16 +25,20 @@ extern crate alloc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-pub mod tpu_bench;
 pub mod framework_comparison;
+pub mod tpu_bench;
 
 // no_std trig approximations
 fn approx_sin(x: f32) -> f32 {
     let pi = core::f32::consts::PI;
     let two_pi = 2.0 * pi;
     let mut a = x % two_pi;
-    if a > pi { a -= two_pi; }
-    if a < -pi { a += two_pi; }
+    if a > pi {
+        a -= two_pi;
+    }
+    if a < -pi {
+        a += two_pi;
+    }
     let abs_a = if a < 0.0 { -a } else { a };
     let y = 4.0 / pi * a - 4.0 / (pi * pi) * a * abs_a;
     0.225 * (y * (if y < 0.0 { -y } else { y }) - y) + y
@@ -51,7 +55,7 @@ fn approx_cos(x: f32) -> f32 {
 #[derive(Debug, Clone)]
 pub struct ModelSpec {
     pub name: &'static str,
-    pub params_b: f32,  // billions of parameters
+    pub params_b: f32, // billions of parameters
     pub hidden_dim: usize,
     pub head_dim: usize,
     pub n_heads: usize,
@@ -191,9 +195,7 @@ pub fn bench_flash_attention_correctness() -> BenchmarkResult {
 
 /// Run FlashAttention memory savings benchmark.
 pub fn bench_flash_memory_savings() -> BenchmarkResult {
-    let est = flash_attention::estimate_memory(
-        4096, 128, 32, 32, 64, 64,
-    );
+    let est = flash_attention::estimate_memory(4096, 128, 32, 32, 64, 64);
 
     BenchmarkResult {
         name: "FlashAttention memory savings",
@@ -259,8 +261,8 @@ pub fn bench_memory_planning() -> Vec<BenchmarkResult> {
     ];
 
     let hardware_configs = [
-        ("BPI-F3 (4GB)", 4_294_967_296usize), // 4GB
-        ("AIBOX-K3 (8GB)", 8_589_934_592usize), // 8GB
+        ("BPI-F3 (4GB)", 4_294_967_296usize),     // 4GB
+        ("AIBOX-K3 (8GB)", 8_589_934_592usize),   // 8GB
         ("AIBOX-K3 (32GB)", 34_359_738_368usize), // 32GB
     ];
 
@@ -407,7 +409,11 @@ mod tests {
     #[test]
     fn test_flash_correctness() {
         let result = bench_flash_attention_correctness();
-        assert!(result.passed, "FlashAttention correctness check failed: max_error={}", result.metric_value);
+        assert!(
+            result.passed,
+            "FlashAttention correctness check failed: max_error={}",
+            result.metric_value
+        );
     }
 
     #[test]
@@ -427,7 +433,8 @@ mod tests {
         let results = bench_memory_planning();
         assert!(!results.is_empty());
         // Qwen 0.5B Q4 should fit on BPI-F3
-        let qwen_bpi = results.iter()
+        let qwen_bpi = results
+            .iter()
             .find(|r| r.model == "Qwen 2.5 0.5B" && r.hardware == "BPI-F3 (4GB)")
             .expect("Should have Qwen 0.5B on BPI-F3");
         assert!(qwen_bpi.passed, "Qwen 0.5B Q4 should fit on BPI-F3 4GB");

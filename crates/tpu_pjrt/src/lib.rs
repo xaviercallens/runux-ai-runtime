@@ -6,6 +6,7 @@
 #![cfg_attr(not(test), no_std)]
 #![deny(clippy::all)]
 #![warn(clippy::pedantic)]
+#![allow(clippy::manual_checked_ops, clippy::too_many_arguments)]
 //! RunuX TPU PJRT — Safe Rust bindings for Google TPU via PJRT C API
 //!
 //! Provides ownership-aware types that map to the PJRT runtime:
@@ -33,9 +34,9 @@
 
 extern crate alloc;
 pub mod ffi;
+use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
-use alloc::string::String;
 use hal::{DType, Shape};
 
 // ---------------------------------------------------------------------------
@@ -191,7 +192,9 @@ impl PjrtDevice {
 
     /// HBM utilization as percentage.
     pub fn hbm_utilization_pct(&self) -> f32 {
-        if self.hbm_total == 0 { return 0.0; }
+        if self.hbm_total == 0 {
+            return 0.0;
+        }
         self.hbm_used as f32 / self.hbm_total as f32 * 100.0
     }
 }
@@ -258,13 +261,15 @@ pub enum TpuGeneration {
 impl PjrtClient {
     /// Create a simulated TPU v5e client (1 chip).
     pub fn sim_v5e(n_chips: u32) -> Self {
-        let devices: Vec<PjrtDevice> = (0..n_chips).map(|i| PjrtDevice {
-            ordinal: i,
-            kind: "TPU v5e (simulated)",
-            hbm_total: 16 * 1024 * 1024 * 1024, // 16 GB
-            hbm_used: 0,
-            ici_links: 4,
-        }).collect();
+        let devices: Vec<PjrtDevice> = (0..n_chips)
+            .map(|i| PjrtDevice {
+                ordinal: i,
+                kind: "TPU v5e (simulated)",
+                hbm_total: 16 * 1024 * 1024 * 1024, // 16 GB
+                hbm_used: 0,
+                ici_links: 4,
+            })
+            .collect();
 
         Self {
             devices,
@@ -278,13 +283,15 @@ impl PjrtClient {
 
     /// Create a simulated TPU v6e client (1 chip).
     pub fn sim_v6e(n_chips: u32) -> Self {
-        let devices: Vec<PjrtDevice> = (0..n_chips).map(|i| PjrtDevice {
-            ordinal: i,
-            kind: "TPU v6e (simulated)",
-            hbm_total: 32usize * 1024 * 1024 * 1024, // 32 GB
-            hbm_used: 0,
-            ici_links: 6,
-        }).collect();
+        let devices: Vec<PjrtDevice> = (0..n_chips)
+            .map(|i| PjrtDevice {
+                ordinal: i,
+                kind: "TPU v6e (simulated)",
+                hbm_total: 32usize * 1024 * 1024 * 1024, // 32 GB
+                hbm_used: 0,
+                ici_links: 6,
+            })
+            .collect();
 
         Self {
             devices,
@@ -336,7 +343,9 @@ impl PjrtClient {
         dtype: DType,
         device: u32,
     ) -> Result<u64, PjrtError> {
-        let dev = self.devices.iter_mut()
+        let dev = self
+            .devices
+            .iter_mut()
             .find(|d| d.ordinal == device)
             .ok_or(PjrtError::DeviceUnavailable)?;
 
@@ -370,7 +379,10 @@ impl PjrtClient {
 
     /// Free a buffer and reclaim HBM.
     pub fn free_buffer(&mut self, id: u64) -> Result<(), PjrtError> {
-        let buf_idx = self.buffers.iter().position(|b| b.id == id)
+        let buf_idx = self
+            .buffers
+            .iter()
+            .position(|b| b.id == id)
             .ok_or(PjrtError::BufferNotReady)?;
 
         let buf = &self.buffers[buf_idx];
@@ -422,8 +434,7 @@ impl PjrtClient {
 
     /// Transfer data from device to host.
     pub fn transfer_to_host(&self, buffer_id: u64) -> Result<Vec<f32>, PjrtError> {
-        let buf = self.buffer(buffer_id)
-            .ok_or(PjrtError::BufferNotReady)?;
+        let buf = self.buffer(buffer_id).ok_or(PjrtError::BufferNotReady)?;
         buf.copy_to_host()
     }
 
@@ -479,8 +490,8 @@ pub fn plan_tpu_model(
     let weights_bytes = (total_params as f32 * weight_dtype.bytes_per_element()) as usize;
 
     // KV-cache: 2 (K+V) × n_kv_heads × head_dim × bytes_per_element
-    let kv_per_layer_per_token = 2 * n_kv_heads * head_dim *
-        weight_dtype.bytes_per_element() as usize;
+    let kv_per_layer_per_token =
+        2 * n_kv_heads * head_dim * weight_dtype.bytes_per_element() as usize;
 
     // Activation memory: ~4× hidden_dim per layer per token (Q,K,V,FFN)
     let activation_bytes = 4 * hidden_dim * 4; // FP32 activations
@@ -552,7 +563,9 @@ mod tests {
         let data = vec![1.0f32, 2.0, 3.0, 4.0];
         let shape = Shape::vector(4);
 
-        let id = client.transfer_to_device(&data, &shape, DType::F32, 0).unwrap();
+        let id = client
+            .transfer_to_device(&data, &shape, DType::F32, 0)
+            .unwrap();
         let result = client.transfer_to_host(id).unwrap();
         assert_eq!(result, data);
     }
@@ -597,8 +610,8 @@ mod tests {
         let mut client = PjrtClient::sim_v5e(1);
         let exe = client.compile(
             "flash_attention_fwd",
-            3,  // Q, K, V
-            1,  // output
+            3,             // Q, K, V
+            1,             // output
             1_000_000_000, // 1 GFLOP
         );
         assert_eq!(exe.name, "flash_attention_fwd");
@@ -612,16 +625,19 @@ mod tests {
         let plan = plan_tpu_model(
             "Llama 7B",
             7_000_000_000,
-            4096,   // hidden_dim
-            32,     // n_layers
-            32,     // n_kv_heads
-            128,    // head_dim
+            4096, // hidden_dim
+            32,   // n_layers
+            32,   // n_kv_heads
+            128,  // head_dim
             DType::BF16,
             16 * 1024 * 1024 * 1024, // v5e: 16 GB
         );
 
         assert!(plan.fits, "7B BF16 should fit on v5e (14GB weights + KV)");
-        assert!(plan.max_seq_len >= 512, "Should support at least 512 tokens");
+        assert!(
+            plan.max_seq_len >= 512,
+            "Should support at least 512 tokens"
+        );
     }
 
     #[test]

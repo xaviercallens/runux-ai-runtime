@@ -87,7 +87,7 @@ impl SpeculativeConfig {
     /// Configuration optimized for BPI-F3 → AIBOX-K3 setup.
     pub fn for_edge_cluster() -> Self {
         Self {
-            draft_length: 5,   // Conservative K for edge latency
+            draft_length: 5, // Conservative K for edge latency
             max_accept: 5,
             draft_temperature: 0.7,
             target_temperature: 0.7,
@@ -212,7 +212,8 @@ impl SpeculativeEngine {
                     accepted_count += 1;
                 } else {
                     // Rejected: sample from residual distribution max(0, p - q)
-                    let draft_probs = softmax_simple(&draft.draft_logits, self.config.draft_temperature);
+                    let draft_probs =
+                        softmax_simple(&draft.draft_logits, self.config.draft_temperature);
                     let bonus = self.sample_residual(&target_probs, &draft_probs);
                     accepted_tokens.push(bonus);
                     has_bonus = true;
@@ -308,13 +309,17 @@ impl SpeculativeEngine {
 
     /// Average acceptance rate across all steps.
     pub fn avg_acceptance_rate(&self) -> f32 {
-        if self.total_drafted == 0 { return 0.0; }
+        if self.total_drafted == 0 {
+            return 0.0;
+        }
         self.total_accepted as f32 / self.total_drafted as f32
     }
 
     /// Average tokens generated per step (accepted + bonus).
     pub fn avg_tokens_per_step(&self) -> f32 {
-        if self.total_steps == 0 { return 0.0; }
+        if self.total_steps == 0 {
+            return 0.0;
+        }
         self.total_accepted as f32 / self.total_steps as f32
     }
 
@@ -324,7 +329,9 @@ impl SpeculativeEngine {
     /// where draft_overhead is the relative cost of running the draft model.
     pub fn estimated_speedup(&self, draft_cost_ratio: f32) -> f32 {
         let tokens_per_step = self.avg_tokens_per_step();
-        if tokens_per_step <= 0.0 { return 1.0; }
+        if tokens_per_step <= 0.0 {
+            return 1.0;
+        }
         tokens_per_step / (1.0 + draft_cost_ratio)
     }
 
@@ -332,11 +339,7 @@ impl SpeculativeEngine {
     ///
     /// By accepting multiple tokens per target forward pass, we amortize
     /// the target model's power cost across multiple tokens.
-    pub fn power_efficiency_ratio(
-        &self,
-        draft_watts: f32,
-        target_watts: f32,
-    ) -> PowerReport {
+    pub fn power_efficiency_ratio(&self, draft_watts: f32, target_watts: f32) -> PowerReport {
         let alpha = self.avg_acceptance_rate();
         let k = self.config.draft_length as f32;
 
@@ -370,12 +373,12 @@ impl SpeculativeEngine {
     /// When carbon intensity is low, we scale K up to maximize generation throughput.
     pub fn adjust_draft_length_carbon_aware(
         &mut self,
-        grid_co2: f32,          // Current grid CO2 factor (gCO2/kWh)
-        target_co2: f32,        // Target low-carbon threshold (e.g. 50.0 for France/Sweden)
-        max_co2: f32,           // Maximum high-carbon limit (e.g. 500.0 for coal-heavy grids)
-        gamma: f32,             // Scaling sensitivity factor (usually 0.5 - 1.0)
-        baseline_k: usize,      // Standard baseline draft length K
-        max_k: usize,           // Maximum limit for K (hardware capacity bound)
+        grid_co2: f32,     // Current grid CO2 factor (gCO2/kWh)
+        target_co2: f32,   // Target low-carbon threshold (e.g. 50.0 for France/Sweden)
+        max_co2: f32,      // Maximum high-carbon limit (e.g. 500.0 for coal-heavy grids)
+        gamma: f32,        // Scaling sensitivity factor (usually 0.5 - 1.0)
+        baseline_k: usize, // Standard baseline draft length K
+        max_k: usize,      // Maximum limit for K (hardware capacity bound)
     ) {
         if grid_co2 <= target_co2 {
             // Low carbon intensity: maximize throughput up to max_k
@@ -385,7 +388,7 @@ impl SpeculativeEngine {
             let range = (max_co2 - target_co2).max(1.0);
             let overshoot = (grid_co2 - target_co2).min(range);
             let scaling_factor = 1.0 - gamma * (overshoot / range);
-            
+
             let new_k = (baseline_k as f32 * scaling_factor) as usize;
             // Clamp to at least 2 draft tokens (minimum speculative advantage)
             self.config.draft_length = new_k.max(2).min(max_k);
@@ -418,7 +421,9 @@ fn softmax_simple(logits: &[f32], temperature: f32) -> Vec<f32> {
     // Find max for numerical stability
     let mut max_val = f32::NEG_INFINITY;
     for &v in logits {
-        if v > max_val { max_val = v; }
+        if v > max_val {
+            max_val = v;
+        }
     }
 
     // exp and sum
@@ -455,8 +460,12 @@ fn argmax(probs: &[f32]) -> u32 {
 
 /// Fast exp approximation (Schraudolph).
 fn fast_exp(x: f32) -> f32 {
-    if x < -88.0 { return 0.0; }
-    if x > 88.0 { return f32::MAX; }
+    if x < -88.0 {
+        return 0.0;
+    }
+    if x > 88.0 {
+        return f32::MAX;
+    }
     let a = 12102203.0f32;
     let b = 1065353216.0f32;
     let bits = (a * x + b) as u32;
@@ -493,9 +502,7 @@ mod tests {
             })
             .collect();
 
-        let target_logits: Vec<Vec<f32>> = (0..4)
-            .map(|i| make_logits(i + 1, 100))
-            .collect();
+        let target_logits: Vec<Vec<f32>> = (0..4).map(|i| make_logits(i + 1, 100)).collect();
 
         let result = engine.verify(&draft_tokens, &target_logits);
         assert!(
@@ -522,7 +529,10 @@ mod tests {
         let target_logits = vec![make_logits(10, 100)];
 
         let result = engine.verify(&draft_tokens, &target_logits);
-        assert_eq!(result.accepted_count, 0, "Disagreeing token should be rejected");
+        assert_eq!(
+            result.accepted_count, 0,
+            "Disagreeing token should be rejected"
+        );
         assert_eq!(result.accepted_tokens[0], 10, "Should use target's token");
     }
 
@@ -532,11 +542,13 @@ mod tests {
 
         // Simulate 10 steps with ~60% acceptance
         for _ in 0..10 {
-            let draft: Vec<DraftToken> = (0..5).map(|i| DraftToken {
-                token_id: i,
-                draft_prob: 0.5,
-                draft_logits: make_logits(i as usize, 50),
-            }).collect();
+            let draft: Vec<DraftToken> = (0..5)
+                .map(|i| DraftToken {
+                    token_id: i,
+                    draft_prob: 0.5,
+                    draft_logits: make_logits(i as usize, 50),
+                })
+                .collect();
 
             let target: Vec<Vec<f32>> = (0..5).map(|i| make_logits(i as usize, 50)).collect();
             engine.verify(&draft, &target);
@@ -544,7 +556,10 @@ mod tests {
 
         let report = engine.power_efficiency_ratio(5.0, 15.0);
         assert!(report.co2_reduction_factor > 0.0);
-        assert!(report.speculative_watts_per_token < report.standard_watts_per_token || report.savings_percent > 0.0);
+        assert!(
+            report.speculative_watts_per_token < report.standard_watts_per_token
+                || report.savings_percent > 0.0
+        );
     }
 
     #[test]
@@ -563,15 +578,15 @@ mod tests {
     #[test]
     fn test_modified_rejection_sampling_probability_bounds() {
         let mut engine = SpeculativeEngine::new(SpeculativeConfig::default());
-        
+
         let draft_tokens = vec![DraftToken {
             token_id: 1,
             draft_prob: 0.00001,
             draft_logits: make_logits(1, 100),
         }];
-        
+
         let target_logits = vec![make_logits(99, 100)];
-        
+
         let result = engine.verify(&draft_tokens, &target_logits);
         assert!(!result.accepted_tokens.is_empty());
     }
@@ -589,16 +604,15 @@ mod tests {
     #[test]
     fn test_carbon_aware_dynamic_scaling() {
         let mut engine = SpeculativeEngine::new(SpeculativeConfig::default());
-        
+
         // Target is 50.0 (e.g. France/Sweden), max is 500.0 (e.g. Germany/USA)
         // With very low carbon: should scale up to max_k
         engine.adjust_draft_length_carbon_aware(30.0, 50.0, 500.0, 0.5, 5, 8);
         assert_eq!(engine.config.draft_length, 8);
-        
+
         // With moderate carbon: should scale K down
         engine.adjust_draft_length_carbon_aware(200.0, 50.0, 500.0, 0.5, 8, 8);
         assert!(engine.config.draft_length < 8);
         assert!(engine.config.draft_length >= 2);
     }
 }
-

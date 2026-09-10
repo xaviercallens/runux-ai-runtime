@@ -6,6 +6,7 @@
 #![cfg_attr(not(test), no_std)]
 #![deny(clippy::all)]
 #![warn(clippy::pedantic)]
+#![allow(clippy::manual_memcpy, clippy::needless_range_loop)]
 //! RunuX Simulated Inference — End-to-end LLM pipeline in simulation mode
 //!
 //! Wires together every crate in the RunuX AI Runtime stack to execute
@@ -289,9 +290,8 @@ pub fn run_simulation(config: &SimConfig) -> SimulationResult {
                         let v_end = (v_start + d_k).min(v_out.len());
                         if v_end > v_start && v_end - v_start >= 8 {
                             let v_slice = &v_out[v_start..v_end];
-                            let compressed = turbo_quant::compress_kv(
-                                k_slice, v_slice, &tq_config, seq_pos,
-                            );
+                            let compressed =
+                                turbo_quant::compress_kv(k_slice, v_slice, &tq_config, seq_pos);
 
                             total_kv_original += (end - start + v_end - v_start) * 4;
                             total_kv_compressed += compressed.key_quantized.len()
@@ -318,9 +318,8 @@ pub fn run_simulation(config: &SimConfig) -> SimulationResult {
                     scale: 1.0 / fast_sqrt(d_k as f32),
                 };
 
-                let result = flash_attention::flash_attention_forward(
-                    q_head, k_head, v_head, &fa_config,
-                );
+                let result =
+                    flash_attention::flash_attention_forward(q_head, k_head, v_head, &fa_config);
                 result.output
             } else {
                 // Fallback: simple scaled dot-product
@@ -343,11 +342,8 @@ pub fn run_simulation(config: &SimConfig) -> SimulationResult {
             let mut ffn_in = hidden_state.clone();
             rvv_simd::rms_norm_f32(&mut ffn_in, &norm_weight, 1e-6);
 
-            let ffn_out = transformer::ffn_forward(
-                &ffn_in,
-                &gate_weight, &up_weight, &down_weight,
-                d, d_ff,
-            );
+            let ffn_out =
+                transformer::ffn_forward(&ffn_in, &gate_weight, &up_weight, &down_weight, d, d_ff);
 
             // Residual
             for i in 0..d.min(ffn_out.len()) {
@@ -380,9 +376,7 @@ pub fn run_simulation(config: &SimConfig) -> SimulationResult {
 
     // --- Compute metrics ---
     let flash_savings = if config.use_flash_attention {
-        let est = flash_attention::estimate_memory(
-            total_seq_len, d_k, n_heads, n_layers, 64, 64,
-        );
+        let est = flash_attention::estimate_memory(total_seq_len, d_k, n_heads, n_layers, 64, 64);
         est.savings_ratio
     } else {
         1.0
@@ -411,7 +405,8 @@ pub fn run_simulation(config: &SimConfig) -> SimulationResult {
     // Power estimate
     let power_profile = power_monitor::PowerProfile::bpi_f3();
     let carbon = power_monitor::CarbonFactor::france();
-    let energy = power_monitor::estimate_token_energy(&power_profile, perf.tokens_per_second, &carbon);
+    let energy =
+        power_monitor::estimate_token_energy(&power_profile, perf.tokens_per_second, &carbon);
 
     // Speculative decoding (simulate if enabled)
     let speculative_acceptance = if config.use_speculative {
@@ -420,22 +415,26 @@ pub fn run_simulation(config: &SimConfig) -> SimulationResult {
 
         // Simulate 10 draft-verify rounds
         for _ in 0..10 {
-            let draft_tokens: Vec<speculative::DraftToken> = (0..5).map(|i| {
-                let mut logits = vec![-5.0f32; 100];
-                logits[(i * 7) % 100] = 5.0;
-                speculative::DraftToken {
-                    token_id: ((i * 7) % 100) as u32,
-                    draft_prob: 0.6,
-                    draft_logits: logits,
-                }
-            }).collect();
+            let draft_tokens: Vec<speculative::DraftToken> = (0..5)
+                .map(|i| {
+                    let mut logits = vec![-5.0f32; 100];
+                    logits[(i * 7) % 100] = 5.0;
+                    speculative::DraftToken {
+                        token_id: ((i * 7) % 100) as u32,
+                        draft_prob: 0.6,
+                        draft_logits: logits,
+                    }
+                })
+                .collect();
 
-            let target_logits: Vec<Vec<f32>> = (0..5).map(|i| {
-                let mut logits = vec![-5.0f32; 100];
-                logits[(i * 7) % 100] = 4.5; // similar but not identical
-                logits[((i * 7 + 1) % 100)] = 1.0;
-                logits
-            }).collect();
+            let target_logits: Vec<Vec<f32>> = (0..5)
+                .map(|i| {
+                    let mut logits = vec![-5.0f32; 100];
+                    logits[(i * 7) % 100] = 4.5; // similar but not identical
+                    logits[((i * 7 + 1) % 100)] = 1.0;
+                    logits
+                })
+                .collect();
 
             engine.verify(&draft_tokens, &target_logits);
         }
@@ -467,9 +466,13 @@ pub fn run_simulation(config: &SimConfig) -> SimulationResult {
 // ---------------------------------------------------------------------------
 
 fn fast_sqrt(x: f32) -> f32 {
-    if x <= 0.0 { return 0.0; }
+    if x <= 0.0 {
+        return 0.0;
+    }
     let mut g = x;
-    for _ in 0..5 { g = 0.5 * (g + x / g); }
+    for _ in 0..5 {
+        g = 0.5 * (g + x / g);
+    }
     g
 }
 
@@ -502,8 +505,11 @@ mod tests {
         // savings. The ratio is still computed correctly — it's just < 1.0
         // because the model is too small to benefit. For production sizes
         // (N≥256), savings are always > 1.0.
-        assert!(result.flash_mem_savings > 0.0,
-            "FlashAttention savings ratio should be positive, got {}", result.flash_mem_savings);
+        assert!(
+            result.flash_mem_savings > 0.0,
+            "FlashAttention savings ratio should be positive, got {}",
+            result.flash_mem_savings
+        );
         assert_eq!(result.num_generated, config.gen_len);
     }
 
@@ -517,8 +523,11 @@ mod tests {
         let result = run_simulation(&config);
 
         // KV compression should show non-trivial ratio
-        assert!(result.kv_compression_ratio >= 1.0,
-            "KV compression ratio should be >= 1.0, got {}", result.kv_compression_ratio);
+        assert!(
+            result.kv_compression_ratio >= 1.0,
+            "KV compression ratio should be >= 1.0, got {}",
+            result.kv_compression_ratio
+        );
     }
 
     #[test]
@@ -529,8 +538,11 @@ mod tests {
 
         assert!(result.speculative_acceptance.is_some());
         let alpha = result.speculative_acceptance.unwrap();
-        assert!(alpha >= 0.0 && alpha <= 1.0,
-            "Acceptance rate should be in [0,1], got {}", alpha);
+        assert!(
+            alpha >= 0.0 && alpha <= 1.0,
+            "Acceptance rate should be in [0,1], got {}",
+            alpha
+        );
     }
 
     #[test]
@@ -540,8 +552,12 @@ mod tests {
 
         // All generated tokens should be valid (within vocab)
         for &tok in &result.generated_tokens {
-            assert!((tok as usize) < config.vocab_size,
-                "Token {} exceeds vocab size {}", tok, config.vocab_size);
+            assert!(
+                (tok as usize) < config.vocab_size,
+                "Token {} exceeds vocab size {}",
+                tok,
+                config.vocab_size
+            );
         }
     }
 

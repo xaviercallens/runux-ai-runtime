@@ -66,7 +66,7 @@ impl PowerProfile {
             ai_watts: 6.0,
             idle_watts: 2.0,
             peak_tops: 2.0,
-            peak_gflops: 16.0, // 8 cores × 1.6GHz × 2 FMA
+            peak_gflops: 16.0,       // 8 cores × 1.6GHz × 2 FMA
             mem_bandwidth_gbs: 12.8, // LPDDR4-3200 single-channel
         }
     }
@@ -91,8 +91,8 @@ impl PowerProfile {
             tdp_watts: 400.0,
             ai_watts: 300.0,
             idle_watts: 50.0,
-            peak_tops: 624.0, // INT8
-            peak_gflops: 19500.0, // FP32
+            peak_tops: 624.0,          // INT8
+            peak_gflops: 19500.0,      // FP32
             mem_bandwidth_gbs: 2039.0, // HBM2e
         }
     }
@@ -131,31 +131,58 @@ pub struct CarbonFactor {
 
 impl CarbonFactor {
     pub fn france() -> Self {
-        Self { region: "France", g_co2_per_kwh: 56.0 } // Nuclear-dominated
+        Self {
+            region: "France",
+            g_co2_per_kwh: 56.0,
+        } // Nuclear-dominated
     }
     pub fn china_avg() -> Self {
-        Self { region: "China (avg)", g_co2_per_kwh: 555.0 } // Coal-heavy
+        Self {
+            region: "China (avg)",
+            g_co2_per_kwh: 555.0,
+        } // Coal-heavy
     }
     pub fn china_yunnan() -> Self {
-        Self { region: "China (Yunnan)", g_co2_per_kwh: 120.0 } // Hydro
+        Self {
+            region: "China (Yunnan)",
+            g_co2_per_kwh: 120.0,
+        } // Hydro
     }
     pub fn germany() -> Self {
-        Self { region: "Germany", g_co2_per_kwh: 350.0 }
+        Self {
+            region: "Germany",
+            g_co2_per_kwh: 350.0,
+        }
     }
     pub fn us_avg() -> Self {
-        Self { region: "USA (avg)", g_co2_per_kwh: 386.0 }
+        Self {
+            region: "USA (avg)",
+            g_co2_per_kwh: 386.0,
+        }
     }
     pub fn us_california() -> Self {
-        Self { region: "USA (CA)", g_co2_per_kwh: 210.0 }
+        Self {
+            region: "USA (CA)",
+            g_co2_per_kwh: 210.0,
+        }
     }
     pub fn iceland() -> Self {
-        Self { region: "Iceland", g_co2_per_kwh: 28.0 } // Geothermal
+        Self {
+            region: "Iceland",
+            g_co2_per_kwh: 28.0,
+        } // Geothermal
     }
     pub fn sweden() -> Self {
-        Self { region: "Sweden", g_co2_per_kwh: 20.0 } // Hydro + Nuclear (Borlänge)
+        Self {
+            region: "Sweden",
+            g_co2_per_kwh: 20.0,
+        } // Hydro + Nuclear (Borlänge)
     }
     pub fn nordic_avg() -> Self {
-        Self { region: "Nordic (avg)", g_co2_per_kwh: 25.0 } // Hydro-dominated mix
+        Self {
+            region: "Nordic (avg)",
+            g_co2_per_kwh: 25.0,
+        } // Hydro-dominated mix
     }
 }
 
@@ -371,7 +398,8 @@ pub fn run_power_simulation() -> Vec<SimulationResult> {
         joules_per_token: a100_est.joules_per_token,
         g_co2_per_1k: a100_est.g_co2_per_1k_tokens,
         speedup_vs_baseline: a100_tps / baseline_tps,
-        energy_savings_percent: (1.0 - a100_est.joules_per_token / baseline.joules_per_token) * 100.0,
+        energy_savings_percent: (1.0 - a100_est.joules_per_token / baseline.joules_per_token)
+            * 100.0,
     });
 
     results
@@ -401,7 +429,8 @@ mod tests {
         assert!(
             k3.tops_per_watt() > k1.tops_per_watt(),
             "K3 ({:.2} TOPS/W) should beat K1 ({:.2} TOPS/W)",
-            k3.tops_per_watt(), k1.tops_per_watt()
+            k3.tops_per_watt(),
+            k1.tops_per_watt()
         );
     }
 
@@ -431,24 +460,27 @@ mod tests {
         assert!(
             edge.g_co2_per_token < cloud.g_co2_per_token,
             "Edge ({:.6} gCO2/tok) should be greener than cloud ({:.6} gCO2/tok)",
-            edge.g_co2_per_token, cloud.g_co2_per_token
+            edge.g_co2_per_token,
+            cloud.g_co2_per_token
         );
     }
 
     #[test]
     fn test_training_energy() {
         let est = estimate_training_energy(
-            4,                            // 4 BPI-F3 nodes
+            4, // 4 BPI-F3 nodes
             &PowerProfile::bpi_f3(),
-            2.0,                          // 2 hours training
-            1000,                         // 1000 samples/node
-            10,                           // 10 rounds
+            2.0,  // 2 hours training
+            1000, // 1000 samples/node
+            10,   // 10 rounds
             &CarbonFactor::france(),
         );
 
         assert!(est.total_kwh > 0.0);
-        assert!(est.savings_vs_cloud_percent > 0.0,
-            "Edge training should be more energy-efficient than cloud");
+        assert!(
+            est.savings_vs_cloud_percent > 0.0,
+            "Edge training should be more energy-efficient than cloud"
+        );
     }
 
     #[test]
@@ -462,26 +494,34 @@ mod tests {
             assert!(
                 results[i].joules_per_token <= results[i - 1].joules_per_token * 1.01,
                 "BPI-F3 config '{}' ({:.3} J/tok) should improve on '{}' ({:.3} J/tok)",
-                results[i].config_name, results[i].joules_per_token,
-                results[i - 1].config_name, results[i - 1].joules_per_token
+                results[i].config_name,
+                results[i].joules_per_token,
+                results[i - 1].config_name,
+                results[i - 1].joules_per_token
             );
         }
 
         // K3 should be faster than baseline BPI-F3 (higher tok/s)
-        assert!(results[4].tokens_per_second > results[0].tokens_per_second,
-            "K3 should have higher throughput than baseline BPI-F3");
+        assert!(
+            results[4].tokens_per_second > results[0].tokens_per_second,
+            "K3 should have higher throughput than baseline BPI-F3"
+        );
 
         // A100 should be fastest overall
         let last = results.len() - 1;
-        assert!(results[last].tokens_per_second > results[0].tokens_per_second * 10.0,
-            "A100 should be >10× faster than baseline");
+        assert!(
+            results[last].tokens_per_second > results[0].tokens_per_second * 10.0,
+            "A100 should be >10× faster than baseline"
+        );
     }
 
     #[test]
     fn test_carbon_factors() {
         let fr = CarbonFactor::france();
         let cn = CarbonFactor::china_avg();
-        assert!(fr.g_co2_per_kwh < cn.g_co2_per_kwh,
-            "France (nuclear) should have lower carbon intensity than China avg");
+        assert!(
+            fr.g_co2_per_kwh < cn.g_co2_per_kwh,
+            "France (nuclear) should have lower carbon intensity than China avg"
+        );
     }
 }

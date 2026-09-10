@@ -178,7 +178,8 @@ impl BpeTokenizer {
 
         for &b in bytes {
             // Find the byte-level token (e.g., <0x41> for byte 0x41)
-            let token_id = self.find_byte_token(b)
+            let token_id = self
+                .find_byte_token(b)
                 .unwrap_or(self.special_tokens.unk_id);
             byte_tokens.push(token_id);
         }
@@ -255,9 +256,8 @@ impl BpeTokenizer {
         }
 
         // Best-effort UTF-8 decode
-        String::from_utf8(bytes).unwrap_or_else(|e| {
-            String::from_utf8_lossy(e.as_bytes()).into_owned()
-        })
+        String::from_utf8(bytes)
+            .unwrap_or_else(|e| String::from_utf8_lossy(e.as_bytes()).into_owned())
     }
 
     /// Get the token string for a given ID.
@@ -267,7 +267,8 @@ impl BpeTokenizer {
 
     /// Find a token ID by its string.
     fn find_token(&self, token: &str) -> Option<u32> {
-        self.vocab.iter()
+        self.vocab
+            .iter()
             .position(|e| e.token == token)
             .map(|i| i as u32)
     }
@@ -275,24 +276,27 @@ impl BpeTokenizer {
     /// Find the byte-level fallback token for a given byte value.
     fn find_byte_token(&self, byte: u8) -> Option<u32> {
         let byte_token = alloc::format!("<0x{:02X}>", byte);
-        self.find_token(&byte_token)
-            .or_else(|| {
-                // Some models use single-char tokens for printable ASCII
-                if byte.is_ascii_graphic() || byte == b' ' {
-                    let ch = alloc::format!("{}", byte as char);
-                    self.find_token(&ch)
-                } else {
-                    None
-                }
-            })
+        self.find_token(&byte_token).or_else(|| {
+            // Some models use single-char tokens for printable ASCII
+            if byte.is_ascii_graphic() || byte == b' ' {
+                let ch = alloc::format!("{}", byte as char);
+                self.find_token(&ch)
+            } else {
+                None
+            }
+        })
     }
 
     /// Construct the merged token string from two token IDs.
     fn merge_token_string(&self, left: u32, right: u32) -> String {
-        let left_str = self.vocab.get(left as usize)
+        let left_str = self
+            .vocab
+            .get(left as usize)
             .map(|e| e.token.as_str())
             .unwrap_or("");
-        let right_str = self.vocab.get(right as usize)
+        let right_str = self
+            .vocab
+            .get(right as usize)
             .map(|e| e.token.as_str())
             .unwrap_or("");
         alloc::format!("{}{}", left_str, right_str)
