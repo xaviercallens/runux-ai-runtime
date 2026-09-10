@@ -516,7 +516,7 @@ def retrofit_soak_results_to_datasets(
     master["long_duration_soak_validation"] = {
         "t4_1hour_soak_summary": t4_data.get("summary", {}),
         "tpu_spot_serverless_summary": tpu_data.get("summary", {}),
-        "zenodo_doi": "10.5281/zenodo.14992026",
+        "zenodo_doi": "10.5281/zenodo.22697937",
         "open_science_license": "CC-BY-4.0",
     }
 

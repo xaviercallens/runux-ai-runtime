@@ -108,7 +108,7 @@ PYTHONPATH=. /home/callensxavier_gmail_com/venv/bin/pytest tests/
 
 ## 6. Open Science Repositories & DOI Identifiers
 
-- **Zenodo DOI**: `10.5281/zenodo.14992026` (License: `CC-BY-4.0`).
+- **Zenodo DOI**: `10.5281/zenodo.22697937` (License: `CC-BY-4.0`).
 - **Hugging Face Hub**:
   - Datasets: `socrateai/runux-scientific-proof-datasets`
   - Models & Configs: `socrateai/runux-evaluation-configs`

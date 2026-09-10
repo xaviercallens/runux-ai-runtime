@@ -357,7 +357,7 @@ Conformément à la stratégie de valorisation des brevets d'invention (Article 
 - **Inférence Serverless Élastique à Coût Minimal** : Déploiement de charges d'inférence résilientes sans état résiduel sur instances Spot TPU avec sauvegarde DMA asynchrone sub-12 ms, abaissant les coûts de calcul d'inférence de plus de 65%.
 
 ### 10.4 Cadre de Contribution en Code Ouvert (Open Science & Open Source)
-- **Couche d'Accompagnement Ouverte** : Les harnais d'évaluation scientifique (`harness_mistral.py`, `harness_nvidia.py`, `harness_google.py`), les jeux de données de reproductibilité (`mistral_7b_runux_hardware_gains.json`, `scientific_proof_master_dataset.json`) et les scripts d'étalonnage sont publiés sous licences ouvertes permissives (Apache 2.0 / MIT) et archivés sur Zenodo (DOI `10.5281/zenodo.14992026`) et Hugging Face (`socrateai/runux-scientific-proof-datasets`).
+- **Couche d'Accompagnement Ouverte** : Les harnais d'évaluation scientifique (`harness_mistral.py`, `harness_nvidia.py`, `harness_google.py`), les jeux de données de reproductibilité (`mistral_7b_runux_hardware_gains.json`, `scientific_proof_master_dataset.json`) et les scripts d'étalonnage sont publiés sous licences ouvertes permissives (Apache 2.0 / MIT) et archivés sur Zenodo (DOI `10.5281/zenodo.22697937`) et Hugging Face (`socrateai/runux-scientific-proof-datasets`).
 - **Protection du Cœur Technologique** : Le micro-noyau d'exécution compilé en Rust natif sans runtime (*no_std*), les constantes secrètes de dispersion et les algorithmes de compactage mémoire restent strictement protégés par le secret de fabrique et les droits exclusifs issus de la présente demande de brevet.
 
 ---

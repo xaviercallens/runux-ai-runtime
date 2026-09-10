@@ -336,7 +336,7 @@
       "formal_safety_guarantee": "CERT-LEAN4-BUMP-ALLOCATOR-A9C3B1280CDC",
       "status": "PASS (Zero Token Loss Under Spot Preemption)"
     },
-    "zenodo_doi": "10.5281/zenodo.14992026",
+    "zenodo_doi": "10.5281/zenodo.22697937",
     "open_science_license": "CC-BY-4.0"
   }
 }

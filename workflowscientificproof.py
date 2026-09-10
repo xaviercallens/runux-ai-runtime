@@ -652,14 +652,14 @@ tags:
 
 # RunuX AI Runtime — Scientific Benchmarking & Open Evaluation Artifacts
 
-[![Zenodo DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.14992026-blue.svg)](https://doi.org/10.5281/zenodo.14992026)
+[![Zenodo DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.22697937-blue.svg)](https://doi.org/10.5281/zenodo.22697937)
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 [![Paper PDF](https://img.shields.io/badge/Paper-PDF_Available-red.svg)](paper/runux_scientific_proof_paper.pdf)
 
 This repository provides open, reproducible evaluation datasets, empirical hardware telemetry, and model configuration cards accompanying the scientific research paper:
 > **"RunuX: Deterministic Fixed-Point Attention, Isometric PolarQuant KV-Compression, and Grid-Carbon Adaptive Scheduling for High-Efficiency Foundation Model Inference"**  
 > *Author: Xavier Callens (Socrate AI Lab / RunuX Research, 2026)*  
-> *Permanent Zenodo Archive: [10.5281/zenodo.14992026](https://doi.org/10.5281/zenodo.14992026)*
+> *Permanent Zenodo Archive: [10.5281/zenodo.22697937](https://doi.org/10.5281/zenodo.22697937)*
 
 ---
 
