@@ -1,0 +1,87 @@
+{
+  "timestamp": "2026-09-10T10:44:56.399160Z",
+  "host_arch": "x86_64",
+  "os_name": "Linux-6.8.0-1066-gcp-x86_64-with-glibc2.35",
+  "python_version": "3.10.12",
+  "rustc_version": "rustc 1.96.1 (31fca3adb 2026-06-26)",
+  "gpu_detected": true,
+  "gpu_name": "Tesla T4",
+  "gpu_vram_gb": 14.56,
+  "total_stages": 5,
+  "stages_passed": 5,
+  "stages_failed": 0,
+  "overall_status": "SUCCESS",
+  "stage_results": [
+    {
+      "stage_name": "Environment Diagnostics",
+      "passed": true,
+      "duration_s": 1.6781244277954102,
+      "metrics": {
+        "os": "Linux-6.8.0-1066-gcp-x86_64-with-glibc2.35",
+        "arch": "x86_64",
+        "python": "3.10.12",
+        "rustc": "rustc 1.96.1 (31fca3adb 2026-06-26)",
+        "cuda_available": true,
+        "torch_version": "2.7.1+cu118",
+        "gpu_name": "Tesla T4",
+        "gpu_count": 1,
+        "gpu_vram_gb": 14.56,
+        "cuda_version": "11.8"
+      },
+      "errors": [],
+      "details": "Host x86_64 with Tesla T4"
+    },
+    {
+      "stage_name": "Workspace Unit Test Suite",
+      "passed": true,
+      "duration_s": 4.220656394958496,
+      "metrics": {
+        "tests_passed": 181,
+        "tests_failed": 0
+      },
+      "errors": [],
+      "details": "181 tests passed with 0 failures"
+    },
+    {
+      "stage_name": "Scientific Benchmarks (runux-report)",
+      "passed": true,
+      "duration_s": 0.05852174758911133,
+      "metrics": {
+        "flash_attn_savings": "0.2x",
+        "kv_compression": "4.6x",
+        "k1_tps": "305436.8",
+        "joules_per_tok": "0.0000",
+        "autoresearch": {
+          "estimated_tps_k1": 305436.8,
+          "tpu_opt_tflops": 173.4
+        }
+      },
+      "errors": [],
+      "details": "Autoresearch metrics: {'estimated_tps_k1': 305436.8, 'tpu_opt_tflops': 173.4}"
+    },
+    {
+      "stage_name": "GPU Deterministic Attention PoC",
+      "passed": true,
+      "duration_s": 2.680025815963745,
+      "metrics": {
+        "float_softmax_perf": "PoC 1 (float softmax):  3.255 ms/iter @ 36.2W",
+        "lut_softmax_perf": "PoC 2 (LUT softmax):    3.359 ms/iter @ 36.2W",
+        "speedup": "Speedup: 0.97x",
+        "determinism_confirmed": true
+      },
+      "errors": [],
+      "details": "Bit-exact zero numerical drift verified on NVIDIA Tesla T4"
+    },
+    {
+      "stage_name": "Neuro-Symbolic Gatekeeper",
+      "passed": true,
+      "duration_s": 0.0486292839050293,
+      "metrics": {
+        "rtx_4090_accepted": true,
+        "oom_node_rejected": true
+      },
+      "errors": [],
+      "details": "Differential privacy and VRAM bounding gates verified"
+    }
+  ]
+}
