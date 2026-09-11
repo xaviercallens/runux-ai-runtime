@@ -1,0 +1,185 @@
+{
+  "generated": "2026-09-11T13:45:13Z",
+  "resolutions": [
+    {
+      "iteration": 1,
+      "issue_id": "P0-1",
+      "severity": "CRITICAL",
+      "title": "turbo_quant Cargo.toml absolute path → relative path",
+      "status": "FIXED",
+      "details": "Replaced absolute developer machine path with ../ai_runtime in crates/turbo_quant/Cargo.toml",
+      "timestamp": "2026-09-11T13:45:08Z"
+    },
+    {
+      "iteration": 1,
+      "issue_id": "P0-2",
+      "severity": "CRITICAL",
+      "title": "restart_session.sh hardcoded VENV_PYTHON → dynamic discovery",
+      "status": "FIXED",
+      "details": "Replaced single hardcoded path with VIRTUAL_ENV-aware fallback chain",
+      "timestamp": "2026-09-11T13:45:08Z"
+    },
+    {
+      "iteration": 1,
+      "issue_id": "P0-verify",
+      "severity": "CRITICAL",
+      "title": "Cargo build verification",
+      "status": "FIXED",
+      "details": "cargo check succeeded — lockfile collision resolved",
+      "timestamp": "2026-09-11T13:45:09Z"
+    },
+    {
+      "iteration": 2,
+      "issue_id": "P1-1a",
+      "severity": "HIGH",
+      "title": "requirements.txt: add torch>=2.1.0",
+      "status": "FIXED",
+      "details": "Appended torch>=2.1.0 to requirements.txt",
+      "timestamp": "2026-09-11T13:45:09Z"
+    },
+    {
+      "iteration": 2,
+      "issue_id": "P1-1b",
+      "severity": "HIGH",
+      "title": "requirements-gpu.txt: create CUDA-pinned requirements",
+      "status": "FIXED",
+      "details": "Created requirements-gpu.txt with torch==2.7.1+cu118",
+      "timestamp": "2026-09-11T13:45:09Z"
+    },
+    {
+      "iteration": 2,
+      "issue_id": "P1-2",
+      "severity": "HIGH",
+      "title": "Speculative decoding 0.64× regression: relabeled CERTIFIED→IN CALIBRATION",
+      "status": "FIXED",
+      "details": "Updated GPU_T4_DEEP_VALIDATION.md: changed badge + added calibration note",
+      "timestamp": "2026-09-11T13:45:09Z"
+    },
+    {
+      "iteration": 2,
+      "issue_id": "P2-1",
+      "severity": "MEDIUM",
+      "title": "GPU skip guard added: tests/test_runux_kernels.py",
+      "status": "FIXED",
+      "details": "Injected _HAS_CUDA/_HAS_T4 guards + @requires_t4 decorators in tests/test_runux_kernels.py",
+      "timestamp": "2026-09-11T13:45:09Z"
+    },
+    {
+      "iteration": 2,
+      "issue_id": "P2-1",
+      "severity": "MEDIUM",
+      "title": "GPU skip guard added: tests/test_soak_and_zenodo.py",
+      "status": "FIXED",
+      "details": "Injected _HAS_CUDA/_HAS_T4 guards + @requires_t4 decorators in tests/test_soak_and_zenodo.py",
+      "timestamp": "2026-09-11T13:45:09Z"
+    },
+    {
+      "iteration": 2,
+      "issue_id": "P2-2",
+      "severity": "MEDIUM",
+      "title": "pyproject.toml: add pytest markers + coverage config",
+      "status": "FIXED",
+      "details": "Created/updated pyproject.toml with [tool.pytest.ini_options]",
+      "timestamp": "2026-09-11T13:45:09Z"
+    },
+    {
+      "iteration": 2,
+      "issue_id": "P2-3",
+      "severity": "MEDIUM",
+      "title": "runux import chain verification",
+      "status": "FIXED",
+      "details": "Import OK: ['CarbonAwareSpeculativeScheduler', 'GridCarbonProfile', 'GroupedQueryAttention', 'Int64DeterministicAttention', 'PagedK",
+      "timestamp": "2026-09-11T13:45:13Z"
+    },
+    {
+      "iteration": 2,
+      "issue_id": "P2-4",
+      "severity": "MEDIUM",
+      "title": "Zenodo ORCID placeholder: added audit note",
+      "status": "PARTIAL",
+      "details": "Added orcid_note + _audit_note in zenodo.json. Real ORCID requires manual registration at orcid.org",
+      "timestamp": "2026-09-11T13:45:13Z"
+    },
+    {
+      "iteration": 2,
+      "issue_id": "P2-5",
+      "severity": "MEDIUM",
+      "title": "FlashAttention crossover benchmark created",
+      "status": "FIXED",
+      "details": "Created benchmarks/flash_attention_crossover_benchmark.py with roofline sweep S=512→32768",
+      "timestamp": "2026-09-11T13:45:13Z"
+    },
+    {
+      "iteration": 2,
+      "issue_id": "P2-6",
+      "severity": "MEDIUM",
+      "title": "quickstart_resume.sh symlink",
+      "status": "ALREADY_FIXED",
+      "details": "Symlink resolves correctly to restart_session.sh",
+      "timestamp": "2026-09-11T13:45:13Z"
+    },
+    {
+      "iteration": 3,
+      "issue_id": "P3-1",
+      "severity": "LOW",
+      "title": "Example Cargo.toml: removed ignored [profile.*] sections",
+      "status": "FIXED",
+      "details": "Removed [profile.dev] and [profile.release] from edge_inference_demo and macos_m2_inference_demo Cargo.toml",
+      "timestamp": "2026-09-11T13:45:13Z"
+    },
+    {
+      "iteration": 3,
+      "issue_id": "P3-2",
+      "severity": "LOW",
+      "title": "Cargo.lock: generated and removed from .gitignore exclusion",
+      "status": "FIXED",
+      "details": "Generated Cargo.lock via cargo generate-lockfile; commented out .gitignore exclusion",
+      "timestamp": "2026-09-11T13:45:13Z"
+    },
+    {
+      "iteration": 3,
+      "issue_id": "P3-3",
+      "severity": "LOW",
+      "title": "autoresearch_agent_v4.py: moved to autoresearch_agent/",
+      "status": "FIXED",
+      "details": "Moved autoresearch_agent_v4.py from repo root → autoresearch_agent/autoresearch_agent_v4.py",
+      "timestamp": "2026-09-11T13:45:13Z"
+    },
+    {
+      "iteration": 3,
+      "issue_id": "P3-4",
+      "severity": "LOW",
+      "title": "ffi.rs: IP policy boundary note added",
+      "status": "FIXED",
+      "details": "Added IP policy boundary comment block to crates/tpu_pjrt/src/ffi.rs",
+      "timestamp": "2026-09-11T13:45:13Z"
+    },
+    {
+      "iteration": 3,
+      "issue_id": "P3-verify",
+      "severity": "VERIFY",
+      "title": "Final cargo check",
+      "status": "FIXED",
+      "details": "cargo check PASSED. Output: warning: unexpected `cfg` condition value: `k3_a100`\nwarning: unexpected `cfg` condition value: `k3_a100`\nwarning: `rvv_simd` (lib) generated 2 warnings\nwarning: methods `weight_bytes`, `kv_bytes`, an",
+      "timestamp": "2026-09-11T13:45:13Z"
+    },
+    {
+      "iteration": 3,
+      "issue_id": "P3-run",
+      "severity": "VERIFY",
+      "title": "FlashAttention crossover benchmark executed",
+      "status": "FIXED",
+      "details": "Crossover: unknown",
+      "timestamp": "2026-09-11T13:45:13Z"
+    },
+    {
+      "iteration": 3,
+      "issue_id": "P3-commit",
+      "severity": "INFRA",
+      "title": "Git commit: all audit fixes",
+      "status": "FIXED",
+      "details": "Committed successfully: [main 2ca16d4] fix(audit2): implement all AUDIT2_REPORT.md resolutions (workflowimpr2.py)\n 18 files",
+      "timestamp": "2026-09-11T13:45:13Z"
+    }
+  ]
+}

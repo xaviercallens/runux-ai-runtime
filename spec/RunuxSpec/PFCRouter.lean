@@ -65,7 +65,7 @@ structure ComplexityIndex where
     σ_ded = max(σ_ded_raw, 0.30)
     σ_gen = 1.0 - σ_ded -/
 noncomputable def pfc_calibrate (raw_deductive : Float) (cfg : RouterConfig) : RouterOutput :=
-  let s_ded := Float.max raw_deductive cfg.deductive_floor
+  let s_ded := if raw_deductive ≥ cfg.deductive_floor then raw_deductive else cfg.deductive_floor
   let s_gen := 1.0 - s_ded
   {
     sigma_ded := s_ded,

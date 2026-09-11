@@ -12,8 +12,12 @@
 --   RunuxSpec.PFCRouter          — Calibrated PFC Router (Deductive Floor, MCTS Budget)
 --   RunuxSpec.DFAAlignment       — Direct Feedback Alignment & Direct Inference Transfer
 --   RunuxSpec.SpeculativeDecoding — Modified Rejection Sampling & Carbon-Aware K Scaling
+--   RunuxSpec.ArenaMem           — Bump Allocator bounds safety & Paged KV-Cache zero fragmentation
+--   RunuxSpec.PolarQuant         — SplitMix64 orthogonal rotation isometry & 3-bit compression
+--   RunuxSpec.FlashAttention     — Tiled FlashAttention-2 online softmax & SRAM bounds
+--   RunuxSpec.Int64Attention     — Fixed-point deterministic attention bit-exactness (Δ = 0)
 --
 -- Build: cd spec && lake build
--- Lean Toolchain: leanprover/lean4:v4.17.0
+-- Lean Toolchain: leanprover/lean4:v4.30.0
 
 import RunuxSpec

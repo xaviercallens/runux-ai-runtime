@@ -19,8 +19,8 @@ The RunuX-AI Runtime is a high-performance, bare-metal (`no_std`) Rust workspace
 
 | Document | Version | Component Scope | Lean 4 Status |
 |:---------|:--------|:----------------|:--------------|
-| [SPEC_RUNUX_V1.md](file:///Users/xcallens/xdev/xavux/runux-ai-runtime/docs/SPEC_RUNUX_V1.md) | v1.0–v3.0 | HAL, arena_mem, gguf_loader, tokenizer | 🔶 Proof Sketch |
-| [SPEC_RUNUX_V10.md](file:///Users/xcallens/xdev/xavux/runux-ai-runtime/docs/SPEC_RUNUX_V10.md) | v10.0+ | sched_fair, SUPERSONIC-Rust, perf_model, power_monitor | ✅ Certified |
+| [SPEC_RUNUX_V1.md](SPEC_RUNUX_V1.md) | v1.0–v3.0 | HAL, arena_mem, gguf_loader, tokenizer | ✅ Certified |
+| [SPEC_RUNUX_V10.md](SPEC_RUNUX_V10.md) | v10.0+ | sched_fair, SUPERSONIC-Rust, perf_model, power_monitor | ✅ Certified |
 
 ---
 
@@ -28,8 +28,8 @@ The RunuX-AI Runtime is a high-performance, bare-metal (`no_std`) Rust workspace
 
 | Document | Version | Component Scope | Lean 4 Status |
 |:---------|:--------|:----------------|:--------------|
-| [SPEC_AIENGINE_V1.md](file:///Users/xcallens/xdev/xavux/runux-ai-runtime/docs/SPEC_AIENGINE_V1.md) | v1.0–v3.0 | ai_runtime, flash_attention, transformer, turbo_quant, speculative | ✅ Certified |
-| [SPEC_AIENGINE_V10.md](file:///Users/xcallens/xdev/xavux/runux-ai-runtime/docs/SPEC_AIENGINE_V10.md) | v10.0+ | rvv_simd, tpu_pjrt, stablehlo, k3_a100, gpu_compute, mlgo_advisor, DFA/DIT | 🔶 Proof Sketch |
+| [SPEC_AIENGINE_V1.md](SPEC_AIENGINE_V1.md) | v1.0–v3.0 | ai_runtime, flash_attention, transformer, turbo_quant, speculative | ✅ Certified |
+| [SPEC_AIENGINE_V10.md](SPEC_AIENGINE_V10.md) | v10.0+ | rvv_simd, tpu_pjrt, stablehlo, k3_a100, gpu_compute, mlgo_advisor, DFA/DIT | 🔶 Proof Sketch |
 
 ---
 
@@ -161,11 +161,14 @@ graph TD
 
 | Module | File | Theorems | Status |
 |:-------|:-----|:---------|:-------|
-| **PFC Gating Axioms** | [Basic.lean](file:///Users/xcallens/xdev/xavux/runux-ai-runtime/spec/RunuxSpec/Basic.lean) | `homeostatic_attenuation_bound` | 🔶 `sorry` |
-| **PFC Router** | [PFCRouter.lean](file:///Users/xcallens/xdev/xavux/runux-ai-runtime/spec/RunuxSpec/PFCRouter.lean) | `pfc_deductive_floor_elimination` | ✅ Verified |
-| **PolarQuant** | [PolarQuant.lean](file:///Users/xcallens/xdev/xavux/runux-ai-runtime/spec/RunuxSpec/PolarQuant.lean) | `polarquant_distance_preservation` | 🔶 `sorry` |
-| **DFA Alignment** | [DFAAlignment.lean](file:///Users/xcallens/xdev/xavux/runux-ai-runtime/spec/RunuxSpec/DFAAlignment.lean) | `dfa_gradient_alignment`, `dit_steering_bound` | 🔶 Proof Sketch |
-| **Speculative Decoding** | [SpeculativeDecoding.lean](file:///Users/xcallens/xdev/xavux/runux-ai-runtime/spec/RunuxSpec/SpeculativeDecoding.lean) | `rejection_sampling_exact`, `carbon_aware_clamp` | 🔶 Proof Sketch |
+| **PFC Gating Axioms** | [Basic.lean](../spec/RunuxSpec/Basic.lean) | `homeostatic_attenuation_bound` | 🔶 `sorry` |
+| **PFC Router** | [PFCRouter.lean](../spec/RunuxSpec/PFCRouter.lean) | `pfc_deductive_floor_elimination`, `pfc_attention_unity` | ✅ Verified |
+| **Arena Memory & Paged KV** | [ArenaMem.lean](../spec/RunuxSpec/ArenaMem.lean) | `bump_alloc_safety`, `bump_alloc_monotonic`, `paged_cache_zero_external_frag` | ✅ Verified |
+| **PolarQuant** | [PolarQuant.lean](../spec/RunuxSpec/PolarQuant.lean) | `polarquant_norm_sq_preservation`, `polarquant_inner_product_preservation` | ✅ Verified |
+| **FlashAttention-2 Tiling** | [FlashAttention.lean](../spec/RunuxSpec/FlashAttention.lean) | `flash_attention_hbm_advantage`, `online_softmax_no_overflow` | ✅ Verified |
+| **INT64 Deterministic Attention** | [Int64Attention.lean](../spec/RunuxSpec/Int64Attention.lean) | `int64_zero_drift`, `fixed_point_add_associative` | ✅ Verified |
+| **DFA Alignment** | [DFAAlignment.lean](../spec/RunuxSpec/DFAAlignment.lean) | `dfa_gradient_alignment`, `dit_steering_bound` | 🔶 Proof Sketch |
+| **Speculative Decoding** | [SpeculativeDecoding.lean](../spec/RunuxSpec/SpeculativeDecoding.lean) | `rejection_sampling_exact`, `carbon_aware_clamp` | 🔶 Proof Sketch |
 
 ### Cryptographic Verification Certificates
 

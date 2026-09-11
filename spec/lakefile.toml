@@ -1,7 +1,7 @@
 name = "runux_spec"
 version = "0.1.0"
 keywords = ["math"]
-defaultTargets = ["RunuxSpec"]
+defaultTargets = ["RunuxSpec", "RunuX"]
 
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
@@ -16,3 +16,6 @@ rev = "v4.30.0"
 
 [[lean_lib]]
 name = "RunuxSpec"
+
+[[lean_lib]]
+name = "RunuX"

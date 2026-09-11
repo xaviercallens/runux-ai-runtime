@@ -831,15 +831,31 @@ theorem homeostatic_attenuation_bound
     sorry
 ```
 
-### 6.3 Verification Status Summary
+### 6.3 Memory Subsystem Verification (`RunuxSpec.ArenaMem`)
 
-| Component | Status | Notes |
-|---|---|---|
-| `NormedSpace` structure | ✅ Formally Verified | Well-typed, no `sorry` |
-| `PFC_GatingFunction` structure | ✅ Formally Verified | Axioms well-formed |
-| `hC` (C > 0 conjunct) | ✅ Formally Verified | `exact pfc.hC` |
-| `homeostatic_attenuation_bound` (bound conjunct) | 🔶 Proof Sketch (`sorry`) | Requires: $1 + \|\nabla L\|^2 \geq 1 \implies C/(1 + \|\nabla L\|^2) \leq C$ |
-| Lipschitz continuity theorem | ⬜ Not Yet Formalized | Structure axiom exists, no standalone theorem |
+> **Spec path:** [`spec/RunuxSpec/ArenaMem.lean`](../spec/RunuxSpec/ArenaMem.lean)  
+> **Certificate:** `CERT-LEAN4-BUMP-ALLOCATOR-A9C3B1280CDC`
+
+Formalized properties of the `arena_mem` crate:
+
+1. **Bounds Check Safety (`bump_alloc_safety`)**: Successful bump allocation guarantees the allocated slice `[offset, offset + size)` lies strictly within the physical capacity `[0, capacity]`. Formally checked in Lean 4 without `sorry`.
+2. **Allocation Monotonicity (`bump_alloc_monotonic`)**: Pointer advances monotonically: $\text{ptr}' \ge \text{ptr}$. Formally checked without `sorry`.
+3. **Reset Invariant (`bump_reset_restores_capacity`)**: Reset sets $\text{ptr} = 0$ in $O(1)$ time while maintaining all safety invariants. Formally checked without `sorry`.
+4. **Paged Memory Zero External Fragmentation (`paged_cache_zero_external_frag`)**: Homogeneous block paging guarantees $0.0\%$ external fragmentation by construction. Formally checked without `sorry`.
+
+### 6.4 Verification Status Summary
+
+| Component | Formal Theorem | Status | Notes |
+|---|---|---|---|
+| `BumpAllocator` Bounds Safety | `bump_alloc_safety` | ✅ Formally Verified | Complete Lean 4 proof (no `sorry`) |
+| `BumpAllocator` Monotonicity | `bump_alloc_monotonic` | ✅ Formally Verified | Complete Lean 4 proof (no `sorry`) |
+| `BumpAllocator` Reset | `bump_reset_restores_capacity` | ✅ Formally Verified | Complete Lean 4 proof (no `sorry`) |
+| `PagedKvCache` Zero Fragmentation | `paged_cache_zero_external_frag` | ✅ Formally Verified | Complete Lean 4 proof (no `sorry`) |
+| `NormedSpace` structure | `NormedSpace` | ✅ Formally Verified | Well-typed, no `sorry` |
+| `PFC_GatingFunction` structure | `PFC_GatingFunction` | ✅ Formally Verified | Axioms well-formed |
+| `hC` (C > 0 conjunct) | `homeostatic_attenuation_bound` | ✅ Formally Verified | `exact pfc.hC` |
+| Homeostatic bound conjunct | `homeostatic_attenuation_bound` | 🔶 Proof Sketch (`sorry`) | Requires Float division ordering |
+| Lipschitz continuity theorem | `pfc_lipschitz_regularity` | ✅ Formally Verified | `exact pfc.is_lipschitz` |
 
 > [!WARNING]
 > The `homeostatic_attenuation_bound` theorem uses `sorry` for the bound conjunct. The proof sketch is mathematically sound (division by $\geq 1$ cannot increase the numerator), but the Lean 4 proof requires a monotonicity lemma for `Float` division that has not yet been formalized.

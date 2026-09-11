@@ -45,7 +45,6 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # -----------------------------------------------------------------------------
 # 1. GroupedQueryAttention Tests
 # -----------------------------------------------------------------------------
-@requires_gpu
 def test_gqa_kernel_initialization_and_shapes():
     hidden_dim = 128
     num_q_heads = 8
@@ -73,7 +72,6 @@ def test_gqa_kernel_initialization_and_shapes():
     assert torch.all(torch.isfinite(out))
 
 
-@requires_gpu
 def test_gqa_kernel_with_kv_cache_and_mask():
     hidden_dim = 64
     num_q_heads = 4
@@ -200,7 +198,6 @@ def test_paged_cache_oom_and_stats():
 # -----------------------------------------------------------------------------
 # 3. PolarQuant Tests
 # -----------------------------------------------------------------------------
-@requires_gpu
 def test_polarquant_splitmix64_orthogonality():
     dim = 32
     R = generate_splitmix64_orthogonal_matrix(dim, seed=42, device=DEVICE)
@@ -212,7 +209,6 @@ def test_polarquant_splitmix64_orthogonality():
     assert torch.allclose(gram, identity, atol=1e-5)
 
 
-@requires_gpu
 def test_polarquant_compress_decompress_and_energy():
     dim = 32
     cfg = PolarQuantConfig(bits=3, seed=42, energy_threshold=0.35)
@@ -270,14 +266,32 @@ def test_deterministic_attn_lut_and_forward():
     is_deterministic = attn.verify_determinism(q, k, v, num_runs=5)
     assert is_deterministic is True
 
+    # Check that divergence correctly triggers False
+    orig_forward = attn.forward
+    call_idx = 0
+    def mock_divergent(q_in, k_in, v_in):
+        nonlocal call_idx
+        out_res = orig_forward(q_in, k_in, v_in)
+        if call_idx > 0:
+            out_res = out_res + 1
+        call_idx += 1
+        return out_res
+    attn.forward = mock_divergent
+    assert attn.verify_determinism(q, k, v, num_runs=2) is False
+    attn.forward = orig_forward
+
 
 # -----------------------------------------------------------------------------
 # 5. SignSGDOptimizer Tests
 # -----------------------------------------------------------------------------
-@requires_gpu
 def test_signsgd_optimizer_step_and_bandwidth():
     with pytest.raises(ValueError, match="Invalid learning rate"):
         SignSGDOptimizer([nn.Parameter(torch.randn(4))], lr=-0.01)
+
+    # Test parameter with None grad handling
+    p_no_grad = nn.Parameter(torch.randn(4, device=DEVICE), requires_grad=False)
+    opt_no_grad = SignSGDOptimizer([p_no_grad], lr=0.01)
+    opt_no_grad.step()
 
     model = nn.Linear(10, 2, device=DEVICE)
     optimizer = SignSGDOptimizer(

@@ -7,3 +7,7 @@ import RunuxSpec.Basic
 import RunuxSpec.PFCRouter
 import RunuxSpec.DFAAlignment
 import RunuxSpec.SpeculativeDecoding
+import RunuxSpec.ArenaMem
+import RunuxSpec.PolarQuant
+import RunuxSpec.FlashAttention
+import RunuxSpec.Int64Attention

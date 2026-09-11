@@ -10,6 +10,12 @@ from pathlib import Path
 import pytest
 
 from workflow_soak_benchmark import (
+    query_gpu_telemetry,
+    run_t4_sustained_soak_benchmark,
+    run_tpu_spot_serverless_soak_protocol,
+    generate_zenodo_bundle,
+    retrofit_soak_results_to_datasets,
+)
 
 # --- GPU availability guards (AUDIT2_REPORT §3.2) ---
 import torch as _torch
@@ -19,13 +25,6 @@ _HAS_T4   = _HAS_CUDA and "T4" in _torch.cuda.get_device_name(0)
 requires_gpu = pytest.mark.skipif(not _HAS_CUDA, reason="Requires CUDA GPU")
 requires_t4  = pytest.mark.skipif(not _HAS_T4,   reason="Requires NVIDIA Tesla T4")
 # --- end guards ---
-
-    query_gpu_telemetry,
-    run_t4_sustained_soak_benchmark,
-    run_tpu_spot_serverless_soak_protocol,
-    generate_zenodo_bundle,
-    retrofit_soak_results_to_datasets,
-)
 
 
 @requires_t4

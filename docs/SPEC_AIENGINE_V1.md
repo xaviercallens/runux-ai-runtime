@@ -859,14 +859,18 @@ $$
 
 ### 6.4 Verification Status Summary
 
-| Property                               | Status                       |
-|----------------------------------------|------------------------------|
-| PolarQuant norm preservation           | 🔶 Proof Sketch              |
-| PolarQuant inner product preservation  | 🔶 Proof Sketch              |
-| QJL concentration bound                | ⬜ Not Yet Formalized         |
-| Speculative correctness (distributionally exact) | ⬜ Not Yet Formalized |
-| FlashAttention numerical equivalence   | ⬜ Not Yet Formalized         |
-| RoPE rotation orthogonality            | ✅ Trivial (2D rotation group)|
+| Property                               | Formal Spec Reference | Status                       |
+|----------------------------------------|-----------------------|------------------------------|
+| PolarQuant norm preservation           | `RunuxSpec.PolarQuant` (`polarquant_norm_sq_preservation`) | ✅ Formally Verified |
+| PolarQuant inner product preservation  | `RunuxSpec.PolarQuant` (`polarquant_inner_product_preservation`) | ✅ Formally Verified |
+| PolarQuant exact reconstruction        | `RunuxSpec.PolarQuant` (`polarquant_exact_reconstruction`) | ✅ Formally Verified |
+| FlashAttention HBM footprint reduction | `RunuxSpec.FlashAttention` (`flash_attention_hbm_advantage`) | ✅ Formally Verified |
+| FlashAttention overflow immunity       | `RunuxSpec.FlashAttention` (`online_softmax_no_overflow`) | ✅ Formally Verified |
+| INT64 deterministic bit-exactness      | `RunuxSpec.Int64Attention` (`int64_zero_drift`) | ✅ Formally Verified |
+| Fixed-point addition associativity     | `RunuxSpec.Int64Attention` (`fixed_point_add_associative`) | ✅ Formally Verified |
+| QJL concentration bound                | Analytical sub-Gaussian | 🔶 Proof Sketch |
+| Speculative rejection sampling exact   | `RunuxSpec.SpeculativeDecoding` (`rejection_sampling_exact`) | 🔶 Proof Sketch |
+| RoPE rotation orthogonality            | 2D rotation group SO(2) | ✅ Trivial |
 
 ---
 

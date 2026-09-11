@@ -51,7 +51,8 @@ structure SpeculativeConfig where
     α(x) = min(1.0, p(x) / q(x))
     This is the core mechanism ensuring distribution identity. -/
 def acceptance_probability (p_x q_x : Float) : Float :=
-  Float.min 1.0 (if q_x > 0.0 then p_x / q_x else 1.0)
+  let ratio := if q_x > 0.0 then p_x / q_x else 1.0
+  if 1.0 ≤ ratio then 1.0 else ratio
 
 /-- The residual distribution used when a token is rejected:
     p'(x) = max(0, p(x) - q(x)) / Z
@@ -86,7 +87,7 @@ structure ResidualDistribution where
 
     Status: 🔶 Proof Sketch — Full mechanization requires measure theory from Mathlib. -/
 theorem rejection_sampling_exact (cfg : SpeculativeConfig)
-    (i : Fin cfg.target.vocab_size) :
+    (_i : Fin cfg.target.vocab_size) :
     True := by  -- Simplified: the full statement requires measure-theoretic framing
   trivial
 
@@ -122,7 +123,8 @@ structure CarbonConfig where
 def compute_K_opt (cfg : CarbonConfig) (grid_co2 : Float) : Float :=
   let carbon_factor := cfg.gamma * (grid_co2 - cfg.co2_target) / cfg.co2_max
   let raw_K := cfg.K_baseline * (1.0 - carbon_factor)
-  Float.max 2.0 (Float.min raw_K cfg.K_max)
+  let clamped_max := if raw_K ≤ cfg.K_max then raw_K else cfg.K_max
+  if 2.0 ≥ clamped_max then 2.0 else clamped_max
 
 /-- Theorem (Carbon-Aware K Bounded):
     The optimal draft length K_opt is always bounded in [2, K_max],
