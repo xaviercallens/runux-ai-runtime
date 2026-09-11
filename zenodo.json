@@ -1,11 +1,12 @@
 {
-  "title": "RunuX: Deterministic Fixed-Point Attention, Isometric PolarQuant KV-Compression, and Grid-Carbon Adaptive Scheduling \u2014 Scientific Benchmarking & 1-Hour Soak Dataset",
+  "title": "RunuX: Deterministic Fixed-Point Attention, Isometric PolarQuant KV-Compression, and Grid-Carbon Adaptive Scheduling — Scientific Benchmarking & 1-Hour Soak Dataset",
   "description": "Open scientific replication dataset, empirical telemetry, and academic paper accompanying the RunuX AI Runtime. Includes: (1) 1-Hour continuous hardware soak benchmarks on NVIDIA Tesla T4 GPU (p50/p90/p99 latencies, thermal equilibrium, zero VRAM leak), (2) Google Cloud TPU v5e/v6e Trillium Spot Serverless preemption resilience protocol (< 12 ms checkpointing, zero token loss), (3) Mistral Large 2 (128k context) PolarQuant 3-bit KV-cache reduction (4.92x), (4) INT64 bit-exact zero-drift attention proofs, (5) 1-Bit SignSGD Megatron-LM 70B communication reduction (32.0x), and (6) $50 GCP Spot/Serverless economic reproducibility schedule. Note: Closed-source RunuX runtime engine source code and binaries are proprietary and excluded under IP protection.",
   "creators": [
     {
       "name": "Callens, Xavier",
       "affiliation": "Socrate AI Lab / RunuX Research",
-      "orcid": "0009-0000-0000-0000"
+      "orcid": "0009-0000-0000-0000",
+      "orcid_note": "PENDING: Register at https://orcid.org before final Zenodo publication. Replace orcid field with real ID."
     }
   ],
   "upload_type": "publication",
@@ -41,5 +42,6 @@
     {
       "identifier": "machine-learning-systems"
     }
-  ]
+  ],
+  "_audit_note": "AUDIT2_REPORT §3.4: ORCID '0009-0000-0000-0000' is a placeholder. Register at https://orcid.org and update before final DOI publication."
 }

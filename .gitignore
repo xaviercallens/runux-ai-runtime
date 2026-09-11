@@ -1,5 +1,6 @@
 /target
-Cargo.lock
+# Cargo.lock is committed for binary crates (AUDIT2_REPORT §4.2)
+# Cargo.lock
 *.swp
 *.swo
 *~

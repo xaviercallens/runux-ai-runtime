@@ -18,7 +18,7 @@
 | **INT64 Deterministic Attention** | 10 Consecutive Passes | **Exact 0.0 Max Drift** (100% Bit-Exact Match) | **✅ CERTIFIED** |
 | **1-Bit SignSGD Backpropagation** | Regression Network on GPU | **99.7% Loss Reduction** (505.7 ms) | **✅ CERTIFIED** |
 | **Tiled FlashAttention Memory** | $B=2, H=32, S=1024, D=64$ | **19.9% Peak VRAM Savings** (1199.7 MB $\to$ 961.26 MB) | **✅ CERTIFIED** |
-| **Speculative Decoding Engine** | $K=4$ speculative candidates | **0.64x Latency Speedup** (36.0% Acceptance Rate) | **✅ CERTIFIED** |
+| **Speculative Decoding Engine** | $K=4$ speculative candidates | **0.64× Latency** (36.0% Accept Rate, below break-even) | **⚠️ IN CALIBRATION** |
 
 ---
 
@@ -47,6 +47,14 @@
 - Tiled IO-aware FlashAttention reduces intermediate buffer requirements to **961.26 MB**, achieving a **19.9% peak VRAM reduction** with negligible numerical error ($Err = 0.001953 < 0.05$).
 
 ### 2.6 Speculative Decoding Acceleration
+
+> **⚠️ Speculative Decoding Calibration Note**: At K=4 with 36% acceptance rate,
+> the speedup ratio is 0.64× (below 1.0× break-even). The break-even acceptance rate
+> for K=4 with a 2:1 draft-to-target size ratio is ~60%. Recommended tuning:
+> reduce K to 2 (break-even at ~40% acceptance) or adjust draft model temperature
+> to improve acceptance rate. This benchmark is tagged **IN CALIBRATION** and will
+> be re-certified once tuning achieves ≥1.0× speedup. See AUDIT2_REPORT.md §2.2.
+
 - Utilizing a lightweight draft model ($D=512$) proposing $K=4$ candidates verified in a single parallel step by the target model ($D=2048$).
 - Achieved **36.0% token acceptance rate**, elevating throughput from **721.8 tok/s** to **462.1 tok/s** (**0.64x effective speedup**).
 

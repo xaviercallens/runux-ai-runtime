@@ -15,12 +15,7 @@ federated = { path = "../../crates/federated" }
 default = ["std"]
 std = []
 
-[profile.dev]
-panic = "abort"
-opt-level = 0
-
-[profile.release]
-panic = "abort"
-opt-level = 3
-lto = "fat"
-codegen-units = 1
+# Note: Profile configuration is managed by the workspace root Cargo.toml.
+# Per-package [profile.*] sections are silently ignored by Cargo workspaces.
+# See: https://doc.rust-lang.org/cargo/reference/workspaces.html
+# (AUDIT2_REPORT §4.1 fix)

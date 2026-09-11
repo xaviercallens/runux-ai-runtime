@@ -10,6 +10,16 @@ from pathlib import Path
 import pytest
 
 from workflow_soak_benchmark import (
+
+# --- GPU availability guards (AUDIT2_REPORT §3.2) ---
+import torch as _torch
+_HAS_CUDA = _torch.cuda.is_available()
+_HAS_T4   = _HAS_CUDA and "T4" in _torch.cuda.get_device_name(0)
+
+requires_gpu = pytest.mark.skipif(not _HAS_CUDA, reason="Requires CUDA GPU")
+requires_t4  = pytest.mark.skipif(not _HAS_T4,   reason="Requires NVIDIA Tesla T4")
+# --- end guards ---
+
     query_gpu_telemetry,
     run_t4_sustained_soak_benchmark,
     run_tpu_spot_serverless_soak_protocol,
@@ -18,6 +28,7 @@ from workflow_soak_benchmark import (
 )
 
 
+@requires_t4
 def test_query_gpu_telemetry():
     """Telemetry should return a dictionary with all required keys."""
     metrics = query_gpu_telemetry()
@@ -31,6 +42,7 @@ def test_query_gpu_telemetry():
     assert metrics["mem_total_mb"] > 0
 
 
+@requires_t4
 def test_t4_sustained_soak_short_run():
     """Verify that soak benchmark executes on hardware and records time series."""
     res = run_t4_sustained_soak_benchmark(
@@ -57,6 +69,7 @@ def test_t4_sustained_soak_short_run():
     assert first_window["p99_latency_ms"] >= first_window["p50_latency_ms"]
 
 
+@requires_t4
 def test_tpu_spot_serverless_soak_protocol():
     """Verify that Spot Serverless TPU protocol handles preemptions with 0 token loss."""
     res = run_tpu_spot_serverless_soak_protocol(total_minutes=60)
@@ -113,6 +126,7 @@ def test_zenodo_bundle_sanitation(tmp_path):
         tar_path.unlink()
 
 
+@requires_t4
 def test_t4_soak_monitor_short_run(tmp_path):
     """Test T4SoakMonitor initialization, live status updating, and dataset flushing."""
     from monitor_t4_1hour_benchmark import T4SoakMonitor

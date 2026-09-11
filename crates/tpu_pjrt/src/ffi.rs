@@ -1,6 +1,16 @@
 // Copyright (c) 2026 Xavier Callens / Socrate AI. All Rights Reserved.
 // SPDX-License-Identifier: LicenseRef-RunuX-Commercial
 
+// ─────────────────────────────────────────────────────────────────────────
+// IP POLICY NOTE (AUDIT2_REPORT §4.4):
+// This file contains PJRT C API declarations (public Google XLA interface)
+// and a simulation fallback. It does NOT contain proprietary RunuX kernel
+// implementations. Legal review concluded that C ABI declarations are not
+// trade secrets. Proprietary kernel implementations remain in non-public
+// modules. This note documents the IP boundary explicitly.
+// ─────────────────────────────────────────────────────────────────────────
+
+
 //! C FFI Declarations for Google Cloud TPU PJRT Runtime (`pjrt_c_api.h`).
 //!
 //! Provides ABI-compatible foreign function interfaces to dynamically link

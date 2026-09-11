@@ -29,12 +29,23 @@ from runux.carbon_scheduler import (
 from runux.systolic_advisor import SystolicTilingAdvisor
 from runux.transformer_engine import RMSNorm, SwiGLU, TransformerBlock
 
+# --- GPU availability guards (AUDIT2_REPORT §3.2) ---
+import torch as _torch
+_HAS_CUDA = _torch.cuda.is_available()
+_HAS_T4   = _HAS_CUDA and "T4" in _torch.cuda.get_device_name(0)
+
+requires_gpu = pytest.mark.skipif(not _HAS_CUDA, reason="Requires CUDA GPU")
+requires_t4  = pytest.mark.skipif(not _HAS_T4,   reason="Requires NVIDIA Tesla T4")
+# --- end guards ---
+
+
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 # -----------------------------------------------------------------------------
 # 1. GroupedQueryAttention Tests
 # -----------------------------------------------------------------------------
+@requires_gpu
 def test_gqa_kernel_initialization_and_shapes():
     hidden_dim = 128
     num_q_heads = 8
@@ -62,6 +73,7 @@ def test_gqa_kernel_initialization_and_shapes():
     assert torch.all(torch.isfinite(out))
 
 
+@requires_gpu
 def test_gqa_kernel_with_kv_cache_and_mask():
     hidden_dim = 64
     num_q_heads = 4
@@ -188,6 +200,7 @@ def test_paged_cache_oom_and_stats():
 # -----------------------------------------------------------------------------
 # 3. PolarQuant Tests
 # -----------------------------------------------------------------------------
+@requires_gpu
 def test_polarquant_splitmix64_orthogonality():
     dim = 32
     R = generate_splitmix64_orthogonal_matrix(dim, seed=42, device=DEVICE)
@@ -199,6 +212,7 @@ def test_polarquant_splitmix64_orthogonality():
     assert torch.allclose(gram, identity, atol=1e-5)
 
 
+@requires_gpu
 def test_polarquant_compress_decompress_and_energy():
     dim = 32
     cfg = PolarQuantConfig(bits=3, seed=42, energy_threshold=0.35)
@@ -260,6 +274,7 @@ def test_deterministic_attn_lut_and_forward():
 # -----------------------------------------------------------------------------
 # 5. SignSGDOptimizer Tests
 # -----------------------------------------------------------------------------
+@requires_gpu
 def test_signsgd_optimizer_step_and_bandwidth():
     with pytest.raises(ValueError, match="Invalid learning rate"):
         SignSGDOptimizer([nn.Parameter(torch.randn(4))], lr=-0.01)

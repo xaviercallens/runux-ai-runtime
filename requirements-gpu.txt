@@ -1,0 +1,14 @@
+# ==============================================================================
+# RunuX AI Runtime — GPU/CUDA Requirements (Tesla T4 / A100 / H100 profile)
+# Install with: pip install -r requirements-gpu.txt
+# Tested on: CUDA 11.8, PyTorch 2.7.1+cu118
+# ==============================================================================
+
+# Base requirements
+-r requirements.txt
+
+# PyTorch CUDA build — pinned to validated T4 configuration
+torch==2.7.1+cu118 --index-url https://download.pytorch.org/whl/cu118
+
+# Optional: flash-attention for native CUDA FlashAttention-2
+# flash-attn>=2.5.0  # uncomment when CUDA toolkit >= 11.8 is confirmed

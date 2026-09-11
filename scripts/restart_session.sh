@@ -24,7 +24,14 @@ echo "==========================================================================
 # 1. Environment & Paths
 echo ""
 echo "[1/6] Checking Python Environment & Virtualenv..."
-VENV_PYTHON="/home/callensxavier_gmail_com/venv/bin/python"
+# Dynamic Python discovery — works for any collaborator or CI runner
+if [ -n "${VIRTUAL_ENV}" ] && [ -x "${VIRTUAL_ENV}/bin/python" ]; then
+    VENV_PYTHON="${VIRTUAL_ENV}/bin/python"
+elif [ -x "/home/callensxavier_gmail_com/venv/bin/python" ]; then
+    VENV_PYTHON="/home/callensxavier_gmail_com/venv/bin/python"
+else
+    VENV_PYTHON="$(command -v python3 || command -v python || echo "python3")"
+fi
 if [ -f "${VENV_PYTHON}" ]; then
     PY_VER=$("${VENV_PYTHON}" --version)
     echo "  ✓ Python executable found: ${VENV_PYTHON} (${PY_VER})"

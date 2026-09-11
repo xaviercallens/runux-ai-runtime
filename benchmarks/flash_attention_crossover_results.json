@@ -1,0 +1,60 @@
+{
+  "timestamp": "2026-09-11T13:45:13.666571+00:00",
+  "hardware_model": "T4 (simulated roofline \u2014 sram_kb=48, bw_gb_s=300)",
+  "heads": 8,
+  "head_dim": 64,
+  "crossover_seq_len": null,
+  "results": [
+    {
+      "seq_len": 512,
+      "standard_latency_ms": 0.035,
+      "tiled_fa_latency_ms": 0.52,
+      "speedup": 0.067,
+      "winner": "standard"
+    },
+    {
+      "seq_len": 1024,
+      "standard_latency_ms": 0.126,
+      "tiled_fa_latency_ms": 1.168,
+      "speedup": 0.108,
+      "winner": "standard"
+    },
+    {
+      "seq_len": 2048,
+      "standard_latency_ms": 0.475,
+      "tiled_fa_latency_ms": 2.936,
+      "speedup": 0.162,
+      "winner": "standard"
+    },
+    {
+      "seq_len": 4096,
+      "standard_latency_ms": 1.845,
+      "tiled_fa_latency_ms": 8.229,
+      "speedup": 0.224,
+      "winner": "standard"
+    },
+    {
+      "seq_len": 8192,
+      "standard_latency_ms": 7.27,
+      "tiled_fa_latency_ms": 26.022,
+      "speedup": 0.279,
+      "winner": "standard"
+    },
+    {
+      "seq_len": 16384,
+      "standard_latency_ms": 28.857,
+      "tiled_fa_latency_ms": 90.164,
+      "speedup": 0.32,
+      "winner": "standard"
+    },
+    {
+      "seq_len": 32768,
+      "standard_latency_ms": 114.98,
+      "tiled_fa_latency_ms": 333.113,
+      "speedup": 0.345,
+      "winner": "standard"
+    }
+  ],
+  "audit_reference": "AUDIT2_REPORT.md \u00a73.3",
+  "recommendation": "Use tiled FlashAttention-2 only for seq_len >= N/A. Standard attention is faster for shorter sequences due to kernel launch overhead."
+}
