@@ -350,7 +350,7 @@ def main():
     # --------------------------------------------------------------------------
     print(f"\n{BOLD}{CYAN}[BENCHMARK 8/8] Speculative Decoding Verification Engine on Tesla T4...{RESET}")
     vocab_size = 32000
-    K_spec = 4
+    K_spec = 2
     num_eval_steps = 25
 
     target_weights = torch.randn(2048, vocab_size, device=device, dtype=torch.float16)
