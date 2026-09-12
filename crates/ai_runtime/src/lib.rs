@@ -68,12 +68,15 @@ pub enum DataType {
     UINT8 = 6,
     /// 1-bit binary (extreme quantization, BitNet-style)
     Binary = 7,
+    /// 64-bit IEEE 754 double precision float
+    FP64 = 8,
 }
 
 impl DataType {
     /// Returns the size in bits for one element of this data type.
     pub const fn bits(self) -> usize {
         match self {
+            Self::FP64 => 64,
             Self::FP32 => 32,
             Self::FP16 | Self::BF16 => 16,
             Self::FP8 | Self::INT8 | Self::UINT8 => 8,
@@ -99,6 +102,7 @@ impl DataType {
 impl fmt::Display for DataType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::FP64 => write!(f, "fp64"),
             Self::FP32 => write!(f, "fp32"),
             Self::FP16 => write!(f, "fp16"),
             Self::BF16 => write!(f, "bf16"),

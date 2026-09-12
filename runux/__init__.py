@@ -14,6 +14,15 @@ from .carbon_scheduler import CarbonAwareSpeculativeScheduler, GridCarbonProfile
 from .systolic_advisor import SystolicTilingAdvisor
 from .gqa_kernel import GroupedQueryAttention
 from .paged_cache import PagedKVCache
+from .navier_stokes_advisor import (
+    NavierStokesAdvisor,
+    PhysicsGuard,
+    TruncationSuggestion,
+    PreconditionerSuggestion,
+    TimeStepSuggestion,
+    AdaptiveMeshSuggestion,
+    ValidationResult,
+)
 
 __all__ = [
     "Int64DeterministicAttention",
@@ -25,4 +34,11 @@ __all__ = [
     "SystolicTilingAdvisor",
     "GroupedQueryAttention",
     "PagedKVCache",
+    "NavierStokesAdvisor",
+    "PhysicsGuard",
+    "TruncationSuggestion",
+    "PreconditionerSuggestion",
+    "TimeStepSuggestion",
+    "AdaptiveMeshSuggestion",
+    "ValidationResult",
 ]

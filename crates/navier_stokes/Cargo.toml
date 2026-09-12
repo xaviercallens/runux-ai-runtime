@@ -1,0 +1,17 @@
+[package]
+name = "navier_stokes"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Spectral Galerkin solver for rigorous Navier-Stokes computation with O(M^6) triadic convolution"
+
+[dependencies]
+ai_runtime = { path = "../ai_runtime" }
+arena_mem = { path = "../arena_mem" }
+interval_arith = { path = "../interval_arith" }
+rayon = { workspace = true, optional = true }
+
+[features]
+default = ["parallel"]
+parallel = ["rayon"]

@@ -1,0 +1,9 @@
+[package]
+name = "interval_arith"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Rigorous f64 interval arithmetic with directed rounding for computer-assisted proofs"
+
+[dependencies]

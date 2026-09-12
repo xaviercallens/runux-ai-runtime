@@ -1,0 +1,12 @@
+[package]
+name = "cert_forge"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Air-gapped proof certificate serializer for Lean 4 verification"
+
+[dependencies]
+interval_arith = { path = "../interval_arith" }
+serde = { workspace = true }
+serde_json = { workspace = true }

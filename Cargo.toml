@@ -29,7 +29,15 @@ members = [
     "examples/edge_inference_demo",
     "examples/macos_m2_inference_demo",
     "examples/macos_m2_math_benchmark",
+    "crates/interval_arith",
+    "crates/navier_stokes",
+    "crates/cert_forge",
 ]
+
+[workspace.dependencies]
+rayon = "1.10"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 
 [workspace.package]
 version = "0.1.0"
@@ -60,6 +68,9 @@ hal = { path = "crates/hal" }
 tpu_pjrt = { path = "crates/tpu_pjrt" }
 stablehlo = { path = "crates/stablehlo" }
 mlgo_advisor = { path = "crates/mlgo_advisor" }
+interval_arith = { path = "crates/interval_arith" }
+navier_stokes = { path = "crates/navier_stokes" }
+cert_forge = { path = "crates/cert_forge" }
 
 [profile.dev]
 opt-level = 0

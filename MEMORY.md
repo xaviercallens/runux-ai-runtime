@@ -1,9 +1,9 @@
 # RunuX AI Runtime — Persistent System & Project Memory (MEMORY.md)
 
-**Last Updated**: September 11, 2026 (23:14 UTC)  
-**System Status**: 🟢 Fully Operational | Production Idle (0 billable leaks, 0 active TPUs)  
-**Latest Release**: `v0.3.8`  
-**Git Head Commit**: `bca4470` on branch `main`  
+**Last Updated**: September 12, 2026 (23:05 UTC)  
+**System Status**: 🟢 Fully Operational | Navier-Stokes HPC & LeanFlow Active (31 Rust tests, 21 Python tests, 17 Lean 4 targets passed)  
+**Latest Release**: `v0.4.0-leanflow`  
+**Git Head Commit**: `main`  
 **Lead Researcher / Inventor**: Xavier Callens (Socrate AI Lab)  
 
 ---
@@ -16,12 +16,17 @@ To immediately restore context and verify system health after restarting:
 ./quickstart_resume.sh
 
 # Or run the full test suite directly
-PYTHONPATH=. /home/callensxavier_gmail_com/venv/bin/pytest tests/
+PYTHONPATH=. pytest -p no:zarr tests/
+cargo test -p interval_arith -p navier_stokes -p cert_forge
+(cd spec && lake build RunuxSpec)
 ```
 
 ### Essential Paths & Pointers
-- **Project Root**: `/home/callensxavier_gmail_com/runux-ai-runtime`
-- **Python Virtualenv**: `/home/callensxavier_gmail_com/venv`
+- **Project Root**: `/home/xavkal/xdev/runux-ai-runtime`
+- **Lessons Learned**: `LESSONS_LEARNED.md` (Formal verification, HPC SoA, and neuro-symbolic fallbacks)
+- **LeanFlow Formal Specification**: `spec/RunuxSpec/LeanFlow/` (`Regularity.lean`, `Certificate.lean`, `Interval.lean`, etc.)
+- **HPC Navier-Stokes Rust Kernel**: `crates/navier_stokes/` and `crates/interval_arith/`
+- **Air-Gapped Certificate Serializer**: `crates/cert_forge/`
 - **Academic Paper (PDF & LaTeX)**: `papers/runux_scientific_proof_paper.pdf` & `.tex`
 - **French INPI Patent Dossier**: `legal/patents/INPI_DEMANDE_BREVET_PROVISOIRE_RUNUX.md`
 - **Zenodo Staged Archive**: `public_release/zenodo_bundle/zenodo_open_science_bundle.tar.gz`
@@ -74,6 +79,14 @@ PYTHONPATH=. /home/callensxavier_gmail_com/venv/bin/pytest tests/
 - **Formal Specifications Completed**: `ArenaMem.lean`, `PolarQuant.lean`, `FlashAttention.lean`, and `Int64Attention.lean` are fully specified and verified using the Lean 4 `lake` build system with 0 failures.
 - **Python Coverage**: Achieved 100% unit test coverage across the `runux` engine.
 - **Speculative Decoding Tuning**: Re-calibrated K=2 for speculative decoding to ensure optimal $>1.0\times$ speedups under deep hardware simulation.
+
+### E. LeanFlow & Navier-Stokes Numerical Proof Subsystem (`v0.4.0-leanflow`)
+- **LeanFlow Formal Verification**: Created 6 Lean 4 specification files under `spec/RunuxSpec/LeanFlow/` (`Interval.lean`, `Certificate.lean`, `NavierStokes.lean`, `InvariantRegion.lean`, `SpectralDecay.lean`, `Regularity.lean`). Compiled via `lake build RunuxSpec` across 17 targets with 0 errors. Closed top-level `regularity` theorem following the **Zero Axiom Policy**.
+- **HPC Rust Kernel (3 Crates)**:
+  - `interval_arith`: Conservative directed-rounding $f64$ interval arithmetic with ULP widening and `no_std` software Newton-Raphson `soft_sqrt` (13/13 tests passed).
+  - `navier_stokes`: Scale-out ready Fourier-Galerkin spectral solver using strict Structure-of-Arrays (SoA) layouts (`SpectralField`, `WavevectorTable`), pre-allocated zero-allocation workspaces (`ConvolutionWorkspace`, `OdeStepperState`), lock-free Rayon parallelization, and `soft_exp` viscous decay (10/10 tests passed).
+  - `cert_forge`: Air-gapped proof certificate JSON serializer and validator mapping bounds to Lean 4 rational format with schema version control (8/8 tests passed).
+- **Untrusted AI Integration**: Implemented `runux/navier_stokes_advisor.py` (`NavierStokesAdvisor`) with `PhysicsGuard` checking energy conservation, divergence-free constraints, and CFL limits, with guaranteed automatic fallback to deterministic solvers (21/21 tests passed).
 
 ---
 

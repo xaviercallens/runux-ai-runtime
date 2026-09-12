@@ -11,3 +11,9 @@ import RunuxSpec.ArenaMem
 import RunuxSpec.PolarQuant
 import RunuxSpec.FlashAttention
 import RunuxSpec.Int64Attention
+import RunuxSpec.LeanFlow.Interval
+import RunuxSpec.LeanFlow.Certificate
+import RunuxSpec.LeanFlow.NavierStokes
+import RunuxSpec.LeanFlow.InvariantRegion
+import RunuxSpec.LeanFlow.SpectralDecay
+import RunuxSpec.LeanFlow.Regularity
