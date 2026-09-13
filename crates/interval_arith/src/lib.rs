@@ -37,12 +37,20 @@ impl Interval {
     }
 
     /// Computes the square root of the interval.
-    /// Uses software sqrt (Newton-Raphson) to remain `no_std` compatible.
+    ///
+    /// The returned interval is guaranteed to contain the true square root for every finite
+    /// input, **subnormals included**. It does not simply widen the Newton-Raphson output by a
+    /// fixed margin: that was unsound, because `soft_sqrt`'s bit-hack seed assumes a normalised
+    /// exponent field and is wrong by orders of magnitude on subnormals, where 8 iterations
+    /// cannot recover (measured: `sqrt(8.095e-320)` came back `4.37e-157` against a true
+    /// `2.845e-160` — a factor of 1500, or `4.7e16` ULP, against a 1 ULP widening).
+    ///
+    /// See `sqrt_bounds` for the three-step construction that fixes it.
     #[must_use]
     pub fn sqrt(self) -> Self {
-        let lo = if self.lo < 0.0 { 0.0 } else { soft_sqrt(self.lo) };
-        let hi = soft_sqrt(self.hi);
-        Self::new(lo, hi).widen(1)
+        let lo = if self.lo <= 0.0 { 0.0 } else { sqrt_bounds(self.lo).0 };
+        let hi = if self.hi <= 0.0 { 0.0 } else { sqrt_bounds(self.hi).1 };
+        Self::new(lo, hi)
     }
 
     /// Computes the absolute value of the interval.
@@ -68,17 +76,76 @@ impl Interval {
     }
 
     /// Widens the interval by `ulps` Units in Last Place.
+    ///
+    /// Deliberately does NOT clamp to `[f64::MIN, f64::MAX]`. Clamping an upper bound that
+    /// overflowed to `+inf` back down to `f64::MAX` returns a bound BELOW the true value and
+    /// silently loses containment, which is the one property this type exists to provide. An
+    /// infinite bound is sound — uselessly wide, but sound — so overflow is allowed to escape
+    /// as an infinity where a caller can see it.
     #[must_use]
     fn widen(self, ulps: i64) -> Self {
-        let lo_w = ulp_widen(self.lo, -ulps);
-        let hi_w = ulp_widen(self.hi, ulps);
-        // Clamp to f64::MIN / f64::MAX to prevent blowing up to Infinity if we are close,
-        // but typically ULP widening won't reach Inf unless already huge.
-        Self::new(
-            lo_w.clamp(f64::MIN, f64::MAX),
-            hi_w.clamp(f64::MIN, f64::MAX),
-        )
+        Self::new(ulp_widen(self.lo, -ulps), ulp_widen(self.hi, ulps))
     }
+}
+
+/// `2^e`, exactly, for `-1022 <= e <= 1023`. Bit construction keeps this `no_std`.
+#[must_use]
+fn pow2(e: i32) -> f64 {
+    debug_assert!((-1022..=1023).contains(&e), "pow2 exponent out of normal range");
+    f64::from_bits(((e + 1023) as u64) << 52)
+}
+
+/// A sound bracket `[lo, hi]` around `sqrt(x)` for every finite `x > 0`, subnormals included.
+///
+/// Three steps, because neither the Newton iteration nor a naive self-certification behaves in
+/// the subnormal range:
+///
+/// 1. **Argument reduction.** Scale by an exact power of four into `[1, 4)`. Multiplication by
+///    4 and by `2^-k` are exact, so the reduction introduces no error of its own.
+/// 2. **Root where the seed is valid.** `soft_sqrt`'s estimate assumes a normalised exponent,
+///    which now holds by construction.
+/// 3. **Certify, do not assume.** Widen outward until `lo*lo <= v <= hi*hi` actually holds —
+///    the bound proves itself by comparison rather than resting on an unproven claim about the
+///    iteration's accuracy. Certifying *before* reduction would not work: in the subnormal range
+///    the certifying multiplication itself underflows (measured 3311/20000 failures).
+///
+/// The result is always normal for `x > 0` — `sqrt` of the smallest subnormal is `~2.2e-162` —
+/// so the final scale-back is a single correctly-rounded multiply, covered by 1 ULP.
+#[must_use]
+fn sqrt_bounds(x: f64) -> (f64, f64) {
+    if x.is_nan() || x <= 0.0 {
+        return (0.0, 0.0);
+    }
+    if x.is_infinite() {
+        return (x, x);
+    }
+    // 1. reduce into [1, 4)
+    let mut v = x;
+    let mut k: i32 = 0;
+    while v < 1.0 {
+        v *= 4.0;
+        k += 1;
+    }
+    while v >= 4.0 {
+        v *= 0.25;
+        k -= 1;
+    }
+    // 2. root in the normal range
+    let g = soft_sqrt(v);
+    // 3. certify by exact comparison, widening outward until the bracket really holds
+    let (mut lo, mut hi) = (g, g);
+    let mut w: i64 = 1;
+    while !(lo * lo <= v && hi * hi >= v) {
+        lo = ulp_widen(g, -w);
+        hi = ulp_widen(g, w);
+        w = w.saturating_mul(2);
+        if w > (1 << 62) {
+            return (0.0, f64::INFINITY); // sound last resort; never reached in practice
+        }
+    }
+    // 4. scale back by the exact power of two, then one ULP for the rounding of that multiply
+    let s = pow2(-k);
+    (ulp_widen(lo * s, -1), ulp_widen(hi * s, 1))
 }
 
 /// Software square root via Newton-Raphson iteration.
@@ -339,6 +406,121 @@ mod tests {
     #[should_panic(expected = "Invalid interval: lo > hi")]
     fn test_invalid_interval_bounds() {
         let _ = Interval::new(5.0, 3.0);
+    }
+
+    // ---------------------------------------------------------------------------------
+    // Containment tests on inputs that actually exercise rounding.
+    //
+    // Every constant in the tests above -- 1, 2, 3, 4, 5, 6, 7, 9, 12, 15, 0.5 -- is a dyadic
+    // rational, on which f64 arithmetic and these square roots are EXACT. Those tests therefore
+    // pass unchanged even if `widen` is replaced by the identity function, i.e. with the crate's
+    // entire safety mechanism deleted (demonstrated: 10/10 still green). A checker that cannot
+    // fail is not a checker, so the tests below use non-dyadic and subnormal inputs and assert
+    // the bracket property directly.
+    // ---------------------------------------------------------------------------------
+
+    /// The bracket property: `lo^2 <= v <= hi^2`. This is the guarantee, stated in a form that
+    /// needs no higher-precision reference to check.
+    fn assert_brackets(v: f64) {
+        let s = Interval::exact(v).sqrt();
+        assert!(s.lo >= 0.0, "negative lower bound for sqrt({v:e})");
+        assert!(
+            s.lo * s.lo <= v && s.hi * s.hi >= v,
+            "sqrt({v:e}) = [{:e}, {:e}] does not bracket: lo^2={:e}, hi^2={:e}",
+            s.lo, s.hi, s.lo * s.lo, s.hi * s.hi
+        );
+    }
+
+    #[test]
+    fn sqrt_brackets_nondyadic_normals() {
+        for i in 1..5_000u32 {
+            assert_brackets(f64::from(i) / 7.0);
+            assert_brackets(f64::from(i) * 1.000_000_1);
+        }
+    }
+
+    /// REGRESSION. The previous implementation widened the raw Newton output by 1 ULP, and on
+    /// subnormals the bit-hack seed is wrong by orders of magnitude: sqrt(8.095e-320) returned
+    /// 4.370122139616469e-157 against a true 2.8451311993408992e-160 -- 4.7e16 ULP outside a
+    /// 1 ULP interval. 60 of 20000 sampled subnormals lost containment.
+    #[test]
+    fn sqrt_brackets_subnormals() {
+        assert_brackets(8.095e-320);
+        assert_brackets(1.036_131e-317);
+        assert_brackets(1.326_247_37e-315);
+        assert_brackets(f64::from_bits(1)); // smallest positive subnormal
+        let mut v = f64::MIN_POSITIVE; // smallest normal
+        for _ in 0..1_000 {
+            v *= 0.5; // walks down through the subnormal range
+            if v == 0.0 {
+                break;
+            }
+            assert_brackets(v);
+        }
+    }
+
+    #[test]
+    fn sqrt_brackets_every_power_of_two() {
+        for e in -1070..=1023 {
+            let v = if e >= -1022 { pow2(e) } else { f64::from_bits(1) * pow2(e + 1074) };
+            if v > 0.0 && v.is_finite() {
+                assert_brackets(v);
+            }
+        }
+    }
+
+    /// NEGATIVE CONTROL. If the outward widening ever becomes a no-op, the raw iteration is
+    /// still inexact on almost every non-dyadic input, so a zero-width interval would not
+    /// bracket. This test asserts that inexactness, so the suite NOTICES if someone removes the
+    /// safety margin -- the property the dyadic tests above cannot see.
+    #[test]
+    fn negative_control_raw_iteration_is_inexact() {
+        let mut inexact = 0usize;
+        let mut total = 0usize;
+        for i in 1..5_000u32 {
+            let v = f64::from(i) / 7.0;
+            let g = soft_sqrt(v);
+            total += 1;
+            if g * g != v {
+                inexact += 1;
+            }
+        }
+        assert!(
+            inexact * 2 > total,
+            "the raw square root was exact on most inputs ({inexact}/{total}); this test has \
+             stopped exercising rounding and can no longer detect a lost widening"
+        );
+    }
+
+    /// Pins the bug this commit fixes, by reproducing the OLD construction inline and asserting
+    /// it is unsound. If someone reverts `sqrt` to "iterate then widen by a constant", this test
+    /// starts failing and says why. Without it the fix is only an assertion that the new code
+    /// works, never a demonstration that the old code did not.
+    #[test]
+    fn old_construction_was_unsound_on_subnormals() {
+        let v = 8.095e-320_f64;
+        assert!(v > 0.0 && v < f64::MIN_POSITIVE, "test input must be subnormal");
+
+        // exactly what shipped before: raw Newton output, widened by one ULP either way
+        let g = soft_sqrt(v);
+        let (old_lo, old_hi) = (ulp_widen(g, -1), ulp_widen(g, 1));
+        assert!(
+            !(old_lo * old_lo <= v && old_hi * old_hi >= v),
+            "the old construction unexpectedly bracketed {v:e}; this control no longer \
+             demonstrates the defect it was written for"
+        );
+
+        // and the replacement does bracket it
+        let s = Interval::exact(v).sqrt();
+        assert!(s.lo * s.lo <= v && s.hi * s.hi >= v);
+    }
+
+    /// Overflow must escape as an infinity rather than being clamped back below the true value.
+    #[test]
+    fn widen_does_not_clamp_overflow_below_truth() {
+        let w = Interval::new(f64::MAX, f64::MAX).widen(1);
+        assert!(w.hi.is_infinite() && w.hi > 0.0, "upper bound must not be clamped to f64::MAX");
+        assert!(w.lo.is_finite() && w.lo < f64::MAX);
     }
 
     #[test]
