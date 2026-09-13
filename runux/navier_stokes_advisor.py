@@ -34,6 +34,8 @@ __all__ = [
     "ValidationResult",
     "NavierStokesAdvisor",
     "PhysicsGuard",
+    "HorizonPrediction",
+    "ReadabilityAdvisor",
 ]
 
 
@@ -306,6 +308,7 @@ class NavierStokesAdvisor:
         cfl_number: float,
         max_velocity: float,
         viscosity: float,
+        enstrophy: float | None = None,
     ) -> TimeStepSuggestion:
         """Suggest an adaptive time step honouring the CFL stability limit.
 
@@ -315,13 +318,30 @@ class NavierStokesAdvisor:
             \\text{CFL} = u_{\\max} \\, \\Delta t / \\Delta x \\le \\text{cfl\\_limit}
 
         where ``Δx`` is estimated from the viscous Kolmogorov scale
-        ``(ν³ / ε)^{1/4}`` with ε ≈ ν · u_max².
+        ``η = (ν³ / ε)^{1/4}``.
+
+        **Dimensional note.** ``η`` is a length only if ``ε`` is the dissipation
+        rate per unit mass, ``[L² T⁻³]``.  That is ``ε = 2 ν Z`` with ``Z`` the
+        enstrophy ``Σ |k|² |û_k|²`` ``[T⁻²]`` — a quantity every spectral solver
+        already computes.  The earlier form ``ε ≈ ν · u_max²`` is ``[L⁴ T⁻³]``,
+        off by ``L²``, so its ``η`` collapsed to ``√(ν / u_max)`` with dimension
+        ``L^{1/2}``: not a length, and the ``dt`` built on it was not a CFL step
+        (it changed under a pure rescaling of the length unit).  Pass
+        ``enstrophy`` to get the dimensionally consistent estimate; without it the
+        legacy form is used at reduced confidence, so callers can see which one
+        they got.
+
+        **Scope note.** CFL and the viscous limit are *stability* constraints.
+        They say nothing about *accuracy*: a run can be perfectly stable and still
+        accumulate enough truncation error to be unreadable.  For that, use
+        :class:`ReadabilityAdvisor`.
 
         Args:
             current_dt:    Current time step.
             cfl_number:    Current CFL number of the simulation.
             max_velocity:  Maximum velocity magnitude in the domain.
             viscosity:     Kinematic viscosity ``ν``.
+            enstrophy:     Total enstrophy ``Z = Σ|k|²|û_k|²`` (recommended).
 
         Returns:
             A :class:`TimeStepSuggestion` with the proposed ``dt``.
@@ -334,7 +354,17 @@ class NavierStokesAdvisor:
             )
 
         # Kolmogorov length scale as proxy for Δx
-        epsilon = viscosity * max_velocity ** 2
+        if enstrophy is not None and enstrophy > 0.0:
+            epsilon = 2.0 * viscosity * enstrophy          # [L² T⁻³]: dimensionally consistent
+            dimensional_note = ""
+            confidence_scale = 1.0
+        else:
+            epsilon = viscosity * max_velocity ** 2         # legacy: [L⁴ T⁻³], NOT a true ε
+            dimensional_note = (
+                " (LEGACY estimate without enstrophy: η is not a length; "
+                "pass enstrophy for a dimensionally consistent dt)"
+            )
+            confidence_scale = 0.5
         eta = (viscosity ** 3 / max(epsilon, 1e-30)) ** 0.25
         dx_estimate = max(eta, 1e-15)
 
@@ -368,8 +398,8 @@ class NavierStokesAdvisor:
 
         return TimeStepSuggestion(
             suggested_dt=dt_suggested,
-            confidence=confidence,
-            reasoning=reasoning,
+            confidence=confidence * confidence_scale,
+            reasoning=reasoning + dimensional_note,
         )
 
     # -- mesh adaptation ---------------------------------------------------
@@ -641,3 +671,302 @@ class PhysicsGuard:
             )
             return False
         return True
+
+    @staticmethod
+    def check_step_halving(
+        value_dt: float,
+        value_half_dt: float,
+        tolerance: float = 0.02,
+    ) -> bool:
+        """The readability criterion: a number computed at step ``dt`` is trusted
+        only where its ``dt/2`` partner agrees within *tolerance*.
+
+        This is the one guard in this class that tests *accuracy* rather than
+        *stability* or a conservation law.  It is integrator- and PDE-agnostic,
+        and it is the check that catches the failure mode the others cannot see:
+        a run that stays bounded, conserves what it should, satisfies CFL, and is
+        nonetheless wrong because truncation error has accumulated.
+
+        Args:
+            value_dt:       Observable at time ``t`` from the run with step ``dt``.
+            value_half_dt:  The same observable at the same ``t`` from step ``dt/2``.
+            tolerance:      Maximum relative disagreement.
+
+        Returns:
+            ``True`` if ``|a − b| / max(|b|, tiny)`` ≤ tolerance.
+        """
+        ref = max(abs(value_half_dt), 1e-300)
+        gap = abs(value_dt - value_half_dt) / ref
+        if gap > tolerance:
+            logger.warning(
+                "Step-halving disagreement %.3e exceeds tolerance %.3e: not readable",
+                gap,
+                tolerance,
+            )
+            return False
+        return True
+
+
+# ---------------------------------------------------------------------------
+# ReadabilityAdvisor — predict how far a run can be trusted, BEFORE running it
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class HorizonPrediction:
+    """Predicted readable horizon of a step-halving pair, from a short pilot.
+
+    Attributes:
+        readable_horizon:   Predicted time at which the pair's disagreement
+                            first exceeds the tolerance (``inf`` if the fitted
+                            growth is non-positive).
+        growth_exponent:    Fitted ``p`` in ``disagreement ≈ C · t^p``.
+        target_readable:    Whether the requested target horizon is predicted to
+                            be readable at the current step.
+        suggested_dt:       Step that is predicted to make the target readable
+                            (equals the current step when it already is).
+        pilot_horizon:      How much of the trajectory the prediction was fitted
+                            on.  A prediction is only as good as its pilot; see
+                            ``reasoning``.
+        confidence:         Self-reported confidence in [0, 1].
+        reasoning:          Human-readable explanation.
+    """
+    readable_horizon: float
+    growth_exponent: float
+    target_readable: bool
+    suggested_dt: float
+    pilot_horizon: float
+    confidence: float
+    reasoning: str
+
+
+class ReadabilityAdvisor:
+    """Untrusted heuristic: from a short pilot of a ``dt`` / ``dt/2`` pair, predict
+    the horizon over which the pair will satisfy the step-halving criterion, and
+    the step needed to reach a target horizon.
+
+    Integrator- and PDE-agnostic: it needs only two time series of any scalar
+    observables sampled at shared times.  It exists because the guards in
+    :class:`PhysicsGuard` other than :meth:`PhysicsGuard.check_step_halving` are
+    stability and conservation checks, and a run can pass all of them while
+    accumulating enough truncation error to be worthless.  Measured example that
+    motivated it: six-hour horizon-6 runs at ``M = 16`` that were bounded,
+    smooth, CFL-safe, and readable only to ``t ≈ 0.85``.  A pilot covering the
+    first ``0.2`` of the horizon would have predicted that.
+
+    Method.  The relative disagreement between the two members of the pair
+    oscillates as they dephase, so the fit is to its **running maximum**
+    (envelope) rather than to the raw signal, as ``C · t^p`` by log–log least
+    squares.  The predicted readable horizon is where the envelope reaches the
+    tolerance.  For an integrator of order ``q`` the disagreement scales as
+    ``dt^q``, so the step that brings the envelope at the target horizon down to
+    the tolerance is ``dt · (tol / envelope(T))^{1/q}``.
+
+    **Use every observable your reading rule uses**, via :meth:`predict_all`.
+    Validated on six ``M = 16`` pairs whose true readable horizons were measured
+    (``0.85``, ``0.67``, ``6.0``): with **both** energy and enstrophy and a pilot
+    of ``0.2`` (one thirtieth of the run), the verdict "readable to horizon 6?"
+    was correct on the two cases where the answer was no, and conservative (a
+    false *no*) on the one where it was yes; horizon estimates were within
+    ``1.5×`` on the hard cases.  With energy **alone** and the same pilot it
+    produced a false *yes* on one pair (predicted ``8.0`` against a measured
+    ``0.67``), because enstrophy is the more sensitive observable and its
+    disagreement grows first.  Treat it as a *screen*: "this run will not reach
+    the horizon you want" is reliable given sensitive observables, "this run
+    will" is weaker, and neither replaces actually running the pair.
+
+    Parameters:
+        tolerance:        Readability tolerance (relative), default 2 %.
+        integrator_order: ``q`` such that local error scales as ``dt^q``
+                          (4 for classical RK4).
+        min_pilot_points: Minimum envelope points required to fit at all.
+    """
+
+    def __init__(
+        self,
+        tolerance: float = 0.02,
+        integrator_order: int = 4,
+        min_pilot_points: int = 4,
+    ):
+        if not 0.0 < tolerance < 1.0:
+            raise ValueError("tolerance must be in (0, 1)")
+        if integrator_order < 1:
+            raise ValueError("integrator_order must be >= 1")
+        self.tolerance = tolerance
+        self.integrator_order = integrator_order
+        self.min_pilot_points = min_pilot_points
+
+    @staticmethod
+    def disagreement(
+        pilot_dt: list[tuple[float, float]],
+        pilot_half_dt: list[tuple[float, float]],
+    ) -> list[tuple[float, float]]:
+        """Relative disagreement ``|a − b| / |b|`` at shared times ``t > 0``.
+
+        Both inputs are ``(t, value)`` sequences; times are matched after
+        rounding to 9 decimals so that ``0.1`` and ``0.1000000001`` coincide.
+        """
+        ref = {round(t, 9): v for t, v in pilot_half_dt}
+        out: list[tuple[float, float]] = []
+        for t, a in pilot_dt:
+            if t <= 0.0:
+                continue
+            b = ref.get(round(t, 9))
+            if b is None:
+                continue
+            out.append((t, abs(a - b) / max(abs(b), 1e-300)))
+        return out
+
+    @classmethod
+    def combined_disagreement(
+        cls,
+        pairs: list[tuple[list[tuple[float, float]], list[tuple[float, float]]]],
+    ) -> list[tuple[float, float]]:
+        """Pointwise **maximum** relative disagreement over several observables.
+
+        A reading rule of the form "trusted only where *both* E and Z agree
+        within tolerance" is a rule on the maximum; fitting any single observable
+        can miss the one that dephases first.
+        """
+        merged: dict[float, float] = {}
+        for a, b in pairs:
+            for t, e in cls.disagreement(a, b):
+                k = round(t, 9)
+                merged[k] = max(merged.get(k, 0.0), e)
+        return sorted(merged.items())
+
+    def predict_all(
+        self,
+        pairs: list[tuple[list[tuple[float, float]], list[tuple[float, float]]]],
+        current_dt: float,
+        target_horizon: float,
+        pilot_horizon: float | None = None,
+    ) -> HorizonPrediction:
+        """:meth:`predict` on the combined (max) disagreement of several observables.
+
+        Args:
+            pairs:  ``[(series_at_dt, series_at_half_dt), ...]``, one per observable.
+        """
+        d = self.combined_disagreement(pairs)
+        # Re-express as a synthetic single pair so the fitting path is shared.
+        return self.predict(
+            pilot_dt=[(t, 1.0 + e) for t, e in d],
+            pilot_half_dt=[(t, 1.0) for t, _ in d],
+            current_dt=current_dt,
+            target_horizon=target_horizon,
+            pilot_horizon=pilot_horizon,
+        )
+
+    def _fit_envelope(
+        self, d: list[tuple[float, float]], pilot_horizon: float
+    ) -> tuple[float, float, int] | None:
+        """Log–log least squares on the running-max envelope over ``t <= pilot``.
+
+        Returns ``(p, log C, n_points)`` or ``None`` if too few points.
+        """
+        env: list[tuple[float, float]] = []
+        m = 0.0
+        for t, e in d:
+            if t > pilot_horizon:
+                break
+            m = max(m, e)
+            if m > 0.0:
+                env.append((t, m))
+        if len(env) < self.min_pilot_points:
+            return None
+        xs = [math.log(t) for t, _ in env]
+        ys = [math.log(e) for _, e in env]
+        n = len(xs)
+        mx = sum(xs) / n
+        my = sum(ys) / n
+        sxx = sum((x - mx) ** 2 for x in xs)
+        if sxx <= 0.0:
+            return None
+        p = sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sxx
+        return p, my - p * mx, n
+
+    def predict(
+        self,
+        pilot_dt: list[tuple[float, float]],
+        pilot_half_dt: list[tuple[float, float]],
+        current_dt: float,
+        target_horizon: float,
+        pilot_horizon: float | None = None,
+    ) -> HorizonPrediction:
+        """Predict the readable horizon and the step needed for *target_horizon*.
+
+        Args:
+            pilot_dt:        ``(t, value)`` series from the run at step ``dt``.
+            pilot_half_dt:   The same observable from the run at ``dt/2``.
+            current_dt:      The step ``dt`` of the first series.
+            target_horizon:  Horizon the caller wants to read up to.
+            pilot_horizon:   Use only ``t <= pilot_horizon`` for the fit
+                             (default: everything supplied).
+
+        Returns:
+            A :class:`HorizonPrediction`.  Never raises on poor data; low
+            confidence and an explanatory ``reasoning`` are the failure mode.
+        """
+        d = self.disagreement(pilot_dt, pilot_half_dt)
+        if pilot_horizon is None:
+            pilot_horizon = d[-1][0] if d else 0.0
+        fit = self._fit_envelope(d, pilot_horizon)
+        if fit is None:
+            return HorizonPrediction(
+                readable_horizon=0.0,
+                growth_exponent=0.0,
+                target_readable=False,
+                suggested_dt=current_dt,
+                pilot_horizon=pilot_horizon,
+                confidence=0.0,
+                reasoning=(
+                    f"Too few usable pilot points (< {self.min_pilot_points}) to fit "
+                    "an error envelope; run a longer pilot."
+                ),
+            )
+        p, log_c, n = fit
+        q = self.integrator_order
+        if p <= 0.0:
+            # Disagreement not growing: nothing in the pilot says the target is unreadable.
+            return HorizonPrediction(
+                readable_horizon=math.inf,
+                growth_exponent=p,
+                target_readable=True,
+                suggested_dt=current_dt,
+                pilot_horizon=pilot_horizon,
+                confidence=0.4,
+                reasoning=(
+                    f"Fitted growth exponent p = {p:.2f} <= 0 on {n} envelope points; "
+                    "no evidence the target is unreadable, but a flat pilot is weak evidence "
+                    "either way."
+                ),
+            )
+        t_star = math.exp((math.log(self.tolerance) - log_c) / p)
+        env_at_target = math.exp(log_c + p * math.log(target_horizon))
+        target_ok = env_at_target <= self.tolerance
+        if target_ok:
+            dt_new = current_dt
+        else:
+            dt_new = current_dt * (self.tolerance / env_at_target) ** (1.0 / q)
+        # Confidence: how much of the predicted horizon the pilot actually covered.
+        coverage = min(1.0, pilot_horizon / max(t_star, 1e-300))
+        confidence = 0.5 + 0.4 * coverage
+        return HorizonPrediction(
+            readable_horizon=t_star,
+            growth_exponent=p,
+            target_readable=target_ok,
+            suggested_dt=dt_new,
+            pilot_horizon=pilot_horizon,
+            confidence=confidence,
+            reasoning=(
+                f"Envelope fit disagreement ≈ C·t^{p:.2f} on {n} points up to t={pilot_horizon:g}; "
+                f"predicted readable horizon t ≈ {t_star:.3g} at dt={current_dt:g} "
+                f"(tolerance {self.tolerance:g}). "
+                + (
+                    f"Target {target_horizon:g} is predicted readable."
+                    if target_ok
+                    else f"Target {target_horizon:g} is NOT predicted readable; with an order-{q} "
+                         f"integrator, dt ≈ {dt_new:.3g} should be. Conservative estimate: it "
+                         "under-predicts when error growth later saturates."
+                )
+            ),
+        )

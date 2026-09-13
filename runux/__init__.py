@@ -22,6 +22,8 @@ from .navier_stokes_advisor import (
     TimeStepSuggestion,
     AdaptiveMeshSuggestion,
     ValidationResult,
+    HorizonPrediction,
+    ReadabilityAdvisor,
 )
 
 __all__ = [
