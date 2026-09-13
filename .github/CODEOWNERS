@@ -1,0 +1,24 @@
+# ==============================================================================
+# RunuX AI Runtime — Code Ownership Specification
+#
+# Copyright (c) 2026 Xavier Callens / Socrate AI. All Rights Reserved.
+# Licensed under LicenseRef-RunuX-Commercial.
+# ==============================================================================
+
+# Default code owner for all files across the repository
+* @xaviercallens
+
+# Formal specifications require mandatory review by author
+/spec/ @xaviercallens
+/spec/RunuxSpec/LeanFlow/ @xaviercallens
+
+# High-Performance Computing Rust Crates
+/crates/ @xaviercallens
+/crates/navier_stokes/ @xaviercallens
+/crates/cert_forge/ @xaviercallens
+/crates/interval_arith/ @xaviercallens
+
+# Core Python Runtime and Advisors
+/runux/ @xaviercallens
+/scripts/ @xaviercallens
+/.github/ @xaviercallens
